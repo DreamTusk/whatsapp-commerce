@@ -1,0 +1,21 @@
+id,title,description,availability,condition,price,link,image_link,brand,category
+prod_tomatoes,Fresh Tomatoes,Fresh red tomatoes - 1kg,in stock,new,40 INR,https://freshmart.example.com/products/tomatoes,,Fresh Mart,Fruits & Vegetables
+prod_onions,Onions,Fresh onions - 1kg,in stock,new,30 INR,https://freshmart.example.com/products/onions,,Fresh Mart,Fruits & Vegetables
+prod_bananas,Bananas,Fresh bananas - 1 dozen,in stock,new,50 INR,https://freshmart.example.com/products/bananas,,Fresh Mart,Fruits & Vegetables
+prod_potatoes,Potatoes,Fresh potatoes - 1kg,in stock,new,35 INR,https://freshmart.example.com/products/potatoes,,Fresh Mart,Fruits & Vegetables
+prod_milk,Fresh Milk,Farm fresh milk - 1L,in stock,new,60 INR,https://freshmart.example.com/products/milk,,Fresh Mart,Dairy & Eggs
+prod_eggs,Eggs,Farm fresh eggs - 12 pieces,in stock,new,70 INR,https://freshmart.example.com/products/eggs,,Fresh Mart,Dairy & Eggs
+prod_curd,Curd,Fresh curd - 500g,in stock,new,40 INR,https://freshmart.example.com/products/curd,,Fresh Mart,Dairy & Eggs
+prod_butter,Butter,Fresh butter - 100g,in stock,new,55 INR,https://freshmart.example.com/products/butter,,Fresh Mart,Dairy & Eggs
+prod_cola,Coca Cola,Soft drink - 750ml,in stock,new,40 INR,https://freshmart.example.com/products/cola,,Fresh Mart,Beverages
+prod_pepsi,Pepsi,Soft drink - 750ml,in stock,new,40 INR,https://freshmart.example.com/products/pepsi,,Fresh Mart,Beverages
+prod_water,Mineral Water,Packaged drinking water - 1L,in stock,new,20 INR,https://freshmart.example.com/products/water,,Fresh Mart,Beverages
+prod_juice,Mango Juice,Fresh mango juice - 500ml,in stock,new,50 INR,https://freshmart.example.com/products/juice,,Fresh Mart,Beverages
+prod_lays,Lays Chips,Potato chips - 52g,in stock,new,20 INR,https://freshmart.example.com/products/lays,,Fresh Mart,Snacks
+prod_kurkure,Kurkure,Masala munch - 60g,in stock,new,20 INR,https://freshmart.example.com/products/kurkure,,Fresh Mart,Snacks
+prod_biscuits,Biscuits,Parle-G biscuits - 100g,in stock,new,10 INR,https://freshmart.example.com/products/biscuits,,Fresh Mart,Snacks
+prod_namkeen,Namkeen,Mixed namkeen - 200g,in stock,new,30 INR,https://freshmart.example.com/products/namkeen,,Fresh Mart,Snacks
+prod_soap,Soap,Bathing soap - 125g,in stock,new,30 INR,https://freshmart.example.com/products/soap,,Fresh Mart,Personal Care
+prod_shampoo,Shampoo,Hair shampoo - 7ml sachet,in stock,new,5 INR,https://freshmart.example.com/products/shampoo,,Fresh Mart,Personal Care
+prod_toothpaste,Toothpaste,Dental care - 100g,in stock,new,50 INR,https://freshmart.example.com/products/toothpaste,,Fresh Mart,Personal Care
+prod_handwash,Hand Wash,Liquid hand wash - 200ml,in stock,new,80 INR,https://freshmart.example.com/products/handwash,,Fresh Mart,Personal Care
