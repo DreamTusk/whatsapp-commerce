@@ -7,11 +7,15 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }
 
 body:json {
@@ -21,7 +25,7 @@ body:json {
       "to": "{{Recipient-Phone-Number}}",
       "type": "template",
       "template": {
-          "name": "intro_catalog_offer",
+          "name": "test_template_1",
           "language": {
               "code": "en_US"
           },
