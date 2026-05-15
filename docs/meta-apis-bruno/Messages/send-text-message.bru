@@ -7,11 +7,15 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }
 
 body:json {
