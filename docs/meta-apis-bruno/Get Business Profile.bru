@@ -1,0 +1,38 @@
+meta {
+  name: Get Business Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://graph.facebook.com/v21.0/{{phone_number_id}}/whatsapp_business_profile
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: about,address,description,email,profile_picture_url,websites,vertical
+}
+
+headers {
+  Authorization: Bearer {{access_token}}
+  Content-Type: application/json
+}
+
+vars:pre-request {
+  phone_number_id: YOUR_PHONE_NUMBER_ID
+  access_token: YOUR_ACCESS_TOKEN
+}
+
+docs {
+  # Get WhatsApp Business Profile
+
+  Retrieves the business profile information for your WhatsApp Business Account.
+
+  ## Required Parameters
+  - `phone_number_id`: Your WhatsApp Business Phone Number ID
+  - `access_token`: Your Meta access token
+
+  ## Response
+  Returns business profile details including description, address, email, and profile picture.
+}
