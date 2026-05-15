@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/message_qrdls?fields=code,prefilled_message,qr_image_url.format(SVG)
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 params:query {
   fields: code,prefilled_message,qr_image_url.format(SVG)

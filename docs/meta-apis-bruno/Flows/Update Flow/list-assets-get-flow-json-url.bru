@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}/assets
   body: form-multipart
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   Returns all assets attached to the flow. Currently only FLOW_JSON asset is supported

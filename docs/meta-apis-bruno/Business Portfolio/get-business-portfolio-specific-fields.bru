@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{Business-ID}}?fields=id,name,timezone_id
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 params:query {
   fields: id,name,timezone_id

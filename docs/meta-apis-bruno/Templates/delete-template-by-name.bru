@@ -7,8 +7,13 @@ meta {
 delete {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/message_templates?name=<TEMPLATE_NAME>
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 params:query {
   name: <TEMPLATE_NAME>

@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   When you query all the phone numbers for a WhatsApp Business Account, each phone number has an **`id`**. You can directly query for a phone number using this **`id`**.

@@ -7,8 +7,13 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/migrate_flows
   body: form-multipart
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 body:multipart-form {
   source_waba_id: <SOURCE_WABA_ID>

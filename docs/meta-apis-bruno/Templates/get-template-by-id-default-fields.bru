@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/<TEMPLATE_ID>
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)

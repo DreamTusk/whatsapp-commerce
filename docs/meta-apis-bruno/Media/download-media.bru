@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{Media-URL}}
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   When you retrieve a media URL through the **GET** Media endpoint, you must use a User Access Token to download media content from the URL. If you click the URL from a browser, you will get an access error. <br/>

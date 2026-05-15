@@ -7,8 +7,13 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/subscribed_apps
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   To make sure you receive notifications for your account you need to subscribe your app to your WABA.

@@ -7,8 +7,13 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/whatsapp_business_encryption
   body: form-multipart
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 body:multipart-form {
   business_public_key: -----BEGIN PUBLIC KEY-----

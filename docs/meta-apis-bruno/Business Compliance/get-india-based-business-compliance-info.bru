@@ -7,5 +7,11 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/business_compliance_info
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
+

@@ -7,8 +7,13 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}/assets
   body: form-multipart
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 body:multipart-form {
   file: 

@@ -7,14 +7,19 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
   body: json
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 body:json {
   {
       "messaging_product": "whatsapp",
       "status": "read",
-      "message_id": "<WHATSAPP_MESSAGE_ID>",
+      "message_id": "wamid.HBgMOTE5MzYwNzc3MjU4FQIAERgSQTM2OUQ5RjIzRTJDM0YwOTA4AA==",
       "typing_indicator": {
           "type": "text"
       }

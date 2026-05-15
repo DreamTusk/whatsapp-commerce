@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   - Endpoint reference: [WhatsApp Business Account](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account)

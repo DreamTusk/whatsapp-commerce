@@ -7,5 +7,9 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{Business-ID}}/client_whatsapp_business_accounts
   body: none
-  auth: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }

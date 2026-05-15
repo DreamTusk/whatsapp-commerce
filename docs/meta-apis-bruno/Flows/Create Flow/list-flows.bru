@@ -7,5 +7,9 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/flows
   body: none
-  auth: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }

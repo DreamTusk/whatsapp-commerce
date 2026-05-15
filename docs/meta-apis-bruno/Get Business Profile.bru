@@ -7,15 +7,19 @@ meta {
 get {
   url: https://graph.facebook.com/v21.0/{{phone_number_id}}/whatsapp_business_profile
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 params:query {
   fields: about,address,description,email,profile_picture_url,websites,vertical
 }
 
 headers {
-  Authorization: Bearer {{access_token}}
   Content-Type: application/json
 }
 

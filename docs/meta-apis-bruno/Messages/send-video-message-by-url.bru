@@ -7,12 +7,18 @@ meta {
 post {
   url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
   body: json
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 headers {
   Content-Type: application/json
 }
+
 
 body:json {
   {
@@ -21,8 +27,8 @@ body:json {
       "to": "{{Recipient-Phone-Number}}",
       "type": "video",
       "video": {
-          "link": "<http(s)://video-url>",
-          "caption": "<VIDEO_CAPTION_TEXT>"
+           "link": "https://www.w3schools.com/html/mov_bbb.mp4",
+      "caption": "Test Video Message 🎥"
       }
   }
 }

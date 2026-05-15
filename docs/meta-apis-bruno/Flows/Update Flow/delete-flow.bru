@@ -7,8 +7,13 @@ meta {
 delete {
   url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   Deletes the flow entirely. This action is not reversible. Only a DRAFT flow can be deleted.

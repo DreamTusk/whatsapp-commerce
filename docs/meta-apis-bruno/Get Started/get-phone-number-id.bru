@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/phone_numbers
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   To send messages, you need to register the phone number you want to use. This is the business phone number we mentioned in [Set up Assets](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started#set-up-assets).

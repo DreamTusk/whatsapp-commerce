@@ -7,8 +7,13 @@ meta {
 get {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/phone_numbers
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
 
 docs {
   This API returns all phone numbers in a WhatsApp Business Account specified by the **`{{WABA-ID}}`** value. Get the **`id`** value for the phone number you want to use to send messages with WhatsApp Business Cloud API.
