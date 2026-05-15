@@ -1,0 +1,15 @@
+meta {
+  name: Publish Flow
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}/publish
+  body: none
+  auth: none
+}
+
+docs {
+  Updates the status of the flow as "PUBLISHED". This action is not reversible. The flow and its assets become immutable once published. To update the flow, you must create a new flow and specify the previous flow id as the \`clone_flow_id\` parameter
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Get commerce settings
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/whatsapp_commerce_settings
+  body: none
+  auth: none
+}
+
+docs {
+  - Guide: [Sell Products & Services](https://developers.facebook.com/docs/whatsapp/cloud-api/guides/sell-products-and-services) (Cloud API)
+  - Guide: [Sell Products & Services](https://developers.facebook.com/docs/whatsapp/on-premises/guides/commerce-guides) (On-Premises API)
+  - Endpoint reference: [WhatsApp Business Phone Number > WhatsApp Commerce Settings](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account-to-number-current-status/whatsapp_commerce_settings)
+}

@@ -1,0 +1,43 @@
+meta {
+  name: Send Flow Template Message
+  type: http
+  seq: 8
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "to": "{{Recipient-Phone-Number}}",
+      "type": "template",
+      "template": {
+          "name": "<TEMPLATE_NAME>",
+          "language": {
+              "code": "en_US"
+          },
+          "components": [
+              {
+                  "type": "button",
+                  "sub_type": "flow",
+                  "index": "0",
+                  "parameters": [
+                      {
+                          "type": "action",
+                          "action": {
+                              "flow_token": "<FLOW_TOKEN>",
+                              "flow_action_data": {
+                                  "<CUSTOM_KEY>": "<CUSTOM_VALUE>"
+                              }
+                          }
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}

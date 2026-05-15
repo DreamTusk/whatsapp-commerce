@@ -1,0 +1,22 @@
+meta {
+  name: Upload Audio
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/media
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "file": "@/local/path/file.ogg;type=audio/ogg",
+      "messaging_product": "whatsapp"
+  }
+}
+
+docs {
+  This request uploads an audio as .ogg. The parameters are specified as **form-data** in the request **body**.
+}

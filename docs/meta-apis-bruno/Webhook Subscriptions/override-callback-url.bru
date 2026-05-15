@@ -1,0 +1,31 @@
+meta {
+  name: Override Callback URL
+  type: http
+  seq: 4
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/subscribed_apps
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
+body:json {
+  {
+    "override_callback_uri": "<ALTERNATE_WEBHOOK_ENDPOINT_URL>",
+    "verify_token": "<ALTERNATE_WEBOOK_ENDPOINT_VERIFICATION_TOKEN>"
+  }
+}
+
+docs {
+  If you want to subscribe to Webhooks for multiple WhatsApp Business Accounts but want messages field Webhooks notifications to be sent to different callback URLs for each WABA, you can override the callback URL when subscribing to Webhooks for each WABA.
+  
+  To do this, first verify that the alternate Webhook endpoint can receive and process Webhooks notifications. Then, subscribe to Webhooks for the WABA as your normally would, but include the alternate endpoint's callback URL along with its verification token as a JSON payload:
+  
+  
+  For more information, see [Overriding the Callback URL](https://developers.facebook.com/docs/whatsapp/embedded-signup/webhooks#overriding-the-callback-url).
+}

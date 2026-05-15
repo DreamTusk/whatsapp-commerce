@@ -1,0 +1,19 @@
+meta {
+  name: Get Display Name Status (Beta)
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}?fields=name_status
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: name_status
+}
+
+docs {
+  Include **`fields=name_status`** as a query string parameter to get the status of a display name associated with a specific phone number. This field is currently in beta and not available to all developers.
+}

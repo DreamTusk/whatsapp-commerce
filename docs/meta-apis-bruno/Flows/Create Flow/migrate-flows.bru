@@ -1,0 +1,20 @@
+meta {
+  name: Migrate Flows
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/migrate_flows
+  body: form-multipart
+  auth: none
+}
+
+body:multipart-form {
+  source_waba_id: <SOURCE_WABA_ID>
+  source_flow_names: ["appointment", "leadgen"]
+}
+
+docs {
+  Creates a copy of existing flows from source WABA to destination WABA with the same names.
+}

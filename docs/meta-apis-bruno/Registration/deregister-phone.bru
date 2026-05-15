@@ -1,0 +1,30 @@
+meta {
+  name: Deregister Phone
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/deregister
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+docs {
+  To deregister your phone, make a **POST** call to **`{{Phone-Number-ID}}/deregister`**. **Deregister Phone** removes a previously registered phone. You can always re-register your phone using by repeating the registration process.
+  
+  #### Response
+  
+  A successful response returns:
+  
+  ``` json
+  {
+      "success": true
+  }
+  
+  ```
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Upload Image
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/media
+  body: form-multipart
+  auth: none
+}
+
+body:multipart-form {
+  messaging_product: whatsapp
+  file: 
+}
+
+docs {
+  This request uploads an image as .jpeg. The parameters are specified as **form-data** in the request **body**.
+}

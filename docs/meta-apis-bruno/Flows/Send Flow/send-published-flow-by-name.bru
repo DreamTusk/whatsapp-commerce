@@ -1,0 +1,53 @@
+meta {
+  name: Send Published Flow by Name
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "to": "{{Recipient-Phone-Number}}",
+      "recipient_type": "individual",
+      "type": "interactive",
+      "interactive": {
+          "type": "flow",
+          "header": {
+              "type": "text",
+              "text": "<HEADER_TEXT>"
+          },
+          "body": {
+              "text": "<BODY_TEXT>"
+          },
+          "footer": {
+              "text": "<FOOTER_TEXT>"
+          },
+          "action": {
+              "name": "flow",
+              "parameters": {
+                  "flow_message_version": "3",
+                  "flow_action": "navigate",
+                  "flow_token": "<FLOW_TOKEN>",
+                  "flow_name": "{{Flow-Name}}",
+                  "flow_cta": "Open Flow!",
+                  "flow_action_payload": {
+                      "screen": "<SCREEN_ID>",
+                      "data": {
+                          "<CUSTOM_KEY>": "<CUSTOM_VALUE>"
+                      }
+                  }
+              }
+          }
+      }
+  }
+}
+
+docs {
+  Flow messages won't be delivered to unsupported WhatsApp versions
+}

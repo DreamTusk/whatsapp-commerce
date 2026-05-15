@@ -1,0 +1,57 @@
+meta {
+  name: Edit template
+  type: http
+  seq: 13
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/<TEMPLATE_ID>
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "name": "2023_april_promo",
+      "components": [
+          {
+              "type": "HEADER",
+              "format": "TEXT",
+              "text": "Fall Sale"
+          },
+          {
+              "type": "BODY",
+              "text": "Hi {{1}}, our Fall Sale is on! Use promo code {{2}} Get an extra 25% off every order above $350!",
+              "example": {
+                  "body_text": [
+                      [
+                          "Mark",
+                          "FALL25"
+                      ]
+                  ]
+              }
+          },
+          {
+              "type": "FOOTER",
+              "text": "Not interested in any of our sales? Tap Stop Promotions"
+          },
+          {
+              "type": "BUTTONS",
+              "buttons": [
+                  {
+                      "type": "QUICK_REPLY",
+                      "text": "Stop promotions"
+                  }
+              ]
+          }
+      ],
+      "language": "en_US",
+      "category": "MARKETING"
+  }
+}
+
+docs {
+  - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  - Guide: [How To Monitor Quality Signals](https://developers.facebook.com/docs/whatsapp/guides/how-to-monitor-quality-signals)
+  - Endpoint reference: [WhatsApp Message Template](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-hsm/)
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Update Flow JSON
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}/assets
+  body: form-multipart
+  auth: none
+}
+
+body:multipart-form {
+  file: 
+  name: flow.json
+  asset_type: FLOW_JSON
+}
+
+docs {
+  Used to upload a flow JSON file with the flow content. Refer to flow JSON documentation here [https://developers.facebook.com/docs/whatsapp/flows/reference/flowjson](https://developers.facebook.com/docs/whatsapp/flows/reference/flowjson)
+  
+  The file must be attached as from data. The response will include any validation errors in the JSON file
+}

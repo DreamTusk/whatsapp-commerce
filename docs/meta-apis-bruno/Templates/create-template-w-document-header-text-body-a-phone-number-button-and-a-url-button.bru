@@ -1,0 +1,62 @@
+meta {
+  name: Create template w/ document header, text body, a phone number button, and a URL button
+  type: http
+  seq: 12
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/message_templates
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "order_confirmation",
+    "language": "en_US",
+    "category": "UTILITY",
+    "components": [
+      {
+        "type": "HEADER",
+        "format": "DOCUMENT",
+        "example": {
+          "header_handle": [
+            "4::YXBwbGljYXRpb24vcGRm:ARZVv4zuogJMxmAdS3_6T4o_K4ll2806avA7rWpikisTzYPsXXUeKk0REjS-hIM1rYrizHD7rQXj951TKgUFblgd_BDWVROCwRkg9Vhjj-cHNQ:e:1681237341:634974688087057:100089620928913:ARa1ZDhwbLZM3EENeeg"
+           ]
+        }
+      },
+      {
+        "type": "BODY",
+        "text": "Thank you for your order, {{1}}! Your order number is {{2}}. Tap the PDF linked above to view your receipt. If you have any questions, please use the buttons below to contact support. Thanks again!",
+        "example": {
+          "body_text": [
+            [
+              "Mark","860198-230332"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "BUTTONS",
+        "buttons": [
+          {
+            "type": "PHONE_NUMBER",
+            "text": "Call",
+            "phone_number": "16467043595"
+          },
+          {
+            "type": "URL",
+            "text": "Contact Support",
+            "url": "https://www.examplesite.com/support"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+docs {
+  - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  - Guide: [How To Monitor Quality Signals](https://developers.facebook.com/docs/whatsapp/guides/how-to-monitor-quality-signals)
+  - Endpoint reference: [WhatsApp Business Account > Message Templates](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account/message_templates/)
+}

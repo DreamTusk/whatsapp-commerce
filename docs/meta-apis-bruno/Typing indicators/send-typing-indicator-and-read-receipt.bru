@@ -1,0 +1,28 @@
+meta {
+  name: Send typing indicator and read receipt
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "status": "read",
+      "message_id": "<WHATSAPP_MESSAGE_ID>",
+      "typing_indicator": {
+          "type": "text"
+      }
+  }
+}
+
+docs {
+  - Guide: [Typing indicators](https://developers.facebook.com/docs/whatsapp/cloud-api/typing-indicators)
+      
+  - Endpoint reference: [WhatsApp Business Phone Number &gt; Messages](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account-to-number-current-status/messages/#Creating)
+}

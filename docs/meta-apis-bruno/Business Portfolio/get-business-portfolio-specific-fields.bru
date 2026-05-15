@@ -1,0 +1,19 @@
+meta {
+  name: Get Business Portfolio (Specific Fields)
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Business-ID}}?fields=id,name,timezone_id
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: id,name,timezone_id
+}
+
+docs {
+  Endpoint reference: [Business](https://developers.facebook.com/docs/marketing-api/reference/business/)
+}

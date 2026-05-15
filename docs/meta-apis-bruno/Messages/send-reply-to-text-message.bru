@@ -1,0 +1,50 @@
+meta {
+  name: Send Reply to Text Message
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "recipient_type": "individual",
+      "to": "{{Recipient-Phone-Number}}",
+      "context": {
+          "message_id": "<MSGID_OF_PREV_MSG>"
+      },
+      "type": "text",
+      "text": {
+          "preview_url": false,
+          "body": "<TEXT_MSG_CONTENT>"
+      }
+  }
+}
+
+docs {
+  To send a reply-to text message, make a **POST** call to **`/{{{Phone-Number-ID}}/messages`** and use the **`context.message_id`** field. 
+  
+  Context field is used for specifying to which previous message (**`context.message_id`**) you are replying to.
+  
+  ## Request Parameters
+  
+  | Parameter | Description |
+  |---|---|
+  | **`messaging_product`** | **Required**<br/>Messaging service used for the request. Use `"whatsapp"`.
+  | **`context.message_id`** | **Required for context object**<br/>Specifies the ID of the message being replied to. |
+  
+  For more information about the `Text Object` structure, see [Text object](#fa59d67b-dc6f-446a-a0fd-f97537afbd2e).
+  
+  ## Response
+  
+  A successful response includes an object with an identifier prefixed with **`wamid`**. Use the ID listed after **`wamid`** to track your message status.
+}

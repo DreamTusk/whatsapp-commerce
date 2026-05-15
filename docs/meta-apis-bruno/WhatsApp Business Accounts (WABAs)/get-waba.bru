@@ -1,0 +1,15 @@
+meta {
+  name: Get WABA
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}
+  body: none
+  auth: none
+}
+
+docs {
+  - Endpoint reference: [WhatsApp Business Account](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account)
+}

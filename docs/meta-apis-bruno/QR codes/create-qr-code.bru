@@ -1,0 +1,23 @@
+meta {
+  name: Create QR code
+  type: http
+  seq: 6
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/message_qrdls
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "prefilled_message": "<PREFILLED_MESSAGE>",
+      "generate_qr_image": "<GENERATE_QR_IMAGE>"
+  }
+}
+
+docs {
+  - Guide: [QR Codes](https://developers.facebook.com/docs/whatsapp/business-management-api/qr-codes)
+  - Endpoint reference: [WhatsApp Business Phone Number > Message Qrdls](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account-to-number-current-status/message_qrdls/)
+}

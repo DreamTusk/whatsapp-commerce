@@ -1,0 +1,49 @@
+meta {
+  name: Create authentication template w/ OTP one-tap autofill button
+  type: http
+  seq: 6
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/message_templates
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "name": "authentication_code_autofill_button",
+      "language": "en_US",
+      "category": "AUTHENTICATION",
+      "components": [
+          {
+              "type": "BODY",
+              "add_security_recommendation": true
+          },
+          {
+              "type": "FOOTER",
+              "code_expiration_minutes": 10
+          },
+          {
+              "type": "BUTTONS",
+              "buttons": [
+                  {
+                      "type": "OTP",
+                      "otp_type": "ONE_TAP",
+                      "text": "Copy Code",
+                      "autofill_text": "Autofill",
+                      "package_name": "com.example.luckyshrub",
+                      "signature_hash": "K8a%2FAINcGX7"
+                  }
+              ]
+          }
+      ]
+  }
+}
+
+docs {
+  - Guide: [Authentication Templates with OTP Buttons](https://developers.facebook.com/docs/whatsapp/business-management-api/authentication-templates)
+  - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  - Guide: [How To Monitor Quality Signals](https://developers.facebook.com/docs/whatsapp/guides/how-to-monitor-quality-signals)
+  - Endpoint reference: [WhatsApp Business Account > Message Templates](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account/message_templates/)
+}

@@ -1,0 +1,69 @@
+meta {
+  name: Create template w/ image header, text body, text footer, and 2 call-to-action buttons
+  type: http
+  seq: 10
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/message_templates
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "name": "limited_time_offer_tuscan_getaway_2023",
+      "language": "en_US",
+      "category": "MARKETING",
+      "components": [
+          {
+              "type": "HEADER",
+              "format": "IMAGE",
+              "example": {
+                  "header_handle": [
+                      "4::aW..."
+                  ]
+              }
+          },
+          {
+              "type": "BODY",
+              "text": "Hi {{1}}! For a limited time only you can get our {{2}} for as low as {{3}}. Tap the Offer Details button for more information.",
+              "example": {
+                  "body_text": [
+                      [
+                          "Mark","Tuscan Getaway package","800"
+                      ]
+                  ]
+              }
+          },
+          {
+              "type": "FOOTER",
+              "text": "Offer valid until May 31, 2023"
+          },
+          {
+              "type": "BUTTONS",
+              "buttons": [
+                  {
+                      "type": "PHONE_NUMBER",
+                      "text": "Call",
+                      "phone_number": "15550051310"
+                  },
+                  {
+                      "type": "URL",
+                      "text": "Shop Now",
+                      "url": "https://www.examplesite.com/shop?promo={{1}}",
+                      "example": [
+                          "summer2023"
+                      ]
+                  }
+              ]
+          }
+      ]
+  }
+}
+
+docs {
+  - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  - Guide: [How To Monitor Quality Signals](https://developers.facebook.com/docs/whatsapp/guides/how-to-monitor-quality-signals)
+  - Endpoint reference: [WhatsApp Business Account > Message Templates](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account/message_templates/)
+}

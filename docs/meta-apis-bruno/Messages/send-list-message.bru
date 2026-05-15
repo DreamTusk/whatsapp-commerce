@@ -1,0 +1,78 @@
+meta {
+  name: Send List Message
+  type: http
+  seq: 32
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "recipient_type": "individual",
+      "to": "{{Recipient-Phone-Number}}",
+      "type": "interactive",
+      "interactive": {
+          "type": "list",
+          "header": {
+              "type": "text",
+              "text": "<HEADER_TEXT>"
+          },
+          "body": {
+              "text": "<BODY_TEXT>"
+          },
+          "footer": {
+              "text": "<FOOTER_TEXT>"
+          },
+          "action": {
+              "button": "<BUTTON_TEXT>",
+              "sections": [
+                  {
+                      "title": "<LIST_SECTION_1_TITLE>",
+                      "rows": [
+                          {
+                              "id": "<LIST_SECTION_1_ROW_1_ID>",
+                              "title": "<SECTION_1_ROW_1_TITLE>",
+                              "description": "<SECTION_1_ROW_1_DESC>"
+                          },
+                          {
+                              "id": "<LIST_SECTION_1_ROW_2_ID>",
+                              "title": "<SECTION_1_ROW_2_TITLE>",
+                              "description": "<SECTION_1_ROW_2_DESC>"
+                          }
+                      ]
+                  },
+                  {
+                      "title": "<LIST_SECTION_2_TITLE>",
+                      "rows": [
+                          {
+                              "id": "<LIST_SECTION_2_ROW_1_ID>",
+                              "title": "<SECTION_2_ROW_1_TITLE>",
+                              "description": "<SECTION_2_ROW_1_DESC>"
+                          },
+                          {
+                              "id": "<LIST_SECTION_2_ROW_2_ID>",
+                              "title": "<SECTION_2_ROW_2_TITLE>",
+                              "description": "<SECTION_2_ROW_2_DESC>"
+                          }
+                      ]
+                  }
+              ]
+          }
+      }
+  }
+}
+
+docs {
+  To send a list message, make a **POST** call to `/messages` and attach a message object with **`type`** = `interactive`. Then, set the **`type`** of the `interactive` object = **`list`**. Finally, include the corresponding **`interactive`** object.
+  
+  For more reference information about **`interactive`** objects, see [Interactive Object](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages#interactive-object).
+}

@@ -1,0 +1,37 @@
+meta {
+  name: Set Two-Step Verification Code
+  type: http
+  seq: 7
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "pin": "<6-digit-pin>"
+  }
+}
+
+docs {
+  You can use this endpoint to change two-step verification code associated with your account. 
+  After you change the verification code, future requests like changing the name, must use the new code. 
+  
+  **You set up two-factor verification and [register a phone number](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/registration#register-phone) in the same API call.**
+  
+  You must use the parameters listed below to change two-step verification 
+  
+  
+  ## Parameters
+  
+  | Name          |  Description   |
+  |-------------- |--------------- |
+  | **`pin`**   | **Required**.<br/> A 6-digit PIN you want to use for two-step verification. |
+}

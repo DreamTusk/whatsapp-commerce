@@ -1,0 +1,34 @@
+meta {
+  name: Resumable Upload - Upload File Data
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Upload-ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: image/jpeg
+  file_offset: 0
+}
+
+docs {
+  To upload a profile picture to your business profile, make a **POST** call to the named endpoint {{Version}}/{{Upload-ID}}, where **Upload-ID** is the value you received from **Resumable Upload - Create an Upload Session**. This value should look like the following:
+  
+  ``` json
+  "upload:MTphdHRhY2htZW50Ojlk2mJiZxUwLWV6MDUtNDIwMy05yTA3LWQ4ZDPmZGFkNTM0NT8=?sig=ARZqkGCA_uQMxC8nHKI"
+  
+  ```
+  
+  The **`file_offset`** parameter **must** be included as an HTTP header. It will not work as a query parameter.
+  
+  The access token must be included in an Authorization HTTP header. It cannot work as a query parameter.
+  
+  For more information, see [Initiate Data Upload](https://developers.facebook.com/docs/graph-api/guides/upload#step-2--initiate-upload).
+  
+  **Response**  
+  The call returns a handle that includes the session ID that you can use to update your profile picture using **Update Business Profile**.
+}

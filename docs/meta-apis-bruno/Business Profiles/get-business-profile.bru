@@ -1,0 +1,31 @@
+meta {
+  name: Get Business Profile
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/whatsapp_business_profile
+  body: none
+  auth: none
+}
+
+docs {
+  To get information about a business profile, make a **GET** call to the **`/{{Phone-Number-ID}}/whatsapp_business_profile`** endpoint. Within the **`whatsapp_business_profile`** request, you can specify what you want to know from the business. 
+  
+  ## Fields
+  
+  | Name                    | Description                          |
+  |-------------------------|--------------------------------------|
+  | **`messaging_product`** | **Required**.<br/>The messaging service used for the request. Always set the value to `"whatsapp"` if you are using WhatsApp for Business API.|
+  | **`address`**           | The address of the business. The maximum character limit for the string is 256. |
+  | **`description`** |Description of the business. The maximum character limit for the string is 256. |
+  | **`vertical`** | **Optional**. <br/>The industry type of the business. This can be either an empty string or one of the accepted values<br/><br/>**Values**: `UNDEFINED`, `OTHER`, `AUTO`, `BEAUTY`, `APPAREL`, `EDU`, `ENTERTAIN`, `EVENT_PLAN`, `FINANCE`, `GROCERY`, `GOVT`, `HOTEL`, `HEALTH`, `NONPROFIT`, `PROF_SERVICES`, `RETAIL`, `TRAVEL`, `RESTAURANT`, or `NOT_A_BIZ`.|
+  | **`about`** | **Optional**. <br/>The text to display in business profile's About section The max length for the string is 139 characters. The minimum length for the string is 1 character.<br/><br/>Rendered emojis are supported however their unicode values are not. Emoji unicode values must be Java- or JavaScript-escape encoded.|
+  | **`email`** | **Optional**. <br/>The contact email address (in valid email format) of the business. The maximum character limit for the string is 128 characters.|
+  | **`websites`** | **Optional**. <br/>The URLs associated with the business. For instance, a website, Facebook Page, or Instagram. You must include the http:// or https:// portion of the URL. There is a maximum of 2 websites with a maximum of 256 characters each. |
+  | **`profile_picture_handle`** | **Optional**. <br/>The handle of the profile picture generated from a call to the [Resumable Upload API](https://developers.facebook.com/docs/graph-api/guides/upload).|
+  
+  <!-- grahamp 10262022: Removed table item:
+  | **`id`**                | **Required**.<br/>The ID of the business profile object. |-->
+}

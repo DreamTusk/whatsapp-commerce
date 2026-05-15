@@ -1,0 +1,16 @@
+meta {
+  name: Get all QR codes (default fields)
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/message_qrdls
+  body: none
+  auth: none
+}
+
+docs {
+  - Guide: [QR Codes](https://developers.facebook.com/docs/whatsapp/business-management-api/qr-codes)
+  - Endpoint reference: [WhatsApp Business Phone Number > Message Qrdls](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account-to-number-current-status/message_qrdls/)
+}

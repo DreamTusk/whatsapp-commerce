@@ -1,0 +1,23 @@
+meta {
+  name: Get Preview URL
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}?fields=preview.invalidate(false)
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: preview.invalidate(false)
+}
+
+docs {
+  Returns link to web page with preview of the flow. The link has an expiry time which is returned in the response. The same link will be returned as long as it's still valid, a new link will be generated when it expires.
+  
+  To generate a new link and invalidate the existing link, set
+  
+  `fields=preview.invalidate(true)`
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Send Text Message with Preview URL
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "to": "{{Recipient-Phone-Number}}",
+      "text": {
+          "preview_url": true,
+          "body": "Please visit https://youtu.be/hpltvTEiRrY to inspire your day!"
+      }
+  }
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get credit lines
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Business-ID}}/extendedcredits
+  body: none
+  auth: none
+}
+
+docs {
+  - Endpoint reference: [Business > Extendedcredits](https://developers.facebook.com/docs/marketing-api/reference/extended-credit/)
+}

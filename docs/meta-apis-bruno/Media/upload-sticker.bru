@@ -1,0 +1,20 @@
+meta {
+  name: Upload Sticker
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/media
+  body: form-multipart
+  auth: none
+}
+
+body:multipart-form {
+  messaging_product: whatsapp
+  file: 
+}
+
+docs {
+  This request uploads a sticker as .webp. The parameters are specified as **form-data** in the request **body**.
+}

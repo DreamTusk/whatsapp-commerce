@@ -1,0 +1,24 @@
+meta {
+  name: Create Flow
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/flows
+  body: form-multipart
+  auth: none
+}
+
+body:multipart-form {
+  name: <FLOW_NAME>
+  categories: ["OTHER"]
+  clone_flow_id: <EXISTING_FLOW_ID>
+  endpoint_uri: https://example.com
+}
+
+docs {
+  Creates a new flow. To clone an existing flow you can add the parameter
+  
+  `"clone_flow_id": "original-flow-id"`
+}

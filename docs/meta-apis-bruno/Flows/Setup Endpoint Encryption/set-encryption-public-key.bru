@@ -1,0 +1,23 @@
+meta {
+  name: Set Encryption Public Key
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/whatsapp_business_encryption
+  body: form-multipart
+  auth: none
+}
+
+body:multipart-form {
+  business_public_key: -----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC
+...
+8QIDAQAB
+-----END PUBLIC KEY-----
+}
+
+docs {
+  Sets the public key that is used for encrypting the data channel requests
+}

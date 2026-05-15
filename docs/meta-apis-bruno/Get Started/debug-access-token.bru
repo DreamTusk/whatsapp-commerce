@@ -1,0 +1,15 @@
+meta {
+  name: Debug Access Token
+  type: http
+  seq: 5
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/debug_token?input_token={{User-Access-Token}}
+  body: none
+  auth: none
+}
+
+params:query {
+  input_token: {{User-Access-Token}}
+}

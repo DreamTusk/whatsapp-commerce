@@ -1,0 +1,11 @@
+meta {
+  name: Get shared WABAs
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Business-ID}}/client_whatsapp_business_accounts
+  body: none
+  auth: none
+}

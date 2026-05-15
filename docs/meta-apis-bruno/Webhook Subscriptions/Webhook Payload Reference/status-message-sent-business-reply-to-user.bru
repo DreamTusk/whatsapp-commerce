@@ -1,0 +1,54 @@
+meta {
+  name: Status: Message Sent - Business Reply to User
+  type: http
+  seq: 14
+}
+
+view {
+  url: 
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "object": "whatsapp_business_account",
+      "entry": [
+          {
+              "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+              "changes": [
+                  {
+                      "value": {
+                          "messaging_product": "whatsapp",
+                          "metadata": {
+                              "display_phone_number": "PHONE_NUMBER",
+                              "phone_number_id": "PHONE_NUMBER_ID"
+                          },
+                          "statuses": [
+                              {
+                                  "id": "wamid.ID",
+                                  "status": "sent",
+                                  "timestamp": TIMESTAMP,
+                                  "recipient_id": PHONE_NUMBER,
+                                  "conversation": {
+                                      "id": "CONVERSATION_ID",
+                                      "expiration_timestamp": TIMESTAMP,
+                                      "origin": {
+                                          "type": "referral_conversion"
+                                      }
+                                  },
+                                  "pricing": {
+                                      "billable": false,
+                                      "pricing_model": "CBP",
+                                      "category": "referral_conversion"
+                                  }
+                              }
+                          ]
+                      },
+                      "field": "messages"
+                  }
+              ]
+          }
+      ]
+  }
+}

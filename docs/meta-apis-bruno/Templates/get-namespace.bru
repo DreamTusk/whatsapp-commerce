@@ -1,0 +1,21 @@
+meta {
+  name: Get namespace
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}?fields=message_template_namespace
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: message_template_namespace
+}
+
+docs {
+  - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  - Guide: [How To Monitor Quality Signals](https://developers.facebook.com/docs/whatsapp/guides/how-to-monitor-quality-signals)
+  - Endpoint reference: [WhatsApp Business Account > Message Templates](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account/message_templates/)
+}

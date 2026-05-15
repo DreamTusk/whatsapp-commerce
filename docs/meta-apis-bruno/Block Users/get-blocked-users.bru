@@ -1,0 +1,17 @@
+meta {
+  name: Get blocked users
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/block_users
+  body: none
+  auth: none
+}
+
+docs {
+  - Guide: [Block Users](https://developers.facebook.com/docs/whatsapp/cloud-api/block-users)
+      
+  - Endpoint reference: [GET WhatsApp Buiness Phone Number &gt; block_users](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account-to-number-current-status/block_users/#Reading)
+}

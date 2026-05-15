@@ -1,0 +1,15 @@
+meta {
+  name: Delete Flow
+  type: http
+  seq: 6
+}
+
+delete {
+  url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}
+  body: none
+  auth: none
+}
+
+docs {
+  Deletes the flow entirely. This action is not reversible. Only a DRAFT flow can be deleted.
+}

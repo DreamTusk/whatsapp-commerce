@@ -1,0 +1,21 @@
+meta {
+  name: Delete template by name
+  type: http
+  seq: 14
+}
+
+delete {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/message_templates?name=<TEMPLATE_NAME>
+  body: none
+  auth: none
+}
+
+params:query {
+  name: <TEMPLATE_NAME>
+}
+
+docs {
+  - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  - Guide: [How To Monitor Quality Signals](https://developers.facebook.com/docs/whatsapp/guides/how-to-monitor-quality-signals)
+  - Endpoint reference: [WhatsApp Business Account > Message Templates](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account/message_templates/)
+}

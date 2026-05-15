@@ -1,0 +1,33 @@
+meta {
+  name: Register Phone
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "pin": "<your-6-digit-pin>"
+  }
+}
+
+docs {
+  To register your phone, make a **POST** call to **`/{{Phone-Number-ID}}/register`**. You need to include the following parameters.
+  
+  ## Request Parameters
+  
+  | Name                    | Description              |
+  |-------------------------|--------------------------|
+  | **`messaging_product`** | **Required**.<br/>The messaging service used. This value always needs to be set to `"whatsapp"`. |
+  | **`pin`**               | **Required**.<br/>A 6-digit pin you previously set up. For more information, see [Set Two-Step Verification](#08c441cc-8837-4ce5-8e0d-73fb0125c323). |
+}

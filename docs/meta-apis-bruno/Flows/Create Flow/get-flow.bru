@@ -1,0 +1,19 @@
+meta {
+  name: Get Flow
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}?fields=id,name,categories,preview,status,validation_errors,json_version,data_api_version,data_channel_uri,health_status,whatsapp_business_account,application
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: id,name,categories,preview,status,validation_errors,json_version,data_api_version,data_channel_uri,health_status,whatsapp_business_account,application
+}
+
+docs {
+  Can request specific fields by enabling the \`fields\` query param
+}

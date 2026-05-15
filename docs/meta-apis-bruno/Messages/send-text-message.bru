@@ -1,0 +1,38 @@
+meta {
+  name: Send Text Message
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",    
+      "recipient_type": "individual",
+      "to": {{Test_Mobile_Number}},
+      "type": "text",
+      "text": {
+          "preview_url": false,
+          "body": "Test Message From whatsapp"
+      }
+  }
+}
+
+docs {
+  To send a text message, make a **POST** call to **`/{{{Phone-Number-ID}}/messages`** and attach a message object with `type = "text"`. Then, add a `text object`.
+  
+  For more information about the `Text Object` structure, see [Text object](#fa59d67b-dc6f-446a-a0fd-f97537afbd2e).
+  
+  ## Response
+  
+  A successful response includes an object with an identifier prefixed with **`wamid`**. Use the ID listed after **`wamid`** to track your message status.
+}

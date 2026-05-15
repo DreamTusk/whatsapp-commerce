@@ -1,0 +1,19 @@
+meta {
+  name: Get All Subscriptions for a WABA
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/subscribed_apps
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
+}
+
+docs {
+  To get a list of apps subscribed to Webhooks for a WABA, send a **GET** request to the **`subscribed_apps`** endpoint on the WABA:
+}

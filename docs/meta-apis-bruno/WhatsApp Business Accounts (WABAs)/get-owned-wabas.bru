@@ -1,0 +1,15 @@
+meta {
+  name: Get owned WABAs
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Business-ID}}/owned_whatsapp_business_accounts
+  body: none
+  auth: none
+}
+
+docs {
+  Endpoint reference: [Business > Extended Credits](https://developers.facebook.com/docs/marketing-api/reference/business/extendedcredits/)
+}

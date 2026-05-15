@@ -1,0 +1,28 @@
+meta {
+  name: Unblock user(s)
+  type: http
+  seq: 3
+}
+
+delete {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/block_users
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "block_users": [
+          {
+              "user": "{{Recipient-Phone-Number}}"
+          }
+      ]
+  }
+}
+
+docs {
+  - Guide: [Block Users](https://developers.facebook.com/docs/whatsapp/cloud-api/block-users)
+      
+  - Endpoint reference: [DELETE WhatsApp Buiness Phone Number &gt; block_users](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account-to-number-current-status/block_users/#Deleting)
+}

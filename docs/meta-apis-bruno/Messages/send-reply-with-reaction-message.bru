@@ -1,0 +1,45 @@
+meta {
+  name: Send Reply with Reaction Message
+  type: http
+  seq: 4
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "recipient_type": "individual",
+      "to": "{{Recipient-Phone-Number}}",
+      "type": "reaction",
+      "reaction": {
+          "message_id": "<WAM_ID>",
+          "emoji": "<EMOJI>"
+      }
+  }
+}
+
+docs {
+  To send reaction messages, make a **POST** call to `/PHONE_NUMBER_ID/messages` and attach a message object with `type = reaction`. Then, add a **`reaction`** object.
+  
+  
+  ### Parameters
+  
+  | Name | Description |
+  | --- | --- |
+  | **`messaging_product`** | **Required**.<br/>Always set this value to `"whatsapp"`. |
+  | **`recipient_type`** | **Optional**.<br/> Currently, you can only send messages to individuals. Set this value to `"individual"`. <br/><br/>**Default**: `individual` |
+  | **`to`** | **Required**. <br/> WhatsApp ID or phone number for the person you want to send a message to.<br></br>See [Phone Numbers, Formatting](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/phone-numbers#formatting) for more information. |
+  | **`type`** | **Required**.<br/> To send a reply with a reaction, set this string value to `"reaction"`. |
+  | **`reaction`** | **Required**. <br/> The [reaction object](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages#reaction-object) you are using for your reply. |
+  
+  If the previous message is more than 30 days old or doesn't correspond to any message in the conversation, the reaction message will not be delivered and you will receive a Webhook with the code `131009`.
+}

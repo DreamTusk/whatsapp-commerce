@@ -1,0 +1,20 @@
+meta {
+  name: Get analytics
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}?fields=analytics.start(1680503760).end(1680564980).granularity(DAY).phone_numbers([]).country_codes(["US", "BR"])
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: analytics.start(1680503760).end(1680564980).granularity(DAY).phone_numbers([]).country_codes(["US", "BR"])
+}
+
+docs {
+  - Guide: [Analytics](https://developers.facebook.com/docs/whatsapp/business-management-api/analytics)
+  - Endpoint reference: [WhatsApp Business Account > Analytics](https://developers.facebook.com/docs/graph-api/reference/waba-analytics/)
+}

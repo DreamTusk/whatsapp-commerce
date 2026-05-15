@@ -1,0 +1,57 @@
+meta {
+  name: Send Reply Button
+  type: http
+  seq: 34
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/messages
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "messaging_product": "whatsapp",
+      "recipient_type": "individual",
+      "to": "{{Recipient-Phone-Number}}",
+      "type": "interactive",
+      "interactive": {
+          "type": "button",
+          "body": {
+              "text": "<BUTTON_TEXT>"
+          },
+          "action": {
+              "buttons": [
+                  {
+                      "type": "reply",
+                      "reply": {
+                          "id": "<UNIQUE_BUTTON_ID_1>",
+                          "title": "<BUTTON_TITLE_1>"
+                      }
+                  },
+                  {
+                      "type": "reply",
+                      "reply": {
+                          "id": "<UNIQUE_BUTTON_ID_2>",
+                          "title": "<BUTTON_TITLE_2>"
+                      }
+                  }
+              ]
+          }
+      }
+  }
+}
+
+docs {
+  To send interactive messages, make a **POST** call to `/PHONE_NUMBER_ID/messages`(see [Get Phone Number](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/phone-numbers)) and attach a message object with **`type`**\=`interactive`. Then, add an **`interactive object`**.
+  
+  For more reference information about **`interactive`** objects, see [Interactive Object](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages#interactive-object).
+  
+  ## Response
+  A successful response includes an object with an identifier prefixed with wamid. Use the ID listed after wamid to track your message status.
+}

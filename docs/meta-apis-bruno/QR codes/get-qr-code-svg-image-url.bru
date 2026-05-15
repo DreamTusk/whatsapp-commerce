@@ -1,0 +1,21 @@
+meta {
+  name: Get QR code SVG image URL
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Phone-Number-ID}}/message_qrdls?fields=prefilled_message,deep_link_url,qr_image_url.format(SVG)&code=<QR_CODE_ID>
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: prefilled_message,deep_link_url,qr_image_url.format(SVG)
+  code: <QR_CODE_ID>
+}
+
+docs {
+  - Guide: [QR Codes](https://developers.facebook.com/docs/whatsapp/business-management-api/qr-codes)
+  - Endpoint reference: [WhatsApp Business Phone Number > Message Qrdls](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account-to-number-current-status/message_qrdls/)
+}

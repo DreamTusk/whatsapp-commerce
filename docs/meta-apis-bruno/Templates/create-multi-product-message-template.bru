@@ -1,0 +1,58 @@
+meta {
+  name: Create multi-product message template
+  type: http
+  seq: 8
+}
+
+post {
+  url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/message_templates
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "name": "abandoned_cart",
+      "language": "en_US",
+      "category": "MARKETING",
+      "components": [
+          {
+              "type": "HEADER",
+              "format": "TEXT",
+              "text": "Forget something {{1}}?",
+              "example": {
+                  "header_text": [
+                      "Pablo"
+                  ]
+              }
+          },
+          {
+              "type": "BODY",
+              "text": "Looks like you left some items in your cart! Use code {{1}} and you can get 10% off of all of them!",
+              "example": {
+                  "body_text": [
+                      [
+                          "10OFF"
+                      ]
+                  ]
+              }
+          },
+          {
+              "type":"BUTTONS",
+              "buttons": [
+                  {
+                      "type": "MPM",
+                      "text": "View items"
+                  }
+              ]
+          }
+      ]
+  }
+}
+
+docs {
+  - Guide: [Multi-Product Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/mpm-templates)
+  - Guide: [Message Templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  - Guide: [How To Monitor Quality Signals](https://developers.facebook.com/docs/whatsapp/guides/how-to-monitor-quality-signals)
+  - Endpoint reference: [WhatsApp Business Account > Message Templates](https://developers.facebook.com/docs/graph-api/reference/whats-app-business-account/message_templates/)
+}

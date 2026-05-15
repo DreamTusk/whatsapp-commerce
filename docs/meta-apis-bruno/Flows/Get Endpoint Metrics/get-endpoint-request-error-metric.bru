@@ -1,0 +1,19 @@
+meta {
+  name: Get Endpoint Request Error Metric
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}?fields=metric.name(ENDPOINT_REQUEST_ERROR).granularity(DAY).since(2024-01-28).until(2024-01-30)
+  body: none
+  auth: none
+}
+
+params:query {
+  fields: metric.name(ENDPOINT_REQUEST_ERROR).granularity(DAY).since(2024-01-28).until(2024-01-30)
+}
+
+docs {
+  Can request specific fields by enabling the \`fields\` query param
+}

@@ -1,0 +1,15 @@
+meta {
+  name: List Assets (Get Flow JSON URL)
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://graph.facebook.com/{{Version}}/{{Flow-ID}}/assets
+  body: form-multipart
+  auth: none
+}
+
+docs {
+  Returns all assets attached to the flow. Currently only FLOW_JSON asset is supported
+}
