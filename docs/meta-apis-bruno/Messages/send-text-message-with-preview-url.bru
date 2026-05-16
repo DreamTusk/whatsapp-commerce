@@ -10,13 +10,12 @@ post {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{User-Access-Token}}
-}
-
-
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }
 
 body:json {
@@ -25,7 +24,7 @@ body:json {
       "to": "{{Recipient-Phone-Number}}",
       "text": {
           "preview_url": true,
-          "body": "Please visit https://youtu.be/hpltvTEiRrY to inspire your day!"
+          "body": "Please visit https://www.dreamtusk.com/ to inspire your day!"
       }
   }
 }

@@ -14,7 +14,6 @@ auth:bearer {
   token: {{User-Access-Token}}
 }
 
-
 body:json {
   {
       "messaging_product": "whatsapp",
@@ -52,6 +51,10 @@ body:json {
           }
       }
   }
+}
+
+vars:pre-request {
+  Flow-Name: My First Flow
 }
 
 docs {
