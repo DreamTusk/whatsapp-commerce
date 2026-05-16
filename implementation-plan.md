@@ -1,183 +1,290 @@
-# Store Admin Portal — Implementation Plan
+# WhatsApp Commerce — Implementation Plan
 
 ## Overview
-A Next.js admin portal for WhatsApp Commerce store owners to manage products, categories, orders, customers, and view analytics.
+Three apps sharing one backend:
+- `backend-apis` — Express + Prisma API server
+- `store-admin` — Next.js portal for store owners to manage their store
+- `store-customer` — Next.js storefront for customers to browse and order
+
+---
+
+## Project Structure
+```
+whatsapp-commerce/
+├── backend-apis/          ← Shared API server (Express + Prisma)
+├── store-admin/           ← Store owner admin portal (Next.js)
+├── store-customer/        ← Customer storefront (Next.js, multi-tenant by domain)
+├── docs/
+└── implementation-plan.md
+```
+
+---
+
+## Multi-Tenant Architecture (store-customer)
+
+Each store gets its own domain. The domain identifies the tenant — no store ID in the URL.
+
+**Production:**
+- `freshmart.com` → Fresh Mart store
+- `bakehouse.com` → Bake House store
+
+**Local Development (via `/etc/hosts`):**
+- `freshmart.localhost:3001` → Fresh Mart store
+- `bakehouse.localhost:3001` → Bake House store
+
+### Local Dev Setup (one-time, per developer)
+Add to `/etc/hosts`:
+```
+127.0.0.1   freshmart.localhost
+127.0.0.1   bakehouse.localhost
+```
+
+### How Tenant Resolution Works
+Next.js middleware in `store-customer` reads the hostname on every request:
+```
+freshmart.localhost:3001  →  strip port  →  freshmart.localhost
+                          →  API lookup  →  GET /api/store?domain=freshmart.localhost
+                          →  inject store context into page
+```
+
+The backend `Store` model has a `domain` field:
+- `freshmart.localhost` in development
+- `freshmart.com` in production
+
+Same code, different domain values per environment. No special cases needed.
+
+### Adding a New Tenant (Dev)
+1. Add `127.0.0.1 newstore.localhost` to `/etc/hosts`
+2. Create store record in DB with `domain = newstore.localhost`
+3. Visit `http://newstore.localhost:3001`
 
 ---
 
 ## Phase 1 — Project Setup
 
-### 1.1 Create Next.js App
-- Create folder `store-admin` at project root
-- Init with: `npx create-next-app@latest store-admin`
-  - TypeScript: Yes
-  - Tailwind CSS: Yes
-  - App Router: Yes
-  - ESLint: Yes
-- Install additional dependencies:
-  - `axios` — API calls to backend
-  - `react-query` / `@tanstack/react-query` — server state management
-  - `react-hook-form` + `zod` — form validation
-  - `shadcn/ui` — component library (built on Radix UI + Tailwind)
-  - `lucide-react` — icons
-  - `recharts` — charts for analytics
-  - `js-cookie` — JWT token storage
+### 1.1 Create Next.js Apps
+Run from `whatsapp-commerce/` root:
 
-### 1.2 Folder Structure
+```bash
+# Admin portal
+npx create-next-app@latest store-admin --typescript --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-npm
+
+# Customer storefront
+npx create-next-app@latest store-customer --typescript --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-npm
 ```
-store-admin/
-├── app/
-│   ├── (auth)/
-│   │   └── login/
-│   ├── (dashboard)/
-│   │   ├── layout.tsx         # Sidebar + header shell
-│   │   ├── page.tsx           # Dashboard home (stats)
-│   │   ├── orders/
-│   │   ├── products/
-│   │   ├── categories/
-│   │   ├── customers/
-│   │   └── settings/
-├── components/
-│   ├── ui/                    # shadcn components
-│   ├── layout/                # Sidebar, Header, Breadcrumb
-│   └── shared/                # DataTable, StatusBadge, ConfirmDialog
-├── lib/
-│   ├── api.ts                 # Axios instance with JWT interceptors
-│   └── utils.ts
-├── hooks/                     # Custom React Query hooks
-├── types/                     # TypeScript interfaces matching Prisma models
-└── middleware.ts               # Next.js route protection
+
+### 1.2 Install Dependencies
+
+**store-admin:**
+```bash
+npm install axios @tanstack/react-query react-hook-form zod @hookform/resolvers lucide-react recharts js-cookie
+npm install @shadcn/ui
+npx shadcn@latest init
+```
+
+**store-customer:**
+```bash
+npm install axios @tanstack/react-query react-hook-form zod @hookform/resolvers lucide-react
+npx shadcn@latest init
 ```
 
 ### 1.3 Environment Variables
+
+**store-admin/.env.local:**
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
+**store-customer/.env.local:**
+```
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+### 1.4 Run Ports
+- `backend-apis` → port `3000`
+- `store-admin` → port `3001`
+- `store-customer` → port `3002`
+
+### 1.5 Folder Structure
+
+**store-admin:**
+```
+store-admin/
+├── app/
+│   ├── (auth)/login/
+│   └── (dashboard)/
+│       ├── layout.tsx         # Sidebar + header shell
+│       ├── page.tsx           # Stats overview
+│       ├── orders/
+│       ├── products/
+│       ├── categories/
+│       ├── customers/
+│       └── settings/
+├── components/
+│   ├── ui/                    # shadcn components
+│   ├── layout/                # Sidebar, Header
+│   └── shared/                # DataTable, StatusBadge, ConfirmDialog
+├── lib/
+│   ├── api.ts                 # Axios instance with JWT interceptors
+│   └── utils.ts
+├── hooks/                     # React Query hooks per resource
+├── types/                     # TypeScript interfaces
+└── middleware.ts              # JWT route protection
+```
+
+**store-customer:**
+```
+store-customer/
+├── app/
+│   ├── page.tsx               # Home — category listing
+│   ├── products/page.tsx      # All products
+│   ├── cart/page.tsx          # Cart
+│   ├── checkout/page.tsx      # Address + payment
+│   └── orders/[id]/page.tsx   # Order tracking
+├── components/
+│   ├── ui/                    # shadcn components
+│   ├── layout/                # Header, Footer, CartDrawer
+│   └── shared/                # ProductCard, CategoryCard, OrderStatus
+├── lib/
+│   ├── api.ts                 # Axios + domain-aware store resolver
+│   ├── store-context.tsx      # Store info React context
+│   └── utils.ts
+├── hooks/
+├── types/
+└── middleware.ts              # Domain → store resolution
+```
+
 ---
 
-## Phase 2 — Backend: Auth API (in backend-apis)
+## Phase 2 — Backend Changes (backend-apis)
 
-Before building the frontend, these backend routes need to be created:
+### 2.1 Schema Update — Add `domain` to Store
+```prisma
+model Store {
+  ...
+  domain  String?  @unique   // e.g. "freshmart.localhost" or "freshmart.com"
+  ...
+}
+```
+Run: `npx prisma migrate dev --name add-store-domain`
 
-### 2.1 Auth Routes (`/api/auth`)
+### 2.2 Auth Routes (`/api/auth`)
 | Method | Route | Description |
 |--------|-------|-------------|
-| POST | `/api/auth/login` | Email + password → JWT token |
-| POST | `/api/auth/logout` | Invalidate session |
-| GET | `/api/auth/me` | Get current user info |
+| POST | `/api/auth/login` | Email + password → JWT |
+| GET | `/api/auth/me` | Get current user + store |
 
-- Use `bcryptjs` to compare password
-- Sign JWT with `JWT_SECRET` (already in `.env`)
-- Return token + user + storeId on login
+- Hash passwords with `bcryptjs`
+- Sign JWT with `JWT_SECRET`
+- Return `{ token, user, store }`
 
-### 2.2 Auth Middleware
-- Create `src/middleware/auth.js` in backend-apis
-- Verify JWT on all protected routes
-- Attach `req.user` and `req.storeId`
+### 2.3 Auth Middleware
+- `src/middleware/auth.js` — verify JWT, attach `req.user` + `req.storeId`
 
-### 2.3 Admin Routes (`/api/admin`)
+### 2.4 Admin Routes (`/api/admin`) — JWT protected
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET | `/api/admin/store` | Get store details |
-| PUT | `/api/admin/store` | Update store settings |
-| GET | `/api/admin/orders` | List orders (filter by status/date) |
+| GET/PUT | `/api/admin/store` | Store settings |
+| GET | `/api/admin/orders` | List orders (filters: status, date) |
 | PUT | `/api/admin/orders/:id/status` | Update order status |
-| GET | `/api/admin/products` | List products |
-| POST | `/api/admin/products` | Create product |
-| PUT | `/api/admin/products/:id` | Update product |
-| DELETE | `/api/admin/products/:id` | Delete product |
-| GET | `/api/admin/categories` | List categories |
-| POST | `/api/admin/categories` | Create category |
-| PUT | `/api/admin/categories/:id` | Update category |
-| DELETE | `/api/admin/categories/:id` | Delete category |
+| GET/POST | `/api/admin/products` | List / create products |
+| PUT/DELETE | `/api/admin/products/:id` | Update / delete product |
+| GET/POST | `/api/admin/categories` | List / create categories |
+| PUT/DELETE | `/api/admin/categories/:id` | Update / delete category |
 | GET | `/api/admin/customers` | List customers |
 | GET | `/api/admin/stats` | Daily/weekly stats |
 
----
+### 2.5 Public Customer Routes (`/api/storefront`) — domain-resolved, no auth
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/storefront/store` | Store info by domain header |
+| GET | `/api/storefront/categories` | Categories for the store |
+| GET | `/api/storefront/products` | Products (filter by category) |
+| POST | `/api/storefront/orders` | Place new order |
+| GET | `/api/storefront/orders/:id` | Track order by ID |
 
-## Phase 3 — Frontend: Authentication
-
-### 3.1 Login Page (`/login`)
-- Email + password form
-- Calls `POST /api/auth/login`
-- Stores JWT in httpOnly cookie via Next.js middleware
-- Redirects to dashboard on success
-
-### 3.2 Route Protection (middleware.ts)
-- Intercept all `/dashboard/*` routes
-- Redirect to `/login` if no valid JWT cookie
-- Attach token to all API requests via Axios interceptor
+> Domain passed as `X-Store-Domain` request header by the customer frontend middleware.
 
 ---
 
-## Phase 4 — Frontend: Dashboard Shell
+## Phase 3 — store-admin: Auth
 
-### 4.1 Layout
-- Sidebar with navigation links
-- Top header with store name, user avatar, logout
-- Responsive (collapsible sidebar on mobile)
-
-### 4.2 Sidebar Navigation Items
-- Dashboard (stats overview)
-- Orders
-- Products
-- Categories
-- Customers
-- Settings
+- Login page with email + password form
+- JWT stored in httpOnly cookie
+- `middleware.ts` protects all `/(dashboard)` routes
+- Axios interceptor attaches token to every request
 
 ---
 
-## Phase 5 — Frontend: Pages
+## Phase 4 — store-admin: Dashboard Shell
 
-### 5.1 Dashboard (Stats Overview)
-- Today's orders count
-- Today's revenue
-- Pending orders count
-- Total customers
-- Orders by status (pie/bar chart)
+- Sidebar: Dashboard, Orders, Products, Categories, Customers, Settings
+- Top header: store name, user avatar, logout
+- Responsive — collapsible sidebar on mobile
+
+---
+
+## Phase 5 — store-admin: Pages
+
+### 5.1 Dashboard
+- Stats cards: today's orders, revenue, pending, total customers
+- Bar chart: orders this week
 - Recent orders table (last 10)
 
-### 5.2 Orders Page
-- Table: order number, customer, amount, status, payment, date
-- Filter by: status, payment method, date range
-- Click order → order detail modal/page
-  - Customer info, items list, delivery address
-  - Update order status dropdown (NEW → CONFIRMED → PROCESSING → OUT_FOR_DELIVERY → DELIVERED)
+### 5.2 Orders
+- Table with filters (status, payment, date range)
+- Order detail: items, customer, address, status updater
 
-### 5.3 Products Page
-- Table: image, name, category, price, stock status, active toggle
-- Add / Edit product form:
-  - Name, description, price, unit
-  - Category dropdown
-  - Image upload (Cloudinary)
-  - In stock toggle
-- Delete product with confirm dialog
+### 5.3 Products
+- Table: image, name, category, price, stock toggle
+- Add/Edit form with image upload (Cloudinary)
+- Delete with confirmation
 
-### 5.4 Categories Page
-- Table: name, sort order, active toggle, product count
-- Add / Edit category form
-- Delete category
+### 5.4 Categories
+- Table with sort order management
+- Add/Edit/Delete
 
-### 5.5 Customers Page
-- Table: name, phone, total orders, last order date
-- Click customer → view order history
+### 5.5 Customers
+- Table: name, phone, order count, last order
+- Customer detail: order history
 
-### 5.6 Settings Page
-- Store name, address, logo
-- Min order amount, delivery radius
-- WhatsApp Phone Number ID (read-only)
-- Update webhook verify token
+### 5.6 Settings
+- Store name, logo, address, min order, delivery radius
+- WhatsApp config (read-only)
 
 ---
 
-## Phase 6 — Polish & Production Readiness
+## Phase 6 — store-customer: Storefront
 
-- Loading skeletons for all data tables
-- Error boundaries and toast notifications
-- Empty state illustrations
-- Mobile responsive layouts
-- Environment configs for production (`NEXT_PUBLIC_API_URL`)
+### 6.1 Middleware — Tenant Resolution
+```ts
+// middleware.ts
+const hostname = request.headers.get('host')   // freshmart.localhost:3002
+const domain = hostname.split(':')[0]           // freshmart.localhost
+// Forward as X-Store-Domain header to all API calls
+```
+
+### 6.2 Pages
+- **Home** — store banner, category grid
+- **Products** — product cards with add-to-cart
+- **Cart** — line items, quantity controls, total
+- **Checkout** — delivery address (map pin or manual), COD / online payment
+- **Order Tracking** — live order status with timeline
+
+### 6.3 Cart State
+- Stored in `localStorage` (no login required for customers)
+- Tied to the domain so carts don't bleed across tenants
+
+---
+
+## Phase 7 — Polish & Production
+
+- Loading skeletons on all data tables and product grids
+- Toast notifications (success/error)
+- Empty states
+- Full mobile responsiveness
+- Production env configs
+- CORS update in backend to allow storefront domains
 
 ---
 
@@ -185,13 +292,31 @@ Before building the frontend, these backend routes need to be created:
 
 | Step | What | Where |
 |------|------|-------|
-| 1 | Create Next.js project | `store-admin/` |
-| 2 | Build auth API + middleware | `backend-apis/` |
-| 3 | Login page + route protection | `store-admin/` |
-| 4 | Dashboard shell + sidebar | `store-admin/` |
-| 5 | Stats / Dashboard page | `store-admin/` |
-| 6 | Orders page + status update | `store-admin/` |
-| 7 | Products CRUD | `store-admin/` |
-| 8 | Categories CRUD | `store-admin/` |
-| 9 | Customers page | `store-admin/` |
-| 10 | Settings page | `store-admin/` |
+| 1 | Create both Next.js projects | `store-admin/`, `store-customer/` |
+| 2 | Add `domain` to Store schema + migrate | `backend-apis/` |
+| 3 | Build auth API + middleware | `backend-apis/` |
+| 4 | Build admin routes | `backend-apis/` |
+| 5 | Build storefront public routes | `backend-apis/` |
+| 6 | Admin login + route protection | `store-admin/` |
+| 7 | Admin dashboard shell | `store-admin/` |
+| 8 | Admin pages (orders, products, categories) | `store-admin/` |
+| 9 | Customer storefront middleware + home | `store-customer/` |
+| 10 | Customer cart + checkout + order tracking | `store-customer/` |
+| 11 | Polish + production readiness | both |
+
+---
+
+## Developer Onboarding Checklist
+
+For every new developer joining the project:
+
+1. Clone the repo
+2. Add to `/etc/hosts`:
+   ```
+   127.0.0.1   freshmart.localhost
+   127.0.0.1   bakehouse.localhost
+   ```
+3. Copy `.env.example` → `.env` in `backend-apis/`
+4. Run `docker compose up -d` in `backend-apis/`
+5. Run `npx prisma migrate dev` in `backend-apis/`
+6. Run `npm run dev` in each app on their respective ports
