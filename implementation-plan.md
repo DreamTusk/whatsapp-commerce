@@ -277,14 +277,46 @@ const domain = hostname.split(':')[0]           // freshmart.localhost
 
 ---
 
-## Phase 7 — Polish & Production
+## Phase 7 — Landing Page & Waitlist
+
+**Goal:** Early access signups from real store owners before full launch.
+
+### 7.1 New App
+- Add `landing/` as a Next.js app at the project root (port `3003`)
+- Mobile-first, single page
+
+### 7.2 Page Sections
+1. **Hero** — value prop + "Apply for Early Access" CTA
+2. **Problem** — show the pain of manual WhatsApp order taking
+3. **Demo** — short screen recording or GIF of the customer ordering flow
+4. **Features** — Automated ordering, Product catalog, Order tracking
+5. **Who it's for** — Grocery, restaurants, D2C, any local store
+6. **Early access form** — Name, store type, WhatsApp number, city
+7. **Footer**
+
+### 7.3 Backend
+- Add `WaitlistEntry` model to Prisma schema
+- `POST /api/waitlist` — public endpoint, no auth
+- Store: name, store type, WhatsApp number, city, timestamp
+
+### 7.4 GTM — Distribution Channels
+| Channel | Why |
+|---------|-----|
+| WhatsApp groups (local business groups) | Audience is already there |
+| Instagram reels showing the demo | Visual product, visual medium |
+| IndiaMART / JustDial store owners | High-intent, already selling online |
+| Referral from beta stores | Best signal for next cohort |
+
+---
+
+## Phase 8 — Polish & Production
 
 - Loading skeletons on all data tables and product grids
 - Toast notifications (success/error)
 - Empty states
 - Full mobile responsiveness
 - Production env configs
-- CORS update in backend to allow storefront domains
+- CORS update in backend to allow storefront and landing domains
 
 ---
 
@@ -302,7 +334,8 @@ const domain = hostname.split(':')[0]           // freshmart.localhost
 | 8 | Admin pages (orders, products, categories) | `store-admin/` |
 | 9 | Customer storefront middleware + home | `store-customer/` |
 | 10 | Customer cart + checkout + order tracking | `store-customer/` |
-| 11 | Polish + production readiness | both |
+| 11 | Landing page + waitlist form | `landing/` |
+| 12 | Polish + production readiness | all |
 
 ---
 
