@@ -14,10 +14,9 @@ auth:bearer {
   token: {{User-Access-Token}}
 }
 
-
 body:json {
   {
-      "name": "intro_catalog_offer",
+      "name": "intro_catalog",
       "language": "en_US",
       "category": "MARKETING",
       "components": [
@@ -49,6 +48,12 @@ body:json {
           }
       ]
   }
+}
+
+vars:pre-request {
+  1: 23
+  2: 23
+  3: 32
 }
 
 docs {

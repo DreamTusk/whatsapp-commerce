@@ -6,7 +6,7 @@ meta {
 
 post {
   url: https://graph.facebook.com/{{Version}}/{{WABA-ID}}/flows
-  body: form-multipart
+  body: json
   auth: bearer
 }
 
@@ -14,6 +14,13 @@ auth:bearer {
   token: {{User-Access-Token}}
 }
 
+body:json {
+  {
+      "name": "My First Flow 2",
+      "categories": ["LEAD_GENERATION"],
+      "flow_json": "{\"version\":\"7.3\",\"screens\":[{\"id\":\"WELCOME_SCREEN\",\"layout\":{\"type\":\"SingleColumnLayout\",\"children\":[{\"type\":\"TextHeading\",\"text\":\"Hello World\"},{\"type\":\"Footer\",\"label\":\"Complete\",\"on-click-action\":{\"name\":\"complete\",\"payload\":{}}}]},\"title\":\"Welcome\",\"terminal\":true,\"success\":true,\"data\":{}}]}"
+    }
+}
 
 body:multipart-form {
   name: <FLOW_NAME>

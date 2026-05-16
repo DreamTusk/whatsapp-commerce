@@ -10,13 +10,12 @@ post {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{User-Access-Token}}
-}
-
-
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }
 
 body:json {
@@ -25,12 +24,12 @@ body:json {
       "recipient_type": "individual",
       "to": "{{Recipient-Phone-Number}}",
       "context": {
-          "message_id": "<MSGID_OF_PREV_MSG>"
+          "message_id": "wamid.HBgMOTE5MzYwNzc3MjU4FQIAERgSNDU5NTk2ODVDNjhCREM3MzQyAA=="
       },
       "type": "text",
       "text": {
           "preview_url": false,
-          "body": "<TEXT_MSG_CONTENT>"
+          "body": "Test Reply"
       }
   }
 }

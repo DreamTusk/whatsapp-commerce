@@ -14,7 +14,6 @@ auth:bearer {
   token: {{User-Access-Token}}
 }
 
-
 body:json {
   {
       "name": "seasonal_promotion_text_only",
@@ -61,6 +60,12 @@ body:json {
           }
       ]
   }
+}
+
+vars:pre-request {
+  1: product
+  3: product
+  2: product
 }
 
 docs {

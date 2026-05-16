@@ -10,13 +10,12 @@ post {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{User-Access-Token}}
-}
-
-
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }
 
 body:json {
@@ -26,8 +25,8 @@ body:json {
       "to": "{{Recipient-Phone-Number}}",
       "type": "reaction",
       "reaction": {
-          "message_id": "<WAM_ID>",
-          "emoji": "<EMOJI>"
+          "message_id": "wamid.HBgMOTE5MzYwNzc3MjU4FQIAERgSNDU5NTk2ODVDNjhCREM3MzQyAA==",
+          "emoji": "😊"
       }
   }
 }

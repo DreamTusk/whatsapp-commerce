@@ -10,13 +10,12 @@ post {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{User-Access-Token}}
-}
-
-
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{User-Access-Token}}
 }
 
 body:json {
@@ -25,14 +24,14 @@ body:json {
       "recipient_type": "individual",
       "to": "{{Recipient-Phone-Number}}",
       "context": {
-          "message_id": "<MSGID_OF_PREV_MSG>"
+          "message_id": "wamid.HBgMOTE5Njg4MDY5NDM0FQIAERgSODZBMEU5MTMyNzIyQTYxMDM0AA=="
       },
       "type": "location",
       "location": {
-          "latitude": "<LOCATION_LATITUDE>",
-          "longitude": "<LOCATION_LONGITUDE>",
-          "name": "<LOCATION_NAME>",
-          "address": "<LOCATION_ADDRESS>"
+          "latitude": "9.5121",
+          "longitude": "77.6340",
+          "name": "Srivi",
+          "address": "Srivi"
       }
   }
 }
