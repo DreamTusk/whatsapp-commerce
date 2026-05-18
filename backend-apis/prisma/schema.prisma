@@ -34,12 +34,13 @@ model Store {
 }
 
 model User {
-  id         String      @id @default(cuid())
-  name       String
-  email      String      @unique
-  password   String
-  createdAt  DateTime    @default(now())
-  userStores UserStore[]
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  createdAt     DateTime       @default(now())
+  userStores    UserStore[]
+  refreshTokens RefreshToken[]
 }
 
 model UserStore {
@@ -52,6 +53,16 @@ model UserStore {
   createdAt DateTime @default(now())
 
   @@unique([userId, storeId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model Category {
