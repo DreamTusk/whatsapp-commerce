@@ -13,9 +13,9 @@ model Store {
   id                        String    @id @default(cuid())
   name                      String
   phone                     String    @unique
-  whatsappPhoneNumberId     String    @unique
-  whatsappBusinessAccountId String
-  whatsappAccessToken       String
+  whatsappPhoneNumberId     String?   @unique
+  whatsappBusinessAccountId String?
+  whatsappAccessToken       String?
   domain                    String?   @unique
   catalogId                 String?   // WhatsApp Commerce Catalog ID
   address                   String?
@@ -34,13 +34,25 @@ model Store {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
-  password      String
-  createdAt     DateTime       @default(now())
-  userStores    UserStore[]
-  refreshTokens RefreshToken[]
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  password         String
+  isVerified       Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  userStores       UserStore[]
+  refreshTokens    RefreshToken[]
+  otpVerifications OtpVerification[]
+}
+
+model OtpVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  otp       String
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model UserStore {

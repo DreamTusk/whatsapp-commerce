@@ -1,0 +1,38 @@
+meta {
+  name: Create Store
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url_local}}/admin/store
+  body: multipartForm
+  auth: inherit
+}
+
+body:json {
+  {
+    "name":"",
+    "phone":"",
+    "domain":"",
+    "address":"",
+    "logo":"",
+    "min_order_amount":"",
+    "delivery_radius":""
+  }
+}
+
+body:multipart-form {
+  name: Test Store
+  phone: 928778933
+  logo: @file(/Users/venkatesh/Downloads/image 3 (1).png)
+  doamin: dtstore
+  address: 34,abc street, chennai
+  min_order_amount: 1200
+  delivery_radius: 2
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

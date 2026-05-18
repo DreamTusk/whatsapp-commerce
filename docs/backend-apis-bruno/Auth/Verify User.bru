@@ -1,0 +1,23 @@
+meta {
+  name: Verify User
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url_local}}/auth/verify-user
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "user_id":"cmpb0a2xa0000w52rv6ong5q7",
+    "otp":"290369"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

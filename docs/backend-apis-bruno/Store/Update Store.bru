@@ -1,0 +1,26 @@
+meta {
+  name: Update Store
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url_local}}/admin/store
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  name: DT store
+  phone: 928778933
+  logo: @file(/Users/venkatesh/Downloads/bestSeller_1 (2).png)
+  doamin: st_store
+  address: 34,abc street, chennai
+  min_order_amount: 2344.0
+  delivery_radius: 2
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,23 @@
+meta {
+  name: User Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/auth/login
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "email":"venkatesh.r.au.2024@gmail.com",
+    "password":"7654321"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

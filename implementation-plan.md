@@ -60,6 +60,17 @@ Same code, different domain values per environment. No special cases needed.
 
 ---
 
+## API Conventions
+
+- **Request/Response body fields** — always `snake_case` (e.g. `user_id`, `new_password`, `refresh_token`, `min_order_amount`)
+- **Route paths** — always `kebab-case` (e.g. `/verify-user`, `/forgot-password`)
+- **HTTP methods** — follow REST: `GET` read, `POST` create, `PUT` update, `DELETE` delete
+- **snake_case is applied manually per route** — no global transform middleware. Every route handler must explicitly map Prisma camelCase fields to snake_case before sending the response.
+
+> All new APIs must follow these conventions without exception.
+
+---
+
 ## Completed Work Log
 
 ### Session: 2026-05-18
@@ -95,6 +106,12 @@ Same code, different domain values per environment. No special cases needed.
 - **API level**: enforced one-store-per-user limit (check in auth middleware — if user already has a store, block creation of a second one)
 - Migration: `user-store-join-table`
 - This allows future multi-store support by simply removing the API-level restriction
+
+#### RefreshToken Table
+- Added `RefreshToken` model with fields: `id`, `token`, `userId`, `isRevoked`, `expiresAt`, `createdAt`
+- `isRevoked Boolean @default(false)` — set to true on logout or password change
+- Token rows are never deleted — provides audit trail. Cleanup job needed in Phase 8
+- Migration: `add-refresh-token` + `add-refresh-token-revoke`
 
 #### Env Fix
 - Updated `.env.example` `DATABASE_URL` to use correct Docker credentials: `postgresql://postgres:postgres123@localhost:5432/whatsapp_commerce`
@@ -210,16 +227,130 @@ model Store {
 Run: `npx prisma migrate dev --name add-store-domain`
 
 ### 2.2 Auth Routes (`/api/auth`)
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/auth/signup` | Create user account (name, email, password) |
-| POST | `/api/auth/login` | Email + password → JWT |
-| GET | `/api/auth/me` | Get current user + store (if any) |
 
-- Hash passwords with `bcryptjs`
-- Sign JWT with `JWT_SECRET`
-- Signup returns `{ token, user }`
-- Login returns `{ token, user, store }` (store is null if not yet created)
+#### Token Strategy
+- **Access Token** — JWT, signed with `JWT_SECRET`, expires in **40 minutes**, never stored in DB
+- **Refresh Token** — random 64-byte hex string, stored in `RefreshToken` table, expires in **21 days**
+- Access token verified by signature + expiry check (stateless, no DB lookup)
+- Refresh token verified by DB lookup → check `isRevoked` → check `expiresAt`
+
+#### Auth Flow
+```
+Signup/Login → { accessToken, refreshToken }
+Every API call → Authorization: Bearer <accessToken>
+Access token expires → POST /api/auth/refresh { refreshToken } → { accessToken }
+Logout → POST /api/auth/logout { refreshToken } → sets isRevoked = true in DB
+```
+
+#### Routes
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/auth/signup` | No | Create user account |
+| POST | `/api/auth/login` | No | Login with email + password |
+| POST | `/api/auth/refresh` | No | Get new access token using refresh token |
+| POST | `/api/auth/logout` | No | Revoke refresh token |
+| GET | `/api/auth/me` | Yes | Get current user + store |
+
+#### Request / Response Shapes
+
+**POST /api/auth/signup**
+```
+Request:  { name, email, password (min 6 chars) }
+Response: { accessToken, refreshToken, user: { id, name, email } }
+Errors:   400 missing fields | 400 short password | 409 email taken
+```
+
+**POST /api/auth/login**
+```
+Request:  { email, password }
+Response: { accessToken, refreshToken, user: { id, name, email }, store: Store | null }
+Errors:   400 missing fields | 401 invalid credentials
+```
+
+**POST /api/auth/refresh**
+```
+Request:  { refreshToken }
+Response: { accessToken }
+Errors:   400 missing token | 401 invalid | 401 revoked | 401 expired
+```
+
+**POST /api/auth/logout**
+```
+Request:  { refreshToken }
+Response: { message: "Logged out successfully" }
+Action:   sets isRevoked = true on the RefreshToken row
+```
+
+**GET /api/auth/me**
+```
+Headers:  Authorization: Bearer <accessToken>
+Response: { user: { id, name, email }, store: Store | null }
+Errors:   401 no token | 401 invalid token | 404 user not found
+```
+
+#### OTP Email Verification
+
+**Flow:**
+```
+Signup → isVerified = false → generate 6-digit OTP → save in OtpVerification table (expires 10 mins) → send to email via Gmail SMTP
+User submits OTP → POST /api/auth/verify-otp → check DB → valid + not used + not expired → isVerified = true
+Resend OTP → POST /api/auth/resend-otp → mark old OTPs isUsed = true → generate new OTP → send email
+```
+
+**OTP Rules:**
+- 6-digit numeric OTP
+- Expires in 10 minutes
+- `isUsed = true` after successful verification (prevents reuse)
+- On resend — all previous OTPs for that user marked `isUsed = true`
+
+**Email Service:** Nodemailer with Gmail SMTP
+- `GMAIL_USER` and `GMAIL_APP_PASSWORD` required in `.env`
+- Gmail App Password: Google Account → Security → 2-Step Verification → App Passwords
+
+**Routes:**
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/auth/verify-otp` | No | Submit OTP to verify email |
+| POST | `/api/auth/resend-otp` | No | Resend OTP (invalidates old ones) |
+
+**POST /api/auth/verify-otp**
+```
+Request:  { email, otp }
+Response: { message: "Email verified successfully" }
+Errors:   400 missing fields | 400 invalid/expired OTP | 409 already verified
+```
+
+**POST /api/auth/resend-otp**
+```
+Request:  { email }
+Response: { message: "OTP sent successfully" }
+Errors:   400 missing email | 404 user not found | 409 already verified
+```
+
+#### Forgot Password Flow
+
+**Routes:**
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/auth/forgot-password` | No | Send OTP to email for password reset |
+| POST | `/api/auth/reset-password` | No | Verify OTP + set new password |
+
+**POST /api/auth/forgot-password**
+```
+Request:  { email }
+Response: { message: "OTP sent to your email" }
+Errors:   400 missing email | 404 user not found
+Note:     Reuses OtpVerification table (same as email verification OTP)
+```
+
+**POST /api/auth/reset-password**
+```
+Request:  { email, otp, newPassword (min 6 chars) }
+Response: { message: "Password reset successfully" }
+Errors:   400 missing fields | 400 short password | 404 user not found | 400 invalid/expired OTP
+Actions:  mark OTP isUsed = true | hash new password | revoke all refresh tokens (force re-login)
+```
 
 ### 2.3 Auth Middleware
 - `src/middleware/auth.js` — verify JWT, attach `req.user` + `req.storeId`
@@ -230,6 +361,54 @@ Run: `npx prisma migrate dev --name add-store-domain`
 | POST | `/api/admin/store` | Create store (first-time setup, one per user enforced at API level) |
 | GET | `/api/admin/store` | Get store settings |
 | PUT | `/api/admin/store` | Update store settings |
+
+**POST /api/admin/store**
+```
+Headers:  Authorization: Bearer <accessToken>
+Request:  {
+  name,                          (required)
+  phone,                         (required)
+  domain,                        (optional)
+  address,                       (optional)
+  logo,                          (optional)
+  min_order_amount,              (optional, default 0)
+  delivery_radius,               (optional)
+  whatsapp_phone_number_id,      (optional, configure later)
+  whatsapp_business_account_id,  (optional, configure later)
+  whatsapp_access_token          (optional, configure later)
+}
+Response: { store }
+Errors:   400 missing required fields | 409 store already exists | 409 phone taken
+Note:     One store per user enforced at API level. Creates UserStore join record with role=admin.
+```
+
+**GET /api/admin/store**
+```
+Headers:  Authorization: Bearer <accessToken>
+Response: { store }
+Errors:   404 store not found
+```
+
+**PUT /api/admin/store**
+```
+Headers:  Authorization: Bearer <accessToken>
+Request:  any store fields to update (all optional)
+Response: { store }
+Errors:   404 store not found
+```
+
+**DELETE /api/admin/store**
+```
+Headers:  Authorization: Bearer <accessToken>
+Response: { message: "Store deleted successfully" }
+Errors:   404 store not found
+```
+
+**Email Notifications (all store operations)**
+- Create → "Your store {name} has been created successfully"
+- Update → "Your store {name} details have been updated"
+- Delete → "Your store {name} has been deleted"
+- Sent to the logged-in user's email after each operation
 | GET | `/api/admin/orders` | List orders (filters: status, date) |
 | PUT | `/api/admin/orders/:id/status` | Update order status |
 | GET/POST | `/api/admin/products` | List / create products |

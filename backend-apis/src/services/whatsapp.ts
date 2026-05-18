@@ -33,7 +33,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'text',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });
@@ -82,7 +82,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'interactive',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });
@@ -133,7 +133,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'interactive',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });
@@ -174,7 +174,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'interactive',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });
@@ -217,7 +217,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'template',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });
@@ -263,7 +263,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'catalog',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });
@@ -313,7 +313,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'catalog',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });
@@ -361,7 +361,7 @@ class WhatsAppService {
           customerPhone: to,
           direction: 'OUTBOUND',
           messageType: 'catalog',
-          content: payload,
+          content: payload as unknown as Prisma.InputJsonValue,
           whatsappMsgId: response.data.messages?.[0]?.id,
         },
       });

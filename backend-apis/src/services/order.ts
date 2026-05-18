@@ -1,4 +1,4 @@
-import { ConversationSession } from '@prisma/client';
+import { ConversationSession, Prisma } from '@prisma/client';
 import prisma from '../utils/db.js';
 import logger from '../utils/logger.js';
 import type { CartItem, OrderFilters, OrderItem, StoreStats } from '../types/index.js';
@@ -31,7 +31,7 @@ class OrderService {
           orderNumber,
           customerId: customer.id,
           storeId,
-          items: orderItems,
+          items: orderItems as unknown as Prisma.InputJsonValue,
           totalAmount,
           paymentMethod,
           paymentStatus: 'PENDING',

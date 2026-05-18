@@ -1,4 +1,4 @@
-import { Store, ConversationSession } from '@prisma/client';
+import { Store, ConversationSession, Prisma } from '@prisma/client';
 import prisma from '../utils/db.js';
 import logger from '../utils/logger.js';
 import whatsappService from './whatsapp.js';
@@ -251,7 +251,7 @@ class ConversationService {
 
     await prisma.conversationSession.update({
       where: { id: session.id },
-      data: { cartData: cart },
+      data: { cartData: cart as unknown as Prisma.InputJsonValue },
     });
 
     const cartSummary = this.formatCartSummary(cart);
@@ -390,7 +390,7 @@ class ConversationService {
 
       await prisma.conversationSession.update({
         where: { id: session.id },
-        data: { cartData: cartItems, state: STATES.CHECKOUT_LOCATION },
+        data: { cartData: cartItems as unknown as Prisma.InputJsonValue, state: STATES.CHECKOUT_LOCATION },
       });
 
       let summary = `✅ Order Summary:\n\n`;

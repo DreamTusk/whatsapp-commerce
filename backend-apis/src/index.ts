@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import webhookRouter from './routes/webhook.js';
+import authRouter from './routes/auth.js';
+import adminStoreRouter from './routes/admin/store.js';
 import logger from './utils/logger.js';
 
 const app = express();
@@ -13,6 +15,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/api/auth', authRouter);
+app.use('/api/admin/store', adminStoreRouter);
 app.use('/api/webhook', webhookRouter);
 
 app.use((req, res) => {
