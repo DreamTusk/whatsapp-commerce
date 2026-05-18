@@ -16,6 +16,7 @@ model Store {
   whatsappPhoneNumberId     String    @unique
   whatsappBusinessAccountId String
   whatsappAccessToken       String
+  domain                    String?   @unique
   catalogId                 String?   // WhatsApp Commerce Catalog ID
   address                   String?
   logo                      String?
