@@ -60,6 +60,47 @@ Same code, different domain values per environment. No special cases needed.
 
 ---
 
+## Completed Work Log
+
+### Session: 2026-05-18
+
+#### TypeScript Migration (backend-apis)
+- Installed: `typescript`, `tsx`, `@types/node`, `@types/express`, `@types/bcryptjs`, `@types/jsonwebtoken`
+- Created `tsconfig.json` with `NodeNext` module resolution
+- Updated `package.json` scripts:
+  - `dev`: `tsx watch src/index.ts` (runs TS directly, no compile step needed)
+  - `start`: `node dist/index.js` (production uses compiled output)
+  - `build`: `tsc` (compiles TS → JS into `dist/`)
+  - `seed`: `tsx src/scripts/seed.ts`
+- Migrated all files from `.js` → `.ts` and deleted old `.js` files:
+  - `src/index.ts`
+  - `src/routes/webhook.ts`
+  - `src/services/conversation.ts`
+  - `src/services/order.ts`
+  - `src/services/whatsapp.ts`
+  - `src/utils/db.ts`
+  - `src/utils/logger.ts`
+  - `src/scripts/seed.ts`
+- Created `src/types/index.ts` — shared interfaces: `CartItem`, `OrderItem`, `OrderFilters`, `StoreStats`, `LocationData`, `MessageInput`, `WhatsAppButton`, `WhatsAppSection`, `CatalogOrderData`, `WhatsAppMessage`
+
+#### Schema Update
+- Added `domain String? @unique` to `Store` model
+- Migration: `add-store-domain`
+- Updated `seed.ts` to set `domain: 'freshmart.localhost'` on test store
+
+#### User ↔ Store Relationship Redesign
+- Removed `storeId` and `role` from `User` model
+- Added `UserStore` join table (`userId`, `storeId`, `role`)
+- **DB level**: one user can belong to many stores
+- **API level**: enforced one-store-per-user limit (check in auth middleware — if user already has a store, block creation of a second one)
+- Migration: `user-store-join-table`
+- This allows future multi-store support by simply removing the API-level restriction
+
+#### Env Fix
+- Updated `.env.example` `DATABASE_URL` to use correct Docker credentials: `postgresql://postgres:postgres123@localhost:5432/whatsapp_commerce`
+
+---
+
 ## Phase 1 — Project Setup
 
 ### 1.1 Create Next.js Apps
@@ -171,12 +212,14 @@ Run: `npx prisma migrate dev --name add-store-domain`
 ### 2.2 Auth Routes (`/api/auth`)
 | Method | Route | Description |
 |--------|-------|-------------|
+| POST | `/api/auth/signup` | Create user account (name, email, password) |
 | POST | `/api/auth/login` | Email + password → JWT |
-| GET | `/api/auth/me` | Get current user + store |
+| GET | `/api/auth/me` | Get current user + store (if any) |
 
 - Hash passwords with `bcryptjs`
 - Sign JWT with `JWT_SECRET`
-- Return `{ token, user, store }`
+- Signup returns `{ token, user }`
+- Login returns `{ token, user, store }` (store is null if not yet created)
 
 ### 2.3 Auth Middleware
 - `src/middleware/auth.js` — verify JWT, attach `req.user` + `req.storeId`
@@ -184,7 +227,9 @@ Run: `npx prisma migrate dev --name add-store-domain`
 ### 2.4 Admin Routes (`/api/admin`) — JWT protected
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET/PUT | `/api/admin/store` | Store settings |
+| POST | `/api/admin/store` | Create store (first-time setup, one per user enforced at API level) |
+| GET | `/api/admin/store` | Get store settings |
+| PUT | `/api/admin/store` | Update store settings |
 | GET | `/api/admin/orders` | List orders (filters: status, date) |
 | PUT | `/api/admin/orders/:id/status` | Update order status |
 | GET/POST | `/api/admin/products` | List / create products |

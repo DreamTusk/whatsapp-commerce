@@ -1,15 +1,14 @@
 import axios from 'axios';
+import { Store } from '@prisma/client';
 import logger from '../utils/logger.js';
 import prisma from '../utils/db.js';
+import type { WhatsAppButton, WhatsAppSection } from '../types/index.js';
 
 const WHATSAPP_API_VERSION = 'v21.0';
 const WHATSAPP_API_URL = 'https://graph.facebook.com';
 
 class WhatsAppService {
-  /**
-   * Send a text message
-   */
-  async sendTextMessage(store, to, text) {
+  async sendTextMessage(store: Store, to: string, text: string): Promise<void> {
     try {
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -23,12 +22,11 @@ class WhatsAppService {
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -41,17 +39,20 @@ class WhatsAppService {
       });
 
       logger.debug(`Text message sent to ${to}:`, text);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending text message:', error.response?.data || error.message);
+      logger.error('Error sending text message:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Send an interactive list message
-   */
-  async sendInteractiveList(store, to, header, body, buttonText, sections) {
+  async sendInteractiveList(
+    store: Store,
+    to: string,
+    header: string,
+    body: string,
+    buttonText: string,
+    sections: WhatsAppSection[]
+  ): Promise<void> {
     try {
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -64,21 +65,17 @@ class WhatsAppService {
           type: 'list',
           header: header ? { type: 'text', text: header } : undefined,
           body: { text: body },
-          action: {
-            button: buttonText,
-            sections,
-          },
+          action: { button: buttonText, sections },
         },
       };
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -91,17 +88,18 @@ class WhatsAppService {
       });
 
       logger.debug(`Interactive list sent to ${to}`);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending interactive list:', error.response?.data || error.message);
+      logger.error('Error sending interactive list:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Send interactive reply buttons
-   */
-  async sendInteractiveButtons(store, to, body, buttons) {
+  async sendInteractiveButtons(
+    store: Store,
+    to: string,
+    body: string,
+    buttons: WhatsAppButton[]
+  ): Promise<void> {
     try {
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -114,12 +112,9 @@ class WhatsAppService {
           type: 'button',
           body: { text: body },
           action: {
-            buttons: buttons.map((btn, idx) => ({
+            buttons: buttons.map((btn) => ({
               type: 'reply',
-              reply: {
-                id: btn.id,
-                title: btn.title,
-              },
+              reply: { id: btn.id, title: btn.title },
             })),
           },
         },
@@ -127,12 +122,11 @@ class WhatsAppService {
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -145,17 +139,13 @@ class WhatsAppService {
       });
 
       logger.debug(`Interactive buttons sent to ${to}`);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending interactive buttons:', error.response?.data || error.message);
+      logger.error('Error sending interactive buttons:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Send location request
-   */
-  async sendLocationRequest(store, to, bodyText) {
+  async sendLocationRequest(store: Store, to: string, bodyText?: string): Promise<void> {
     try {
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -166,23 +156,18 @@ class WhatsAppService {
         type: 'interactive',
         interactive: {
           type: 'location_request_message',
-          body: {
-            text: bodyText || 'Please share your delivery location',
-          },
-          action: {
-            name: 'send_location',
-          },
+          body: { text: bodyText || 'Please share your delivery location' },
+          action: { name: 'send_location' },
         },
       };
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -195,17 +180,19 @@ class WhatsAppService {
       });
 
       logger.debug(`Location request sent to ${to}`);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending location request:', error.response?.data || error.message);
+      logger.error('Error sending location request:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Send template message
-   */
-  async sendTemplate(store, to, templateName, languageCode = 'en', components = []) {
+  async sendTemplate(
+    store: Store,
+    to: string,
+    templateName: string,
+    languageCode = 'en',
+    components: unknown[] = []
+  ): Promise<void> {
     try {
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -214,21 +201,16 @@ class WhatsAppService {
         recipient_type: 'individual',
         to,
         type: 'template',
-        template: {
-          name: templateName,
-          language: { code: languageCode },
-          components,
-        },
+        template: { name: templateName, language: { code: languageCode }, components },
       };
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -241,21 +223,15 @@ class WhatsAppService {
       });
 
       logger.debug(`Template message sent to ${to}: ${templateName}`);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending template message:', error.response?.data || error.message);
+      logger.error('Error sending template message:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Send catalog message (entire catalog)
-   */
-  async sendCatalogMessage(store, to, bodyText) {
+  async sendCatalogMessage(store: Store, to: string, bodyText: string): Promise<void> {
     try {
-      if (!store.catalogId) {
-        throw new Error('Store does not have a catalog ID configured');
-      }
+      if (!store.catalogId) throw new Error('Store does not have a catalog ID configured');
 
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -266,26 +242,21 @@ class WhatsAppService {
         type: 'interactive',
         interactive: {
           type: 'catalog_message',
-          body: {
-            text: bodyText || 'Browse our products and add items to cart',
-          },
+          body: { text: bodyText || 'Browse our products and add items to cart' },
           action: {
             name: 'catalog_message',
-            parameters: {
-              thumbnail_product_retailer_id: '', // Can specify a featured product
-            },
+            parameters: { thumbnail_product_retailer_id: '' },
           },
         },
       };
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -298,21 +269,21 @@ class WhatsAppService {
       });
 
       logger.debug(`Catalog message sent to ${to}`);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending catalog message:', error.response?.data || error.message);
+      logger.error('Error sending catalog message:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Send product list message (multi-product from catalog)
-   */
-  async sendProductListMessage(store, to, headerText, bodyText, sections) {
+  async sendProductListMessage(
+    store: Store,
+    to: string,
+    headerText: string,
+    bodyText: string,
+    sections: WhatsAppSection[]
+  ): Promise<void> {
     try {
-      if (!store.catalogId) {
-        throw new Error('Store does not have a catalog ID configured');
-      }
+      if (!store.catalogId) throw new Error('Store does not have a catalog ID configured');
 
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -323,28 +294,19 @@ class WhatsAppService {
         type: 'interactive',
         interactive: {
           type: 'product_list',
-          header: {
-            type: 'text',
-            text: headerText,
-          },
-          body: {
-            text: bodyText,
-          },
-          action: {
-            catalog_id: store.catalogId,
-            sections,
-          },
+          header: { type: 'text', text: headerText },
+          body: { text: bodyText },
+          action: { catalog_id: store.catalogId, sections },
         },
       };
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -357,21 +319,20 @@ class WhatsAppService {
       });
 
       logger.debug(`Product list message sent to ${to}`);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending product list message:', error.response?.data || error.message);
+      logger.error('Error sending product list message:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Send single product message
-   */
-  async sendSingleProductMessage(store, to, bodyText, productRetailerId) {
+  async sendSingleProductMessage(
+    store: Store,
+    to: string,
+    bodyText: string,
+    productRetailerId: string
+  ): Promise<void> {
     try {
-      if (!store.catalogId) {
-        throw new Error('Store does not have a catalog ID configured');
-      }
+      if (!store.catalogId) throw new Error('Store does not have a catalog ID configured');
 
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
@@ -382,24 +343,18 @@ class WhatsAppService {
         type: 'interactive',
         interactive: {
           type: 'product',
-          body: {
-            text: bodyText,
-          },
-          action: {
-            catalog_id: store.catalogId,
-            product_retailer_id: productRetailerId,
-          },
+          body: { text: bodyText },
+          action: { catalog_id: store.catalogId, product_retailer_id: productRetailerId },
         },
       };
 
       const response = await axios.post(url, payload, {
         headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
+          Authorization: `Bearer ${store.whatsappAccessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Log outbound message
       await prisma.messageLog.create({
         data: {
           storeId: store.id,
@@ -412,36 +367,30 @@ class WhatsAppService {
       });
 
       logger.debug(`Single product message sent to ${to}`);
-      return response.data;
     } catch (error) {
-      logger.error('Error sending single product message:', error.response?.data || error.message);
+      logger.error('Error sending single product message:', (error as Error).message);
       throw error;
     }
   }
 
-  /**
-   * Mark message as read
-   */
-  async markAsRead(store, messageId) {
+  async markAsRead(store: Store, messageId: string): Promise<void> {
     try {
       const url = `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${store.whatsappPhoneNumberId}/messages`;
 
-      const payload = {
-        messaging_product: 'whatsapp',
-        status: 'read',
-        message_id: messageId,
-      };
-
-      await axios.post(url, payload, {
-        headers: {
-          'Authorization': `Bearer ${store.whatsappAccessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      await axios.post(
+        url,
+        { messaging_product: 'whatsapp', status: 'read', message_id: messageId },
+        {
+          headers: {
+            Authorization: `Bearer ${store.whatsappAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       logger.debug(`Message marked as read: ${messageId}`);
     } catch (error) {
-      logger.error('Error marking message as read:', error.response?.data || error.message);
+      logger.error('Error marking message as read:', (error as Error).message);
     }
   }
 }

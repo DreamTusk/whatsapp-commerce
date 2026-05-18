@@ -30,18 +30,28 @@ model Store {
   products    Product[]
   orders      Order[]
   customers   Customer[]
-  users       User[]
+  userStores  UserStore[]
 }
 
 model User {
+  id         String      @id @default(cuid())
+  name       String
+  email      String      @unique
+  password   String
+  createdAt  DateTime    @default(now())
+  userStores UserStore[]
+}
+
+model UserStore {
   id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("admin") // admin, staff
+  userId    String
   storeId   String
+  role      String   @default("admin") // admin, staff
+  user      User     @relation(fields: [userId], references: [id])
   store     Store    @relation(fields: [storeId], references: [id])
   createdAt DateTime @default(now())
+
+  @@unique([userId, storeId])
 }
 
 model Category {
