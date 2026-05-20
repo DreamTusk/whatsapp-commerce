@@ -32,6 +32,38 @@ const formatStore = (store: {
   updated_at: store.updatedAt,
 });
 
+// GET /api/store/info — public, no auth, resolves store by x-store-domain header
+router.get('/info', async (req: Request, res: Response) => {
+  const domain = req.headers['x-store-domain'] as string;
+  if (!domain) {
+    res.status(400).json({ error: 'Missing x-store-domain header' });
+    return;
+  }
+  try {
+    const store = await prisma.store.findUnique({ where: { domain } });
+    if (!store) {
+      res.status(404).json({ error: 'Store not found' });
+      return;
+    }
+    res.json({
+      store: {
+        id: store.id,
+        name: store.name,
+        phone: store.phone,
+        domain: store.domain,
+        logo: store.logo,
+        address: store.address,
+        min_order_amount: store.minOrderAmount,
+        delivery_radius: store.deliveryRadius,
+        is_active: store.isActive,
+      },
+    });
+  } catch (err) {
+    logger.error('GET /api/store/info error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.use(authMiddleware);
 
 // POST /api/store

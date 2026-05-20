@@ -13,6 +13,10 @@ async function main(): Promise<void> {
   await prisma.customer.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
+  await prisma.userStore.deleteMany();
+  await prisma.storeInvite.deleteMany();
+  await prisma.otpVerification.deleteMany();
+  await prisma.refreshToken.deleteMany();
   await prisma.user.deleteMany();
   await prisma.store.deleteMany();
 
@@ -85,9 +89,63 @@ async function main(): Promise<void> {
     prisma.product.create({ data: { name: 'Hand Wash', description: 'Liquid hand wash', price: 80, unit: '200ml', categoryId: categories[4].id, storeId: store.id, sortOrder: 4 } }),
   ]);
 
+  console.log('Creating Dream Cafe store...');
+  const cafe = await prisma.store.create({
+    data: {
+      name: 'Dream Cafe',
+      phone: '+919876543211',
+      domain: 'dreamcafe.localhost',
+      address: '45 Anna Nagar, Chennai, Tamil Nadu 600040',
+      minOrderAmount: 100,
+      deliveryRadius: 3,
+      isActive: true,
+    },
+  });
+
+  const cafeUser = await prisma.user.create({
+    data: {
+      name: 'Cafe Admin',
+      email: 'admin@dreamcafe.com',
+      password: hashedPassword,
+      isVerified: true,
+    },
+  });
+
+  await prisma.userStore.create({
+    data: { userId: cafeUser.id, storeId: cafe.id, role: 'OWNER' },
+  });
+
+  const cafeCategories = await Promise.all([
+    prisma.category.create({ data: { name: 'Hot Drinks', sortOrder: 1, storeId: cafe.id } }),
+    prisma.category.create({ data: { name: 'Cold Drinks', sortOrder: 2, storeId: cafe.id } }),
+    prisma.category.create({ data: { name: 'Bakery', sortOrder: 3, storeId: cafe.id } }),
+    prisma.category.create({ data: { name: 'Snacks', sortOrder: 4, storeId: cafe.id } }),
+  ]);
+
+  await Promise.all([
+    prisma.product.create({ data: { name: 'Espresso', description: 'Strong shot of coffee', price: 80, unit: '1 cup', categoryId: cafeCategories[0].id, storeId: cafe.id, sortOrder: 1 } }),
+    prisma.product.create({ data: { name: 'Cappuccino', description: 'Espresso with steamed milk foam', price: 120, unit: '1 cup', categoryId: cafeCategories[0].id, storeId: cafe.id, sortOrder: 2 } }),
+    prisma.product.create({ data: { name: 'Latte', description: 'Espresso with steamed milk', price: 130, unit: '1 cup', categoryId: cafeCategories[0].id, storeId: cafe.id, sortOrder: 3 } }),
+    prisma.product.create({ data: { name: 'Masala Chai', description: 'Spiced Indian tea', price: 60, unit: '1 cup', categoryId: cafeCategories[0].id, storeId: cafe.id, sortOrder: 4 } }),
+    prisma.product.create({ data: { name: 'Cold Coffee', description: 'Chilled blended coffee', price: 150, unit: '1 glass', categoryId: cafeCategories[1].id, storeId: cafe.id, sortOrder: 1 } }),
+    prisma.product.create({ data: { name: 'Iced Latte', description: 'Espresso over ice with milk', price: 160, unit: '1 glass', categoryId: cafeCategories[1].id, storeId: cafe.id, sortOrder: 2 } }),
+    prisma.product.create({ data: { name: 'Mango Smoothie', description: 'Fresh mango blended smooth', price: 140, unit: '1 glass', categoryId: cafeCategories[1].id, storeId: cafe.id, sortOrder: 3 } }),
+    prisma.product.create({ data: { name: 'Lemonade', description: 'Fresh squeezed lemonade', price: 80, unit: '1 glass', categoryId: cafeCategories[1].id, storeId: cafe.id, sortOrder: 4 } }),
+    prisma.product.create({ data: { name: 'Croissant', description: 'Buttery flaky croissant', price: 90, unit: '1 piece', categoryId: cafeCategories[2].id, storeId: cafe.id, sortOrder: 1 } }),
+    prisma.product.create({ data: { name: 'Blueberry Muffin', description: 'Fresh baked muffin', price: 80, unit: '1 piece', categoryId: cafeCategories[2].id, storeId: cafe.id, sortOrder: 2 } }),
+    prisma.product.create({ data: { name: 'Chocolate Cake', description: 'Rich chocolate slice', price: 120, unit: '1 slice', categoryId: cafeCategories[2].id, storeId: cafe.id, sortOrder: 3 } }),
+    prisma.product.create({ data: { name: 'Banana Bread', description: 'Homestyle banana bread', price: 70, unit: '1 slice', categoryId: cafeCategories[2].id, storeId: cafe.id, sortOrder: 4 } }),
+    prisma.product.create({ data: { name: 'Veg Sandwich', description: 'Grilled veggie sandwich', price: 110, unit: '1 piece', categoryId: cafeCategories[3].id, storeId: cafe.id, sortOrder: 1 } }),
+    prisma.product.create({ data: { name: 'Cheese Toast', description: 'Toasted bread with melted cheese', price: 90, unit: '2 slices', categoryId: cafeCategories[3].id, storeId: cafe.id, sortOrder: 2 } }),
+    prisma.product.create({ data: { name: 'French Fries', description: 'Crispy golden fries', price: 100, unit: '1 plate', categoryId: cafeCategories[3].id, storeId: cafe.id, sortOrder: 3 } }),
+    prisma.product.create({ data: { name: 'Nachos', description: 'Tortilla chips with dips', price: 120, unit: '1 plate', categoryId: cafeCategories[3].id, storeId: cafe.id, sortOrder: 4 } }),
+  ]);
+
   console.log('Seeding completed!');
   console.log(`\nStore: ${store.name} | Domain: ${store.domain}`);
-  console.log('Admin login — Email: admin@freshmart.com | Password: admin123');
+  console.log(`Store: ${cafe.name} | Domain: ${cafe.domain}`);
+  console.log('Fresh Mart login — Email: admin@freshmart.com | Password: admin123');
+  console.log('Dream Cafe login  — Email: admin@dreamcafe.com | Password: admin123');
 }
 
 main()

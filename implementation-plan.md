@@ -386,9 +386,7 @@ Resend OTP → POST /api/auth/resend-otp → mark old OTPs isUsed = true → gen
 - `isUsed = true` after successful verification (prevents reuse)
 - On resend — all previous OTPs for that user marked `isUsed = true`
 
-**Email Service:** Nodemailer with Gmail SMTP
-- `GMAIL_USER` and `GMAIL_APP_PASSWORD` required in `.env`
-- Gmail App Password: Google Account → Security → 2-Step Verification → App Passwords
+**Email Service:** Zepto Mail — to be integrated later (see Roadmap)
 
 **Routes:**
 | Method | Route | Auth | Description |
@@ -562,7 +560,30 @@ Errors:   404 store not found
 
 ## Phase 6 — store-customer: Storefront
 
-### 6.1 Middleware — Tenant Resolution
+### 6.1 Rendering Strategy
+
+The storefront uses **Next.js ISR (Incremental Static Regeneration)** — not a choice between static or dynamic, but both per page type.
+
+| Page | Rendering | Reason |
+|------|-----------|--------|
+| Home (category grid) | ISR | SEO + fast load, revalidate on category change |
+| Products listing | ISR | SEO + fast load, revalidate on product change |
+| Product detail | ISR | SEO + fast load, revalidate on product change |
+| Cart | Client-side only | No SEO needed, localStorage state |
+| Checkout | Client-side only | Dynamic, payment redirect |
+| Order tracking | Client-side only | Per-user, no SEO needed |
+
+**How ISR works here:**
+- First visitor to `freshmart.com/products` triggers static generation, page is cached at the edge
+- When a store owner updates a product in the admin, the backend calls `revalidatePath()` to bust the cache
+- Next visitor gets a fresh static page
+- Cache is domain-scoped so each tenant's pages are independent
+
+**Deployment:** Vercel (or any edge CDN with Next.js ISR support). Store owners point their domain DNS to it.
+
+**Payments:** Razorpay hosted checkout — always a client-side redirect, fits naturally with checkout being non-static.
+
+### 6.2 Middleware — Tenant Resolution
 ```ts
 // middleware.ts
 const hostname = request.headers.get('host')   // freshmart.localhost:3002
@@ -570,14 +591,15 @@ const domain = hostname.split(':')[0]           // freshmart.localhost
 // Forward as X-Store-Domain header to all API calls
 ```
 
-### 6.2 Pages
-- **Home** — store banner, category grid
-- **Products** — product cards with add-to-cart
-- **Cart** — line items, quantity controls, total
-- **Checkout** — delivery address (map pin or manual), COD / online payment
-- **Order Tracking** — live order status with timeline
+### 6.3 Pages
+- **Home** — store banner, category grid (ISR)
+- **Products** — product cards with add-to-cart (ISR)
+- **Product Detail** — image, description, price, add-to-cart (ISR)
+- **Cart** — line items, quantity controls, total (client-side)
+- **Checkout** — delivery address, Razorpay payment (client-side)
+- **Order Tracking** — live order status with timeline (client-side)
 
-### 6.3 Cart State
+### 6.4 Cart State
 - Stored in `localStorage` (no login required for customers)
 - Tied to the domain so carts don't bleed across tenants
 
