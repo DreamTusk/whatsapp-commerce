@@ -102,7 +102,8 @@ model RefreshToken {
 model Category {
   id        String    @id @default(cuid())
   name      String
-  nameLocal String?   // Tamil/Hindi name
+  nameLocal String?
+  imageUrl  String?
   sortOrder Int       @default(0)
   isActive  Boolean   @default(true)
   storeId   String

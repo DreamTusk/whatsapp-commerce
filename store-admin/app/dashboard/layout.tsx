@@ -51,7 +51,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   useEffect(() => { setUser(auth.getUser()) }, [])
 
   useEffect(() => {
-    api.get('/api/admin/store')
+    api.get('/api/store')
       .then(res => setStore(res.data.store))
       .catch(err => {
         if (err.response?.status === 404) router.push('/create-store')
@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       if (editRadius)    formData.append('delivery_radius', editRadius)
       if (editLogoFile)  formData.append('logo', editLogoFile)
 
-      const res = await api.put('/api/admin/store', formData)
+      const res = await api.put('/api/store', formData)
       setStore(res.data.store)
       setEditOpen(false)
       toast.success('Store updated.')
@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   async function handleDelete() {
     setIsDeleting(true)
     try {
-      await api.delete('/api/admin/store')
+      await api.delete('/api/store')
       toast.success('Store deleted.')
       auth.clear()
       router.push('/login')

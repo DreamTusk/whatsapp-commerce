@@ -175,6 +175,21 @@ Reset   → POST /api/auth/reset-password (email + otp + new_password) → /logi
 
 ---
 
+### Session: 2026-05-20 (continued)
+
+#### API Route Prefix Change
+- Removed `/admin` from all admin API route paths
+- `/api/admin/store` → `/api/store`
+- `/api/admin/invite` → `/api/invite`
+- Future routes follow the same pattern: `/api/categories`, `/api/orders`, `/api/products`, etc.
+- Updated: `src/app.ts`, route file comments, `store-admin` frontend calls, `store.test.ts`, `implementation-plan.md`
+
+#### Schema Update
+- Added `imageUrl String?` to `Category` model
+- Migration: `add-category-image`
+
+---
+
 ### Session: 2026-05-20
 
 #### Auth — Login Verification Gate
@@ -425,11 +440,11 @@ Actions:  mark OTP isUsed = true | hash new password | revoke all refresh tokens
 ### 2.4 Admin Routes (`/api/admin`) — JWT protected
 | Method | Route | Description |
 |--------|-------|-------------|
-| POST | `/api/admin/store` | Create store (first-time setup, one per user enforced at API level) |
-| GET | `/api/admin/store` | Get store settings |
-| PUT | `/api/admin/store` | Update store settings |
+| POST | `/api/store` | Create store (first-time setup, one per user enforced at API level) |
+| GET | `/api/store` | Get store settings |
+| PUT | `/api/store` | Update store settings |
 
-**POST /api/admin/store**
+**POST /api/store**
 ```
 Headers:  Authorization: Bearer <accessToken>
 Request:  {
@@ -449,14 +464,14 @@ Errors:   400 missing required fields | 409 store already exists | 409 phone tak
 Note:     One store per user enforced at API level. Creates UserStore join record with role=admin.
 ```
 
-**GET /api/admin/store**
+**GET /api/store**
 ```
 Headers:  Authorization: Bearer <accessToken>
 Response: { store }
 Errors:   404 store not found
 ```
 
-**PUT /api/admin/store**
+**PUT /api/store**
 ```
 Headers:  Authorization: Bearer <accessToken>
 Request:  any store fields to update (all optional)
@@ -464,7 +479,7 @@ Response: { store }
 Errors:   404 store not found
 ```
 
-**DELETE /api/admin/store**
+**DELETE /api/store**
 ```
 Headers:  Authorization: Bearer <accessToken>
 Response: { message: "Store deleted successfully" }
@@ -476,14 +491,14 @@ Errors:   404 store not found
 - Update → "Your store {name} details have been updated"
 - Delete → "Your store {name} has been deleted"
 - Sent to the logged-in user's email after each operation
-| GET | `/api/admin/orders` | List orders (filters: status, date) |
-| PUT | `/api/admin/orders/:id/status` | Update order status |
-| GET/POST | `/api/admin/products` | List / create products |
-| PUT/DELETE | `/api/admin/products/:id` | Update / delete product |
-| GET/POST | `/api/admin/categories` | List / create categories |
-| PUT/DELETE | `/api/admin/categories/:id` | Update / delete category |
-| GET | `/api/admin/customers` | List customers |
-| GET | `/api/admin/stats` | Daily/weekly stats |
+| GET | `/api/orders` | List orders (filters: status, date) |
+| PUT | `/api/orders/:id/status` | Update order status |
+| GET/POST | `/api/products` | List / create products |
+| PUT/DELETE | `/api/products/:id` | Update / delete product |
+| GET/POST | `/api/categories` | List / create categories |
+| PUT/DELETE | `/api/categories/:id` | Update / delete category |
+| GET | `/api/customers` | List customers |
+| GET | `/api/stats` | Daily/weekly stats |
 
 ### 2.5 Public Customer Routes (`/api/storefront`) — domain-resolved, no auth
 | Method | Route | Description |

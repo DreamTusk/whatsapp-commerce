@@ -34,7 +34,7 @@ const formatStore = (store: {
 
 router.use(authMiddleware);
 
-// POST /api/admin/store
+// POST /api/store
 router.post('/', upload.single('logo'), async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
@@ -110,7 +110,7 @@ router.post('/', upload.single('logo'), async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/admin/store
+// GET /api/store
 router.get('/', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
@@ -132,7 +132,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/admin/store
+// PUT /api/store
 router.put('/', upload.single('logo'), async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
@@ -193,7 +193,7 @@ router.put('/', upload.single('logo'), async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/admin/store
+// DELETE /api/store
 router.delete('/', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
