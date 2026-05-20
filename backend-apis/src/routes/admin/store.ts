@@ -90,7 +90,7 @@ router.post('/', upload.single('logo'), async (req: Request, res: Response) => {
     });
 
     await prisma.userStore.create({
-      data: { userId, storeId: store.id, role: 'admin' },
+      data: { userId, storeId: store.id, role: 'OWNER' },
     });
 
     const user = await prisma.user.findUnique({ where: { id: userId } });

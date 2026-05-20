@@ -1,0 +1,23 @@
+meta {
+  name: Invite User
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url_local}}/admin/invite
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email":"venkatesh.r@dreamtusk.com",
+    "role":"MANAGER"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

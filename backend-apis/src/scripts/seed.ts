@@ -34,13 +34,20 @@ async function main(): Promise<void> {
 
   console.log('Creating admin user...');
   const hashedPassword = await bcrypt.hash('admin123', 10);
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       name: 'Admin User',
       email: 'admin@freshmart.com',
       password: hashedPassword,
-      role: 'admin',
+      isVerified: true,
+    },
+  });
+
+  await prisma.userStore.create({
+    data: {
+      userId: user.id,
       storeId: store.id,
+      role: 'OWNER',
     },
   });
 

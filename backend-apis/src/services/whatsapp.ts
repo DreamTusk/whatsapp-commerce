@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Store } from '@prisma/client';
+import { Prisma, Store } from '@prisma/client';
 import logger from '../utils/logger.js';
 import prisma from '../utils/db.js';
 import type { WhatsAppButton, WhatsAppSection } from '../types/index.js';

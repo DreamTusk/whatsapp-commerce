@@ -4,6 +4,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  OWNER
+  MANAGER
+  SALES_EXECUTIVE
+  EMPLOYEE
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -26,11 +33,12 @@ model Store {
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 
-  categories  Category[]
-  products    Product[]
-  orders      Order[]
-  customers   Customer[]
-  userStores  UserStore[]
+  categories   Category[]
+  products     Product[]
+  orders       Order[]
+  customers    Customer[]
+  userStores   UserStore[]
+  storeInvites StoreInvite[]
 }
 
 model User {
@@ -59,12 +67,26 @@ model UserStore {
   id        String   @id @default(cuid())
   userId    String
   storeId   String
-  role      String   @default("admin") // admin, staff
+  role      Role     @default(OWNER)
   user      User     @relation(fields: [userId], references: [id])
   store     Store    @relation(fields: [storeId], references: [id])
   createdAt DateTime @default(now())
 
   @@unique([userId, storeId])
+}
+
+model StoreInvite {
+  id        String    @id @default(cuid())
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id])
+  email     String
+  role      Role      @default(EMPLOYEE)
+  token     String    @unique
+  isUsed    Boolean   @default(false)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@unique([email, storeId])
 }
 
 model RefreshToken {

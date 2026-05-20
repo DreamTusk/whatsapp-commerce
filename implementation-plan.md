@@ -118,6 +118,72 @@ Same code, different domain values per environment. No special cases needed.
 
 ---
 
+### Session: 2026-05-18 (store-admin — Auth Module)
+
+#### Branding
+- App is branded **DT Commerce** (not "WhatsApp Commerce") across all UI
+
+#### Dependencies installed (store-admin)
+- `axios`, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`
+- `lucide-react`, `js-cookie`, `@types/js-cookie`
+- `clsx`, `tailwind-merge`, `class-variance-authority`, `tw-animate-css`, `@base-ui/react`
+- shadcn/ui initialized (Tailwind v4 mode); components added: `button`, `input`, `label`, `card`, `sonner`, `separator`
+- Removed stale `yarn.lock` — project uses npm exclusively
+
+#### Next.js 16 notes
+- `middleware.ts` is **deprecated** in Next.js 16; route protection uses `proxy.ts` instead
+- Turbopack is the default bundler (no flags needed)
+
+#### Files created
+| File | Purpose |
+|------|---------|
+| `.env.local` | `NEXT_PUBLIC_API_URL=http://localhost:3000` |
+| `proxy.ts` | Route protection — redirects unauthenticated users away from `/dashboard`, `/create-store`; redirects authenticated users away from auth pages |
+| `lib/api.ts` | Axios instance with JWT interceptor + auto-refresh on 401 |
+| `lib/auth.ts` | Cookie helpers — `setTokens`, `getUser`, `setPendingUserId`, `clear`, `isAuthenticated` |
+| `types/index.ts` | Shared TS interfaces: `User`, `Store`, `AuthResponse`, `ApiError` |
+| `app/globals.css` | Primary color overridden to WhatsApp green `oklch(0.742 0.196 151.74)` |
+| `app/layout.tsx` | Root layout — adds `<Toaster>` (Sonner), updated metadata to "DT Commerce" |
+| `app/page.tsx` | Root redirects to `/login` |
+| `app/(auth)/layout.tsx` | Split-panel auth shell — green brand panel (desktop) + white form panel |
+| `app/(auth)/login/page.tsx` | Login form — email + password, show/hide password, forgot-password link |
+| `app/(auth)/signup/page.tsx` | Signup form — name + email + password, saves `pending_user_id` cookie, redirects to `/verify-email` |
+| `app/(auth)/verify-email/page.tsx` | 6-digit OTP input (individual boxes, paste support, backspace navigation), 60s resend countdown |
+| `app/(auth)/forgot-password/page.tsx` | Email entry — sends OTP via API, redirects to `/reset-password?email=...` |
+| `app/(auth)/reset-password/page.tsx` | OTP boxes + new password + confirm password — wrapped in `<Suspense>` for `useSearchParams` |
+| `app/dashboard/page.tsx` | Stub page (placeholder until dashboard is built) |
+
+#### Token storage decision
+- Access token and refresh token stored in **cookies** (not localStorage)
+- Reason: `proxy.ts` runs server-side and can only read cookies, not localStorage — needed for route protection redirects
+- Cookies use `sameSite: 'lax'` for CSRF protection; access token expires in 40 min, refresh token in 21 days
+
+#### Backend changes made to support frontend
+- Installed `cors` + `@types/cors` in `backend-apis`
+- Added `cors()` middleware to `src/index.ts` — allows origins: `localhost:3001`, `3002`, `3003` with `credentials: true`
+- Added `POST /api/auth/resend-otp` route — was missing from backend; verify-email page uses it for the resend button
+- Fixed `next.config.ts` — set `turbopack.root` to silence workspace-root detection warning
+
+#### Auth flow implemented
+```
+Signup  → POST /api/auth/signup  → save tokens + pending_user_id → /verify-email
+Verify  → POST /api/auth/verify-user (user_id + otp)             → /dashboard
+Login   → POST /api/auth/login   → save tokens → /dashboard (store exists) or /create-store
+Forgot  → POST /api/auth/forgot-password (email)                 → /reset-password?email=...
+Reset   → POST /api/auth/reset-password (email + otp + new_password) → /login
+```
+
+---
+
+### Session: 2026-05-20
+
+#### Auth — Login Verification Gate
+- Added `isVerified` check to `POST /api/auth/login` — unverified users are blocked with `403`
+- 403 response includes `{ error, is_verified: false, user_id }` so the frontend can redirect the user to `/verify-email` with the `user_id` pre-filled
+- Verification flow for blocked users: 403 login → `POST /api/auth/resend-otp` (email) → `POST /api/auth/verify-user` (user_id + otp) → login succeeds
+
+---
+
 ## Phase 1 — Project Setup
 
 ### 1.1 Create Next.js Apps
@@ -266,6 +332,7 @@ Errors:   400 missing fields | 400 short password | 409 email taken
 Request:  { email, password }
 Response: { accessToken, refreshToken, user: { id, name, email }, store: Store | null }
 Errors:   400 missing fields | 401 invalid credentials
+          403 unverified → { error, is_verified: false, user_id } — frontend redirects to /verify-email
 ```
 
 **POST /api/auth/refresh**
@@ -314,9 +381,9 @@ Resend OTP → POST /api/auth/resend-otp → mark old OTPs isUsed = true → gen
 | POST | `/api/auth/verify-otp` | No | Submit OTP to verify email |
 | POST | `/api/auth/resend-otp` | No | Resend OTP (invalidates old ones) |
 
-**POST /api/auth/verify-otp**
+**POST /api/auth/verify-user**
 ```
-Request:  { email, otp }
+Request:  { user_id, otp }
 Response: { message: "Email verified successfully" }
 Errors:   400 missing fields | 400 invalid/expired OTP | 409 already verified
 ```

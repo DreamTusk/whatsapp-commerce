@@ -13,8 +13,14 @@ post {
 body:json {
   {
     "email":"venkatesh.r.au.2024@gmail.com",
-    "password":"7654321"
+    "password":"123456"
   }
+}
+
+script:post-response {
+    bru.setEnvVar("access_token", res.access_token);
+  
+  
 }
 
 settings {
