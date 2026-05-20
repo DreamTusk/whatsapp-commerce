@@ -45,13 +45,13 @@ async function createUserWithStore() {
 
 // ─── Create Store ─────────────────────────────────────────────────────────────
 
-describe('POST /api/admin/store', () => {
+describe('POST /api/store', () => {
   it('creates store successfully', async () => {
     const user = await createVerifiedUser();
     const token = generateToken(user.id);
 
     const res = await request(app)
-      .post('/api/admin/store')
+      .post('/api/store')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Fresh Mart', phone: '+919876543210' });
 
@@ -65,7 +65,7 @@ describe('POST /api/admin/store', () => {
     const token = generateToken(user.id);
 
     const res = await request(app)
-      .post('/api/admin/store')
+      .post('/api/store')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Fresh Mart' });
 
@@ -74,7 +74,7 @@ describe('POST /api/admin/store', () => {
 
   it('returns 401 without auth token', async () => {
     const res = await request(app)
-      .post('/api/admin/store')
+      .post('/api/store')
       .send({ name: 'Fresh Mart', phone: '+919876543210' });
 
     expect(res.status).toBe(401);
@@ -84,7 +84,7 @@ describe('POST /api/admin/store', () => {
     const { token } = await createUserWithStore();
 
     const res = await request(app)
-      .post('/api/admin/store')
+      .post('/api/store')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Another Store', phone: '+911234567890' });
 
@@ -98,7 +98,7 @@ describe('POST /api/admin/store', () => {
     const token = generateToken(user.id);
 
     const res = await request(app)
-      .post('/api/admin/store')
+      .post('/api/store')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'New Store', phone: '+919999999999' });
 
@@ -108,12 +108,12 @@ describe('POST /api/admin/store', () => {
 
 // ─── Get Store ────────────────────────────────────────────────────────────────
 
-describe('GET /api/admin/store', () => {
+describe('GET /api/store', () => {
   it('returns the store for the logged-in user', async () => {
     const { token } = await createUserWithStore();
 
     const res = await request(app)
-      .get('/api/admin/store')
+      .get('/api/store')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
@@ -121,7 +121,7 @@ describe('GET /api/admin/store', () => {
   });
 
   it('returns 401 without auth token', async () => {
-    const res = await request(app).get('/api/admin/store');
+    const res = await request(app).get('/api/store');
     expect(res.status).toBe(401);
   });
 
@@ -130,7 +130,7 @@ describe('GET /api/admin/store', () => {
     const token = generateToken(user.id);
 
     const res = await request(app)
-      .get('/api/admin/store')
+      .get('/api/store')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(404);
@@ -139,12 +139,12 @@ describe('GET /api/admin/store', () => {
 
 // ─── Update Store ─────────────────────────────────────────────────────────────
 
-describe('PUT /api/admin/store', () => {
+describe('PUT /api/store', () => {
   it('updates store fields', async () => {
     const { token } = await createUserWithStore();
 
     const res = await request(app)
-      .put('/api/admin/store')
+      .put('/api/store')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Updated Store Name' });
 
@@ -154,7 +154,7 @@ describe('PUT /api/admin/store', () => {
 
   it('returns 401 without auth token', async () => {
     const res = await request(app)
-      .put('/api/admin/store')
+      .put('/api/store')
       .send({ name: 'Updated' });
 
     expect(res.status).toBe(401);
@@ -165,7 +165,7 @@ describe('PUT /api/admin/store', () => {
     const token = generateToken(user.id);
 
     const res = await request(app)
-      .put('/api/admin/store')
+      .put('/api/store')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Updated' });
 
@@ -175,12 +175,12 @@ describe('PUT /api/admin/store', () => {
 
 // ─── Delete Store ─────────────────────────────────────────────────────────────
 
-describe('DELETE /api/admin/store', () => {
+describe('DELETE /api/store', () => {
   it('deletes the store', async () => {
     const { token, store } = await createUserWithStore();
 
     const res = await request(app)
-      .delete('/api/admin/store')
+      .delete('/api/store')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
@@ -191,7 +191,7 @@ describe('DELETE /api/admin/store', () => {
   });
 
   it('returns 401 without auth token', async () => {
-    const res = await request(app).delete('/api/admin/store');
+    const res = await request(app).delete('/api/store');
     expect(res.status).toBe(401);
   });
 
@@ -200,7 +200,7 @@ describe('DELETE /api/admin/store', () => {
     const token = generateToken(user.id);
 
     const res = await request(app)
-      .delete('/api/admin/store')
+      .delete('/api/store')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(404);

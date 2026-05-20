@@ -13,7 +13,7 @@ const VALID_ROLES: Role[] = [Role.OWNER, Role.MANAGER, Role.SALES_EXECUTIVE, Rol
 
 router.use(authMiddleware);
 
-// POST /api/admin/invite
+// POST /api/invite
 router.post('/', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
@@ -93,7 +93,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/admin/invite — list pending invites for the store
+// GET /api/invite — list pending invites for the store
 router.get('/', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
@@ -124,7 +124,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/admin/invite/:id — cancel an invite
+// DELETE /api/invite/:id — cancel an invite
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;

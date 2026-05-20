@@ -33,8 +33,8 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRouter);
-app.use('/api/admin/store', adminStoreRouter);
-app.use('/api/admin/invite', adminInviteRouter);
+app.use('/api/store', adminStoreRouter);
+app.use('/api/invite', adminInviteRouter);
 app.use('/api/webhook', webhookRouter);
 
 app.use((req, res) => {

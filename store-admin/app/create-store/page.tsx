@@ -52,7 +52,7 @@ export default function CreateStorePage() {
       if (data.delivery_radius) formData.append('delivery_radius', String(data.delivery_radius))
       if (logoFile) formData.append('logo', logoFile)
 
-      await api.post('/api/admin/store', formData)
+      await api.post('/api/store', formData)
       toast.success('Store created! Welcome to your dashboard.')
       router.push('/dashboard')
     } catch (err: unknown) {
