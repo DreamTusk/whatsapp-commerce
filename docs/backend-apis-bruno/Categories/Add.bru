@@ -1,0 +1,24 @@
+meta {
+  name: Add Category
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url_local}}/categories
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  name: Fruits & Vegetables
+  name_local:
+  sort_order: 0
+  is_active: true
+  image:
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

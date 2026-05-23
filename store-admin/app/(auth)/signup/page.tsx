@@ -42,6 +42,7 @@ export default function SignupPage() {
 
       auth.setTokens(res.data.access_token, res.data.refresh_token)
       auth.setUser(res.data.user)
+      auth.setVerified(false)
       auth.setPendingUserId(res.data.user.id)
 
       toast.success('Account created! Check your email for the verification code.')

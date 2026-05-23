@@ -2,9 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Loader2, Store, ImagePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,29 +9,38 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 
-const schema = z.object({
-  name: z.string().min(2, 'Store name must be at least 2 characters'),
-  phone: z.string().min(7, 'Enter a valid phone number'),
-  address: z.string().optional(),
-  min_order_amount: z.coerce.number().min(0, 'Cannot be negative').optional(),
-  delivery_radius: z.coerce.number().min(0, 'Cannot be negative').optional(),
-})
+const BASE_DOMAIN = process.env.NEXT_PUBLIC_STORE_DOMAIN ?? 'localhost'
 
-type FormData = z.infer<typeof schema>
+function toSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+}
 
 export default function CreateStorePage() {
   const router = useRouter()
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { min_order_amount: 0 },
-  })
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [slug, setSlug] = useState('')
+  const [address, setAddress] = useState('')
+  const [minOrderAmount, setMinOrderAmount] = useState('')
+  const [deliveryRadius, setDeliveryRadius] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const fullDomain = `${slug}.${BASE_DOMAIN}`
+
+  function handleNameChange(value: string) {
+    setName(value)
+    setSlug(toSlug(value))
+  }
 
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
@@ -42,14 +48,29 @@ export default function CreateStorePage() {
     setLogoPreview(file ? URL.createObjectURL(file) : null)
   }
 
-  async function onSubmit(data: FormData) {
+  function validate() {
+    const errs: Record<string, string> = {}
+    if (name.trim().length < 2) errs.name = 'Store name must be at least 2 characters'
+    if (phone.trim().length < 7) errs.phone = 'Enter a valid phone number'
+    if (!slug || slug.length < 2) errs.slug = 'Subdomain must be at least 2 characters'
+    if (!/^[a-z0-9-]+$/.test(slug)) errs.slug = 'Only lowercase letters, numbers, and hyphens allowed'
+    return errs
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const errs = validate()
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
+    setErrors({})
+    setIsSubmitting(true)
     try {
       const formData = new FormData()
-      formData.append('name', data.name)
-      formData.append('phone', data.phone)
-      if (data.address) formData.append('address', data.address)
-      formData.append('min_order_amount', String(data.min_order_amount ?? 0))
-      if (data.delivery_radius) formData.append('delivery_radius', String(data.delivery_radius))
+      formData.append('name', name.trim())
+      formData.append('phone', phone.trim())
+      formData.append('domain', fullDomain)
+      if (address.trim()) formData.append('address', address.trim())
+      formData.append('min_order_amount', String(parseFloat(minOrderAmount) || 0))
+      if (deliveryRadius) formData.append('delivery_radius', String(parseFloat(deliveryRadius)))
       if (logoFile) formData.append('logo', logoFile)
 
       await api.post('/api/store', formData)
@@ -60,25 +81,24 @@ export default function CreateStorePage() {
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
         'Failed to create store. Please try again.'
       toast.error(msg)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-lg">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-[#25D366] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
             <Store className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Set up your store</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            You can update these details any time from settings.
-          </p>
+          <p className="text-sm text-gray-500 mt-1">You can update these details any time from settings.</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-5">
 
             {/* Logo */}
             <div className="space-y-1.5">
@@ -92,9 +112,7 @@ export default function CreateStorePage() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {logoPreview ? 'Change logo' : 'Upload logo'}
-                  </p>
+                  <p className="text-sm font-medium text-gray-700">{logoPreview ? 'Change logo' : 'Upload logo'}</p>
                   <p className="text-xs text-gray-400">PNG, JPG up to 5 MB</p>
                 </div>
                 <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
@@ -104,31 +122,70 @@ export default function CreateStorePage() {
             {/* Store name */}
             <div className="space-y-1.5">
               <Label htmlFor="name">Store name <span className="text-destructive">*</span></Label>
-              <Input id="name" placeholder="Fresh Mart" {...register('name')} aria-invalid={!!errors.name} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+              <Input
+                id="name"
+                placeholder="Fresh Mart"
+                value={name}
+                onChange={e => handleNameChange(e.target.value)}
+                aria-invalid={!!errors.name}
+              />
+              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
             </div>
 
             {/* Phone */}
             <div className="space-y-1.5">
               <Label htmlFor="phone">WhatsApp phone number <span className="text-destructive">*</span></Label>
-              <Input id="phone" type="tel" placeholder="+91 98765 43210" {...register('phone')} aria-invalid={!!errors.phone} />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                aria-invalid={!!errors.phone}
+              />
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+            </div>
+
+            {/* Domain — slug editable, base domain read-only */}
+            <div className="space-y-1.5">
+              <Label htmlFor="slug">Store subdomain <span className="text-destructive">*</span></Label>
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#25D366] focus-within:border-transparent">
+                <input
+                  id="slug"
+                  type="text"
+                  placeholder="freshmart"
+                  value={slug}
+                  onChange={e => setSlug(toSlug(e.target.value))}
+                  className="flex-1 h-10 px-3 text-sm text-gray-900 bg-white outline-none"
+                  aria-invalid={!!errors.slug}
+                />
+                <span className="h-10 px-3 flex items-center text-sm text-gray-400 bg-gray-50 border-l border-gray-200 select-none whitespace-nowrap">
+                  .{BASE_DOMAIN}
+                </span>
+              </div>
+              {errors.slug
+                ? <p className="text-xs text-destructive">{errors.slug}</p>
+                : slug
+                  ? <p className="text-xs text-gray-400">Your store will be at <span className="font-medium text-gray-600">{fullDomain}</span></p>
+                  : <p className="text-xs text-gray-400">Auto-filled from store name — you can edit it</p>
+              }
             </div>
 
             {/* Address */}
             <div className="space-y-1.5">
-              <Label htmlFor="address">
-                Address <span className="text-gray-400 font-normal text-xs">(optional)</span>
-              </Label>
-              <Input id="address" placeholder="123 Main Street, City" {...register('address')} />
+              <Label htmlFor="address">Address <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+              <Input
+                id="address"
+                placeholder="123 Main Street, City"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+              />
             </div>
 
             {/* Min order + Delivery radius */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="min_order_amount">
-                  Min order <span className="text-gray-400 font-normal text-xs">(optional)</span>
-                </Label>
+                <Label htmlFor="min_order_amount">Min order <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
                   <Input
@@ -138,17 +195,13 @@ export default function CreateStorePage() {
                     step={1}
                     placeholder="0"
                     className="pl-7"
-                    {...register('min_order_amount')}
-                    aria-invalid={!!errors.min_order_amount}
+                    value={minOrderAmount}
+                    onChange={e => setMinOrderAmount(e.target.value)}
                   />
                 </div>
-                {errors.min_order_amount && <p className="text-xs text-destructive">{errors.min_order_amount.message}</p>}
               </div>
-
               <div className="space-y-1.5">
-                <Label htmlFor="delivery_radius">
-                  Delivery radius <span className="text-gray-400 font-normal text-xs">(optional)</span>
-                </Label>
+                <Label htmlFor="delivery_radius">Delivery radius <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
                 <div className="relative">
                   <Input
                     id="delivery_radius"
@@ -157,12 +210,11 @@ export default function CreateStorePage() {
                     step={0.1}
                     placeholder="0"
                     className="pr-10"
-                    {...register('delivery_radius')}
-                    aria-invalid={!!errors.delivery_radius}
+                    value={deliveryRadius}
+                    onChange={e => setDeliveryRadius(e.target.value)}
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">km</span>
                 </div>
-                {errors.delivery_radius && <p className="text-xs text-destructive">{errors.delivery_radius.message}</p>}
               </div>
             </div>
 

@@ -190,6 +190,129 @@ Reset   → POST /api/auth/reset-password (email + otp + new_password) → /logi
 
 ---
 
+### Session: 2026-05-23 — Orders, Cart, Wishlist, Customer Auth Design
+
+#### Schema decisions (pending migration)
+
+**Order refactor** — replace JSON `items` field with proper relational tables:
+- `Order` — keeps fulfilment fields only (`status`, `address`, `notes`). Payment fields removed into separate table.
+- `OrderItem` — one row per line item. Stores `productName` + `price` as **snapshots** (product can change after order). Keeps FK to `Product` for analytics.
+- `Payment` — 1-to-1 with `Order`. Owns `method`, `status`, `razorpayLinkId`, `razorpayPaymentId`, `paidAt`.
+
+**New tables:**
+- `CartItem` — server-side cart. `@@unique([customerId, productId])`. Requires customer JWT.
+- `WishlistItem` — server-side wishlist. `@@unique([customerId, productId])`. Requires customer JWT.
+- `CustomerOtp` — separate from admin `OtpVerification`. Keyed by `phone + storeId`, not FK to Customer.
+
+**Changes to existing models:**
+- `Customer.phone` → `String?` (optional, for future email/Google auth)
+- `Store.customerAuthMethods String[] @default(["PHONE_OTP"])` — store admin configures allowed login methods
+
+#### Customer auth design
+- Phone OTP only for now. Store admin can enable more methods later (EMAIL_OTP, GOOGLE, WHATSAPP_OTP).
+- JWT: `{ customerId, storeId, phone }`, 30-day expiry, no refresh token.
+- `verify-otp` response includes `is_new: boolean` — frontend detects first-time vs returning customer.
+- Profile (name, address) only returned **after** OTP verification — never on phone lookup alone.
+
+#### UI pattern — shadcn Dialog
+- All modals in `store-admin` use shadcn `Dialog` component (Base UI under the hood).
+- Form/data-entry modals: `disablePointerDismissal` prop → outside click does NOT close.
+- Delete confirm modals: default behavior → outside click closes (no data to lose).
+- Correct Base UI v1.5 prop name: `disablePointerDismissal` (NOT `dismissible`).
+
+---
+
+### Session: 2026-05-23 — Products Module
+
+#### Backend — Admin Products (`/api/products`, JWT protected)
+- `GET /api/products` — returns all products for the store, optional `?category_id=` filter, ordered by `sort_order`
+- `POST /api/products` — creates product; `name`, `price`, `category_id` required; accepts image upload; validates category belongs to store
+- `PUT /api/products/:id` — updates product; ownership verified; sort_order swap logic (same as categories, scoped per category)
+- `DELETE /api/products/:id` — deletes product; ownership verified
+- File: `src/routes/admin/products.ts`
+
+#### Backend — Public Storefront Products (`/api/storefront/products`, no auth)
+- `GET /api/storefront/products` — returns only in-stock products, resolved by `x-store-domain`, optional `?category_id=` filter
+- File: `src/routes/storefront/products.ts`
+
+#### Categories — Sort Order Swap
+- `PUT /api/categories/:id` — if `sort_order` conflicts with another category in the same store, the two swap values atomically
+- Same pattern applied to products (scoped per category)
+
+#### store-admin — Products Page
+- Table: product image, name, local name, category, price, unit, in-stock toggle
+- Category filter tabs at top
+- Add/Edit modal: image, name, local name, description, price, unit, category dropdown, sort order, stock toggle
+- Delete confirm modal
+- Inline in-stock/out-of-stock toggle
+- `Product` type added to `store-admin/types/index.ts`
+- File: `store-admin/app/dashboard/products/page.tsx`
+
+#### store-customer — Products Page (ISR)
+- `store-customer/app/products/page.tsx` — ISR, reads `?category` query param
+- Category filter tabs + product grid with add-to-cart button (cart logic TBD)
+- `Product` type added to `store-customer/types/index.ts`
+
+#### Bruno Docs
+- `Products/` folder: Get All (with `category_id` query param), Add, Update, Delete
+- `Public Customer API's/Get Products.bru` — with `x-store-domain` header + `category_id` query param
+
+### Session: 2026-05-23 — Categories Module
+
+#### Backend — Admin Categories (`/api/categories`, JWT protected)
+- `GET /api/categories` — returns all categories (active + inactive) for the authenticated user's store, ordered by `sort_order`
+- `POST /api/categories` — creates category; accepts `multipart/form-data` with `name` (required), `name_local`, `sort_order`, `is_active`, `image`
+- `PUT /api/categories/:id` — updates category; ownership verified against `userStore.storeId`
+- `DELETE /api/categories/:id` — deletes category; ownership verified
+- File: `src/routes/admin/categories.ts`
+
+#### Backend — Public Storefront Categories (`/api/storefront/categories`, no auth)
+- `GET /api/storefront/categories` — returns only active categories, resolved by `x-store-domain` header
+- Customers hit this endpoint directly — no token required
+- File: `src/routes/storefront/categories.ts`
+
+#### store-admin — Categories Page
+- Table: category image, name, local name, sort order, active/inactive toggle
+- Add/Edit modal: image upload, name, local name, sort order, status toggle
+- Delete confirm modal
+- Inline active/inactive toggle without opening the modal
+- File: `store-admin/app/dashboard/categories/page.tsx`
+- `Category` type added to `store-admin/types/index.ts`
+
+#### store-customer — Home Page (ISR)
+- Fetches store info + active categories in parallel using `apiFetch` (ISR, revalidate: 60s)
+- Shows store header (logo, name, address) + category grid
+- Each category card links to `/products?category={id}`
+- `Category` type added to `store-customer/types/index.ts`
+- File: `store-customer/app/page.tsx`
+
+### Session: 2026-05-23
+
+#### Image Storage — Local filesystem (temporary)
+- Replaced `src/external-services/cloudinary.ts` with `src/external-services/storage.ts`
+- Images are saved to `uploads/{folder}/{uuid}.jpg` on the local filesystem
+- Served statically via `GET /uploads/*` from `app.ts`
+- Same `uploadImage(buffer, folder)` / `deleteImage(path)` interface — swap to Cloudinary/S3 later with no route changes
+- Updated import in `src/routes/admin/store.ts` and mock in `src/tests/store.test.ts`
+
+#### Email — Console logging (temporary)
+- Replaced Gmail SMTP (nodemailer) in `src/workers/email.ts` with `console.log`
+- OTPs and notifications are printed to the server console during development
+- Zepto Mail SMTP will be wired in when ready — `sendSimpleEmail(to, subject, body)` interface stays the same
+
+#### Auth — Email verification gate on signup
+- `POST /api/auth/signup` now returns `is_verified: false` in the response
+- Frontend stores `is_verified` as a cookie via `auth.setVerified(false)` on signup
+- `store-admin/proxy.ts` blocks unverified users (token exists + `is_verified === 'false'`) from all routes except `/verify-email`
+- After OTP success, `auth.setVerified(true)` is set — user proceeds to `/dashboard`
+- After login success, `auth.setVerified(true)` is set — login only succeeds for verified users (backend enforced)
+- `auth.clear()` now also removes the `is_verified` cookie
+
+#### Store — Domain field required
+- `domain` is now a required field in `POST /api/store` (alongside `name` and `phone`)
+- Added explicit `409 Domain already in use` check before DB insert
+- `store-admin/app/create-store/page.tsx` now includes a `domain` input with validation (lowercase, letters/numbers/dots/hyphens only)
+
 ### Session: 2026-05-20
 
 #### Auth — Login Verification Gate
@@ -498,16 +621,53 @@ Errors:   404 store not found
 | GET | `/api/customers` | List customers |
 | GET | `/api/stats` | Daily/weekly stats |
 
-### 2.5 Public Customer Routes (`/api/storefront`) — domain-resolved, no auth
+### 2.5 Public Customer Routes (`/api/storefront`) — domain-resolved
+
+#### No auth required
 | Method | Route | Description |
 |--------|-------|-------------|
 | GET | `/api/storefront/store` | Store info by domain header |
-| GET | `/api/storefront/categories` | Categories for the store |
-| GET | `/api/storefront/products` | Products (filter by category) |
+| GET | `/api/storefront/categories` | Active categories for the store |
+| GET | `/api/storefront/products` | In-stock products (filter by category) |
+| GET | `/api/storefront/products/:id` | Single product detail |
+| GET | `/api/storefront/auth/methods` | Which login methods are enabled for this store |
+| POST | `/api/storefront/auth/send-otp` | Send OTP to phone number |
+| POST | `/api/storefront/auth/verify-otp` | Verify OTP → returns customer JWT + `is_new` flag |
+| POST | `/api/storefront/auth/logout` | Clear customer session |
+
+#### Customer JWT required (`x-customer-token` header or cookie)
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/storefront/auth/me` | Get current customer profile |
+| GET/POST/PATCH/DELETE | `/api/storefront/cart` | Cart CRUD |
+| GET/POST/DELETE | `/api/storefront/wishlist` | Wishlist CRUD |
 | POST | `/api/storefront/orders` | Place new order |
 | GET | `/api/storefront/orders/:id` | Track order by ID |
 
 > Domain passed as `X-Store-Domain` request header by the customer frontend middleware.
+
+#### Customer JWT design
+- Payload: `{ customerId, storeId, phone }`
+- Expiry: **30 days** — no refresh token (OTP is the re-auth mechanism)
+- `storeId` in payload allows validating against `x-store-domain` header without a DB call
+- Same phone → different `customerId` per store (`Customer` is unique by `phone + storeId`)
+
+#### Customer auth flow — details first, OTP second
+```
+No JWT cookie:
+  Checkout page → fill name + phone + address → [Send OTP]
+  → OTP sent to entered phone
+  → enter OTP → [Verify & Place Order]
+  → verify-otp returns { customer, is_new, access_token }
+      is_new: true  → first visit, save filled details to Customer profile
+      is_new: false → returning customer, pre-fill saved name + address
+
+JWT cookie valid:
+  Checkout page → name + phone + address pre-filled from profile
+  → [Place Order] directly, no OTP needed
+```
+
+**Security:** Customer profile (name, address) is only revealed **after** OTP verification — not on phone number entry alone.
 
 ---
 
@@ -592,16 +752,29 @@ const domain = hostname.split(':')[0]           // freshmart.localhost
 ```
 
 ### 6.3 Pages
-- **Home** — store banner, category grid (ISR)
-- **Products** — product cards with add-to-cart (ISR)
-- **Product Detail** — image, description, price, add-to-cart (ISR)
-- **Cart** — line items, quantity controls, total (client-side)
-- **Checkout** — delivery address, Razorpay payment (client-side)
-- **Order Tracking** — live order status with timeline (client-side)
 
-### 6.4 Cart State
-- Stored in `localStorage` (no login required for customers)
-- Tied to the domain so carts don't bleed across tenants
+| Page | Rendering | Auth required |
+|------|-----------|--------------|
+| Home | ISR | No |
+| Products listing | ISR | No |
+| Product detail | ISR | No |
+| Cart | Client-side | Yes — OTP triggered on first "Add to cart" |
+| Wishlist | Client-side | Yes — OTP triggered on first "♡" click |
+| Checkout | Client-side | Yes — already authed via cart |
+| Order tracking `/orders/:id` | Client-side | Yes |
+
+### 6.4 Cart + Wishlist State
+- **Server-side** — stored in `CartItem` / `WishlistItem` DB tables, not localStorage
+- Auth (phone OTP) is triggered lazily when customer first clicks "Add to cart" or "♡"
+- After OTP verification, JWT cookie set (30 days) — returning customers skip OTP
+- Cart is scoped per customer + store — no cross-tenant bleed
+
+### 6.5 Checkout Flow
+```
+Cart page → Proceed to checkout
+  No JWT:  fill name + phone + address → Send OTP → Verify → Place Order
+  Has JWT: name + phone + address pre-filled → Place Order directly
+```
 
 ---
 

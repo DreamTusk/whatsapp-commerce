@@ -1,0 +1,36 @@
+meta {
+  name: Place Order
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url_local}}/storefront/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+body:json {
+  {
+    "items": [
+      { "product_id": "<product_id>", "quantity": 2 },
+      { "product_id": "<product_id>", "quantity": 1 }
+    ],
+    "address": "12 Anna Nagar, Chennai - 600040",
+    "notes": "Please call before delivery",
+    "payment_method": "COD"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

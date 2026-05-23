@@ -1,0 +1,20 @@
+meta {
+  name: Get Categories
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url_local}}/storefront/categories
+  body: none
+  auth: none
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

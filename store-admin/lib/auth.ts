@@ -7,6 +7,7 @@ const ACCESS_TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
 const USER_KEY = 'auth_user'
 const PENDING_USER_ID_KEY = 'pending_user_id'
+const IS_VERIFIED_KEY = 'is_verified'
 
 export const auth = {
   setTokens(accessToken: string, refreshToken: string) {
@@ -31,6 +32,14 @@ export const auth = {
     return raw ? (JSON.parse(raw) as User) : null
   },
 
+  setVerified(isVerified: boolean) {
+    Cookies.set(IS_VERIFIED_KEY, String(isVerified), { expires: 21, sameSite: 'lax' })
+  },
+
+  isVerified(): boolean {
+    return Cookies.get(IS_VERIFIED_KEY) !== 'false'
+  },
+
   setPendingUserId(userId: string) {
     // 10 minutes — matches OTP expiry
     Cookies.set(PENDING_USER_ID_KEY, userId, { expires: 1 / 144, sameSite: 'lax' })
@@ -49,6 +58,7 @@ export const auth = {
     Cookies.remove(REFRESH_TOKEN_KEY)
     Cookies.remove(USER_KEY)
     Cookies.remove(PENDING_USER_ID_KEY)
+    Cookies.remove(IS_VERIFIED_KEY)
   },
 
   isAuthenticated(): boolean {

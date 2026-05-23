@@ -1,0 +1,20 @@
+meta {
+  name: Get Store Info
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_local}}/store/info
+  body: none
+  auth: none
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -196,9 +196,17 @@ class ConversationService {
 
     const categoryId = selectedId.replace('cat_', '');
     const products = await prisma.product.findMany({
-      where: { categoryId, storeId: store.id, inStock: true },
+      where: { categoryId, storeId: store.id, isActive: true, variants: { some: { isActive: true } } },
       orderBy: { sortOrder: 'asc' },
       take: 10,
+      include: {
+        variants: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          take: 1,
+          include: { inventory: { select: { qty: true, outOfStockLevel: true } } },
+        },
+      },
     });
 
     if (products.length === 0) {
@@ -217,11 +225,14 @@ class ConversationService {
     await whatsappService.sendInteractiveList(store, customerPhone, category!.name, 'Select a product to add to cart', 'View Products', [
       {
         title: category!.name,
-        rows: products.map((product) => ({
-          id: `prod_${product.id}`,
-          title: `${product.name} - ₹${product.price}`,
-          description: product.unit || product.description || '',
-        })),
+        rows: products.map((product) => {
+          const variant = product.variants[0];
+          return {
+            id: `prod_${product.id}`,
+            title: variant ? `${product.name} - ₹${variant.sellingPrice}` : product.name,
+            description: variant?.unit || product.description || '',
+          };
+        }),
       },
     ]);
   }
@@ -233,20 +244,38 @@ class ConversationService {
     }
 
     const productId = input.selectedId.replace('prod_', '');
-    const product = await prisma.product.findUnique({ where: { id: productId } });
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        variants: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          include: { inventory: { select: { qty: true, outOfStockLevel: true } } },
+        },
+      },
+    });
 
-    if (!product || !product.inStock) {
+    if (!product) {
       await whatsappService.sendTextMessage(store, customerPhone, 'Sorry, this product is not available.');
       return;
     }
 
+    const variant = product.variants.find(v =>
+      v.inventory ? v.inventory.qty > v.inventory.outOfStockLevel : true
+    );
+
+    if (!variant) {
+      await whatsappService.sendTextMessage(store, customerPhone, 'Sorry, this product is out of stock.');
+      return;
+    }
+
     const cart = ((session.cartData as unknown as CartItem[]) || []);
-    const existingItem = cart.find((item) => item.productId === productId);
+    const existingItem = cart.find((item) => item.variantId === variant.id);
 
     if (existingItem) {
       existingItem.quantity += 1;
     } else {
-      cart.push({ productId: product.id, name: product.name, price: product.price, unit: product.unit ?? undefined, quantity: 1 });
+      cart.push({ variantId: variant.id, productId: product.id, name: `${product.name} – ${variant.name}`, price: variant.sellingPrice, unit: variant.unit ?? undefined, quantity: 1 });
     }
 
     await prisma.conversationSession.update({
@@ -372,7 +401,7 @@ class ConversationService {
   async handleCatalogOrder(
     store: Store,
     session: ConversationSession,
-    customer: { id: string; phone: string; latitude: number | null; longitude: number | null },
+    customer: { id: string; phone: string | null; latitude: number | null; longitude: number | null },
     orderData: CatalogOrderData
   ): Promise<void> {
     try {
@@ -400,25 +429,25 @@ class ConversationService {
       });
       summary += `Total: ₹${totalAmount.toFixed(2)}`;
 
-      await whatsappService.sendTextMessage(store, customer.phone, summary);
+      await whatsappService.sendTextMessage(store, customer.phone!, summary);
 
       if (customer.latitude && customer.longitude) {
         await prisma.conversationSession.update({
           where: { id: session.id },
           data: { state: STATES.CHECKOUT_PAYMENT },
         });
-        await whatsappService.sendTextMessage(store, customer.phone, 'Great! Please choose your payment method:');
-        await whatsappService.sendInteractiveButtons(store, customer.phone, 'How would you like to pay?', [
+        await whatsappService.sendTextMessage(store, customer.phone!, 'Great! Please choose your payment method:');
+        await whatsappService.sendInteractiveButtons(store, customer.phone!, 'How would you like to pay?', [
           { id: 'payment_cod', title: 'Cash on Delivery' },
           { id: 'payment_online', title: 'Pay Online' },
         ]);
       } else {
-        await whatsappService.sendTextMessage(store, customer.phone, 'To complete your order, please share your delivery location:');
-        await whatsappService.sendLocationRequest(store, customer.phone);
+        await whatsappService.sendTextMessage(store, customer.phone!, 'To complete your order, please share your delivery location:');
+        await whatsappService.sendLocationRequest(store, customer.phone!);
       }
     } catch (error) {
       logger.error('Error handling catalog order:', error);
-      await whatsappService.sendTextMessage(store, customer.phone, 'Sorry, there was an error processing your order. Please try again or contact support.');
+      await whatsappService.sendTextMessage(store, customer.phone!, 'Sorry, there was an error processing your order. Please try again or contact support.');
     }
   }
 

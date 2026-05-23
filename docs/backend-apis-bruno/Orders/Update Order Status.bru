@@ -1,0 +1,30 @@
+meta {
+  name: Update Order Status
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url_local}}/orders/:id/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:path {
+  id: <order_id>
+}
+
+body:json {
+  {
+    "status": "CONFIRMED"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

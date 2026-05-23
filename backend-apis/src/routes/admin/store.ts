@@ -4,7 +4,7 @@ import { authMiddleware } from '../../middleware/auth.js';
 import logger from '../../utils/logger.js';
 import sendEmail from '../../workers/email.js';
 import upload from '../../middleware/upload.js';
-import cloudinaryService from '../../external-services/cloudinary.js';
+import storageService from '../../external-services/storage.js';
 
 const router = express.Router();
 
@@ -90,8 +90,8 @@ router.post('/', upload.single('logo'), async (req: Request, res: Response) => {
       whatsapp_access_token,
     } = req.body;
 
-    if (!name || !phone) {
-      res.status(400).json({ error: 'name and phone are required' });
+    if (!name || !phone || !domain) {
+      res.status(400).json({ error: 'name, phone and domain are required' });
       return;
     }
 
@@ -101,9 +101,15 @@ router.post('/', upload.single('logo'), async (req: Request, res: Response) => {
       return;
     }
 
+    const domainExists = await prisma.store.findUnique({ where: { domain } });
+    if (domainExists) {
+      res.status(409).json({ error: 'Domain already in use' });
+      return;
+    }
+
     let logoUrl: string | null = null;
     if (req.file) {
-      logoUrl = await cloudinaryService.uploadImage(req.file.buffer, 'store-logos');
+      logoUrl = await storageService.uploadImage(req.file.buffer, 'store-logos');
     }
 
     const store = await prisma.store.create({
@@ -189,7 +195,7 @@ router.put('/', upload.single('logo'), async (req: Request, res: Response) => {
 
     let logoUrl: string | undefined = undefined;
     if (req.file) {
-      logoUrl = await cloudinaryService.uploadImage(req.file.buffer, 'store-logos');
+      logoUrl = await storageService.uploadImage(req.file.buffer, 'store-logos');
     }
 
     const store = await prisma.store.update({

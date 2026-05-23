@@ -9,8 +9,8 @@ vi.mock('../workers/email.js', () => ({
   default: { sendSimpleEmail: vi.fn().mockResolvedValue(undefined) },
 }));
 
-vi.mock('../external-services/cloudinary.js', () => ({
-  default: { uploadImage: vi.fn().mockResolvedValue('http://cloudinary.com/test.jpg') },
+vi.mock('../external-services/storage.js', () => ({
+  default: { uploadImage: vi.fn().mockResolvedValue('/uploads/store-logos/test.jpg') },
 }));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

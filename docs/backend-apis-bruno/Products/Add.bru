@@ -1,0 +1,28 @@
+meta {
+  name: Add Product
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/products
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  name: Fresh Apples
+  name_local: 
+  description: Fresh imported apples
+  price: 99
+  unit: 1kg
+  category_id: cmphxseq90001ri0x680z5nte
+  sort_order: 0
+  in_stock: true
+  image: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

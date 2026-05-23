@@ -1,0 +1,30 @@
+meta {
+  name: Add to Wishlist
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/storefront/wishlist
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+body:json {
+  {
+    "product_id": "<product_id>"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

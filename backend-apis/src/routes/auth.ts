@@ -8,7 +8,6 @@ import { authMiddleware } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
 import sendEmail from '../workers/email.js';
 import otpService from '../services/otp.js';
-import { error } from 'console';
 
 const router = express.Router();
 
@@ -100,6 +99,7 @@ router.post('/signup', async (req: Request, res: Response) => {
       access_token,
       refresh_token,
       user: { id: user.id, name: user.name, email: user.email },
+      is_verified: false,
     });
 
 

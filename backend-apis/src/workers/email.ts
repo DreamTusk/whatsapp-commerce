@@ -1,31 +1,11 @@
-import mailer from "nodemailer";
+// Zepto Mail will be integrated later. OTPs and notifications are logged to console for now.
 
-const from_email = process.env.GMAIL_USER;
-const app_password = process.env.GMAIL_APP_PASSWORD;
-
-const sendSimpleEmail= async(to_email:string, subject:string, content:string)=>{
-
-
-    
-    const transport = mailer.createTransport({
-        service:"gmail",
-        auth: {
-            user: from_email,
-            pass: app_password,
-        },
-    })
-
-    await transport.sendMail({
-        from:from_email,
-        to:to_email,
-        subject:subject,
-        text:content
-    })
-}
-
-const sendEmail = {
-
-    sendSimpleEmail
+const sendSimpleEmail = async (to_email: string, subject: string, content: string): Promise<void> => {
+  console.log(`\n📧 EMAIL TO: ${to_email}`);
+  console.log(`   SUBJECT: ${subject}`);
+  console.log(`   BODY:\n${content}\n`);
 };
+
+const sendEmail = { sendSimpleEmail };
 
 export default sendEmail;

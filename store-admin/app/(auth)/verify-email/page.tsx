@@ -21,7 +21,7 @@ function VerifyEmailForm() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const [userId] = useState(() => auth.getPendingUserId())
-  const email = auth.getUser()?.email ?? searchParams.get('email') ?? ''
+  const [email] = useState(() => auth.getUser()?.email ?? searchParams.get('email') ?? '')
 
   useEffect(() => {
     if (!userId) {
@@ -73,6 +73,7 @@ function VerifyEmailForm() {
     try {
       await api.post('/api/auth/verify-user', { user_id: userId, otp })
       const hasToken = auth.isAuthenticated()
+      auth.setVerified(true)
       auth.clearPendingUserId()
       if (hasToken) {
         toast.success('Email verified! Welcome to DT Commerce.')

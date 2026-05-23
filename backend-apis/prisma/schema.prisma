@@ -11,34 +11,60 @@ enum Role {
   EMPLOYEE
 }
 
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  ONLINE
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Store {
-  id                        String    @id @default(cuid())
+  id                        String   @id @default(cuid())
   name                      String
-  phone                     String    @unique
-  whatsappPhoneNumberId     String?   @unique
+  phone                     String   @unique
+  whatsappPhoneNumberId     String?  @unique
   whatsappBusinessAccountId String?
   whatsappAccessToken       String?
-  domain                    String?   @unique
-  catalogId                 String?   // WhatsApp Commerce Catalog ID
+  domain                    String?  @unique
+  catalogId                 String?
   address                   String?
   logo                      String?
-  minOrderAmount            Float     @default(0)
-  deliveryRadius            Float?    // in km, null = no limit
-  isActive                  Boolean   @default(true)
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
+  minOrderAmount            Float    @default(0)
+  deliveryRadius            Float?
+  isActive                  Boolean  @default(true)
+  customerAuthMethods       String[] @default(["PHONE_OTP"])
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
-  categories   Category[]
-  products     Product[]
-  orders       Order[]
-  customers    Customer[]
-  userStores   UserStore[]
-  storeInvites StoreInvite[]
+  brands        Brand[]
+  categories    Category[]
+  products      Product[]
+  inventories   Inventory[]
+  orders        Order[]
+  customers     Customer[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  customerOtps  CustomerOtp[]
+  userStores    UserStore[]
+  storeInvites  StoreInvite[]
 }
 
 model User {
@@ -76,15 +102,15 @@ model UserStore {
 }
 
 model StoreInvite {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   storeId   String
-  store     Store     @relation(fields: [storeId], references: [id])
+  store     Store    @relation(fields: [storeId], references: [id])
   email     String
-  role      Role      @default(EMPLOYEE)
-  token     String    @unique
-  isUsed    Boolean   @default(false)
+  role      Role     @default(EMPLOYEE)
+  token     String   @unique
+  isUsed    Boolean  @default(false)
   expiresAt DateTime
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([email, storeId])
 }
@@ -97,6 +123,17 @@ model RefreshToken {
   isRevoked Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id])
+  products  Product[]
+  createdAt DateTime  @default(now())
+
+  @@unique([name, storeId])
 }
 
 model Category {
@@ -113,39 +150,94 @@ model Category {
 }
 
 model Product {
-  id                 String   @id @default(cuid())
-  name               String
-  nameLocal          String?
-  description        String?
-  price              Float
-  imageUrl           String?
-  unit               String?  // "500ml", "1kg", "1L", "pack of 6"
-  catalogProductId   String?  // Product ID in WhatsApp Catalog (retailer_id)
-  inStock            Boolean  @default(true)
+  id          String   @id @default(cuid())
+  name        String
+  nameLocal   String?
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
+  brandId     String?
+  brand       Brand?   @relation(fields: [brandId], references: [id])
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
   storeId     String
   store       Store    @relation(fields: [storeId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  variants      ProductVariant[]
+  orderItems    OrderItem[]
+  wishlistItems WishlistItem[]
+}
+
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name          String
+  costPrice     Float?
+  originalPrice Float?
+  sellingPrice  Float
+  taxPercentage Float    @default(0)
+  unit          String?
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  inventory  Inventory?
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model Inventory {
+  id              String         @id @default(cuid())
+  variantId       String         @unique
+  variant         ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  storeId         String
+  store           Store          @relation(fields: [storeId], references: [id])
+  qty             Float          @default(0)
+  outOfStockLevel Float          @default(0)
+  updatedAt       DateTime       @updatedAt
 }
 
 model Customer {
-  id        String                @id @default(cuid())
-  phone     String
+  id        String   @id @default(cuid())
+  phone     String?
+  email     String?
   name      String?
+  address   String?
+  doorNo    String?
+  street    String?
+  city      String?
+  state     String?
+  country   String?
+  pincode   String?
   latitude  Float?
   longitude Float?
-  address   String?
   storeId   String
-  store     Store                 @relation(fields: [storeId], references: [id])
-  orders    Order[]
-  sessions  ConversationSession[]
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders        Order[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  sessions      ConversationSession[]
 
   @@unique([phone, storeId])
+}
+
+model CustomerOtp {
+  id        String   @id @default(cuid())
+  phone     String
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  otp       String
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model ConversationSession {
@@ -153,41 +245,105 @@ model ConversationSession {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
   state      String   @default("WELCOME")
-  cartData   Json     @default("[]") // [{productId, name, price, quantity}]
+  cartData   Json     @default("[]")
   storeId    String
-  expiresAt  DateTime // sessions expire after 24 hours
+  expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
 model Order {
-  id                String   @id @default(cuid())
-  orderNumber       String   @unique // human-readable like "ORD-0001"
-  customerId        String
-  customer          Customer @relation(fields: [customerId], references: [id])
-  storeId           String
-  store             Store    @relation(fields: [storeId], references: [id])
-  items             Json     // [{productId, name, price, quantity, subtotal}]
-  totalAmount       Float
-  paymentMethod     String   // "COD" or "ONLINE"
-  paymentStatus     String   @default("PENDING") // PENDING, PAID, FAILED
-  orderStatus       String   @default("NEW") // NEW, CONFIRMED, PROCESSING, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
-  latitude          Float?
-  longitude         Float?
-  address           String?
+  id                 String      @id @default(cuid())
+  orderNumber        String
+  customerId         String
+  customer           Customer    @relation(fields: [customerId], references: [id])
+  storeId            String
+  store              Store       @relation(fields: [storeId], references: [id])
+  totalAmount        Float
+  status             OrderStatus @default(NEW)
+  address            String?
+  doorNo             String?
+  street             String?
+  city               String?
+  state              String?
+  country            String?
+  pincode            String?
+  latitude           Float?
+  longitude          Float?
+  notes              String?
+  altPhone           String?
+  cancellationReason String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  items   OrderItem[]
+  payment Payment?
+
+  @@unique([storeId, orderNumber])
+}
+
+model OrderItem {
+  id          String          @id @default(cuid())
+  orderId     String
+  order       Order           @relation(fields: [orderId], references: [id])
+  productId   String
+  product     Product         @relation(fields: [productId], references: [id])
+  variantId   String?
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  productName String
+  variantName String?
+  price       Float
+  quantity    Int
+  subtotal    Float
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id])
+  method            PaymentMethod
+  status            PaymentStatus @default(PENDING)
   razorpayLinkId    String?
   razorpayPaymentId String?
-  notes             String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model CartItem {
+  id         String         @id @default(cuid())
+  customerId String
+  customer   Customer       @relation(fields: [customerId], references: [id])
+  variantId  String
+  variant    ProductVariant @relation(fields: [variantId], references: [id])
+  storeId    String
+  store      Store          @relation(fields: [storeId], references: [id])
+  quantity   Int            @default(1)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([customerId, variantId])
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
 }
 
 model MessageLog {
   id            String   @id @default(cuid())
   storeId       String
   customerPhone String
-  direction     String   // "INBOUND" or "OUTBOUND"
-  messageType   String   // "text", "interactive", "location", "template"
+  direction     String
+  messageType   String
   content       Json
   whatsappMsgId String?
   createdAt     DateTime @default(now())

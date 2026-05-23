@@ -47,6 +47,7 @@ export default function LoginPage() {
 
       auth.setTokens(res.data.access_token, res.data.refresh_token)
       auth.setUser(res.data.user)
+      auth.setVerified(true)
 
       if (res.data.store) {
         router.push('/dashboard')

@@ -1,0 +1,20 @@
+meta {
+  name: Get Product by ID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url_local}}/storefront/products/cmphymhwi00031hrbbsi0vagk
+  body: none
+  auth: none
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

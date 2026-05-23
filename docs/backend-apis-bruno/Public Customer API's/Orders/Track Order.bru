@@ -1,0 +1,28 @@
+meta {
+  name: Track Order
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url_local}}/storefront/orders/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+params:path {
+  id: <order_id>
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

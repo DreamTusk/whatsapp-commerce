@@ -1,0 +1,34 @@
+meta {
+  name: Update Quantity
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url_local}}/storefront/cart/:productId
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+params:path {
+  productId: <product_id>
+}
+
+body:json {
+  {
+    "quantity": 3
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

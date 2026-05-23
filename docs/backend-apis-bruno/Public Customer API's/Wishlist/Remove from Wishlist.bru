@@ -1,0 +1,28 @@
+meta {
+  name: Remove from Wishlist
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{base_url_local}}/storefront/wishlist/:productId
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+params:path {
+  productId: <product_id>
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Get All Orders
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_local}}/orders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:query {
+  ~status: NEW
+  ~payment_method: COD
+  ~start_date: 2026-01-01
+  ~end_date: 2026-12-31
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

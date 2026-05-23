@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import {
   LayoutDashboard, ShoppingBag, Package, Tag, Users, Settings,
   LogOut, Pencil, Trash2, Menu, X, Loader2, Store, ImagePlus,
+  BookMarked, Warehouse,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,8 @@ const NAV_ITEMS = [
   { label: 'Dashboard',  href: '/dashboard',            icon: LayoutDashboard },
   { label: 'Orders',     href: '/dashboard/orders',     icon: ShoppingBag },
   { label: 'Products',   href: '/dashboard/products',   icon: Package },
+  { label: 'Inventory',  href: '/dashboard/inventory',  icon: Warehouse },
+  { label: 'Brands',     href: '/dashboard/brands',     icon: BookMarked },
   { label: 'Categories', href: '/dashboard/categories', icon: Tag },
   { label: 'Customers',  href: '/dashboard/customers',  icon: Users },
   { label: 'Settings',   href: '/dashboard/settings',   icon: Settings },
@@ -51,6 +54,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   useEffect(() => { setUser(auth.getUser()) }, [])
 
   useEffect(() => {
+    if (!auth.isVerified()) {
+      router.push('/verify-email')
+      return
+    }
     api.get('/api/store')
       .then(res => setStore(res.data.store))
       .catch(err => {

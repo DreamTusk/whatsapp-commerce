@@ -1,0 +1,33 @@
+meta {
+  name: Verify OTP
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url_local}}/storefront/auth/verify-otp
+  body: json
+  auth: none
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+body:json {
+  {
+    "phone": "9876543210",
+    "otp": "123456"
+  }
+}
+
+script:after-request {
+  if (res.status === 200) {
+    bru.setVar("customer_access_token", res.body.access_token);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
