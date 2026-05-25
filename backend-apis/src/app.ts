@@ -16,9 +16,9 @@ import storefrontWishlistRouter from './routes/storefront/wishlist.js';
 import adminOrdersRouter from './routes/admin/orders.js';
 import adminCustomersRouter from './routes/admin/customers.js';
 import adminBrandsRouter from './routes/admin/brands.js';
-import adminVariantsRouter from './routes/admin/variants.js';
 import adminInventoryRouter from './routes/admin/inventory.js';
 import logger from './utils/logger.js';
+import prisma from './utils/db.js';
 
 const app = express();
 
@@ -26,14 +26,16 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:3002',
   'http://localhost:3003',
+  'https://x60r4ghj-3001.inc1.devtunnels.ms',
+  'https://ed80-2409-40f4-1120-794e-8cb6-3675-3f36-5824.ngrok-free.app'
 ];
 
-// customer storefront runs on subdomains: http://freshmart.localhost:3002
 const localhostSubdomainPattern = /^http:\/\/[a-z0-9-]+\.localhost:\d+$/;
+const ngrokPattern = /^https:\/\/[a-z0-9-]+\.ngrok-free\.app$/;
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || localhostSubdomainPattern.test(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || localhostSubdomainPattern.test(origin) || ngrokPattern.test(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: origin ${origin} not allowed`));
@@ -58,8 +60,21 @@ app.use('/api/products', adminProductsRouter);
 app.use('/api/orders', adminOrdersRouter);
 app.use('/api/customers', adminCustomersRouter);
 app.use('/api/brands', adminBrandsRouter);
-app.use('/api/products/:productId/variants', adminVariantsRouter);
 app.use('/api/inventory', adminInventoryRouter);
+// Block all storefront routes if the store is inactive
+app.use('/api/storefront', async (req, res, next) => {
+  const domain = req.headers['x-store-domain'] as string;
+  if (!domain) { next(); return; }
+  try {
+    const store = await prisma.store.findUnique({ where: { domain }, select: { isActive: true } });
+    if (store && !store.isActive) {
+      res.status(503).json({ error: 'Store is currently unavailable' });
+      return;
+    }
+  } catch { /* allow through on DB error */ }
+  next();
+});
+
 app.use('/api/storefront/auth', storefrontAuthRouter);
 app.use('/api/storefront/orders', storefrontOrdersRouter);
 app.use('/api/storefront/cart', storefrontCartRouter);

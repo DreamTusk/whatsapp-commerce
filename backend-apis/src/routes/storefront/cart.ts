@@ -5,47 +5,32 @@ import { customerAuthMiddleware } from '../../middleware/customerAuth.js';
 const router = express.Router();
 router.use(customerAuthMiddleware);
 
-const variantSelect = {
-  id: true, name: true, sellingPrice: true, originalPrice: true,
-  unit: true, isActive: true,
-  product: { select: { id: true, name: true, nameLocal: true, imageUrl: true } },
-  inventory: { select: { qty: true, outOfStockLevel: true } },
-};
-
-function isVariantAvailable(v: { isActive: boolean; inventory: { qty: number; outOfStockLevel: number } | null }) {
-  if (!v.isActive) return false;
-  if (v.inventory) return v.inventory.qty > v.inventory.outOfStockLevel;
-  return true;
-}
-
 const formatItem = (item: {
   id: string; quantity: number; createdAt: Date; updatedAt: Date;
-  variant: {
-    id: string; name: string; sellingPrice: number; originalPrice: number | null;
-    unit: string | null; isActive: boolean;
-    product: { id: string; name: string; nameLocal: string | null; imageUrl: string | null };
-    inventory: { qty: number; outOfStockLevel: number } | null;
+  product: {
+    id: string; name: string; imageUrl: string | null;
+    sellingPrice: number; originalPrice: number | null; unit: string | null; inStock: boolean;
   };
 }) => ({
   id: item.id,
   quantity: item.quantity,
   created_at: item.createdAt,
   updated_at: item.updatedAt,
-  variant: {
-    id: item.variant.id,
-    name: item.variant.name,
-    selling_price: item.variant.sellingPrice,
-    original_price: item.variant.originalPrice,
-    unit: item.variant.unit,
-    in_stock: isVariantAvailable(item.variant),
-  },
   product: {
-    id: item.variant.product.id,
-    name: item.variant.product.name,
-    name_local: item.variant.product.nameLocal,
-    image_url: item.variant.product.imageUrl,
+    id: item.product.id,
+    name: item.product.name,
+    image_url: item.product.imageUrl,
+    selling_price: item.product.sellingPrice,
+    original_price: item.product.originalPrice,
+    unit: item.product.unit,
+    in_stock: item.product.inStock,
   },
 });
+
+const productSelect = {
+  id: true, name: true, imageUrl: true,
+  sellingPrice: true, originalPrice: true, unit: true, inStock: true,
+};
 
 // GET /api/storefront/cart
 router.get('/', async (req: Request, res: Response): Promise<void> => {
@@ -54,46 +39,46 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 
     const items = await prisma.cartItem.findMany({
       where: { customerId, storeId },
-      include: { variant: { select: variantSelect } },
+      include: { product: { select: productSelect } },
       orderBy: { createdAt: 'asc' },
     });
 
-    const total = items.reduce((sum, i) => sum + i.variant.sellingPrice * i.quantity, 0);
+    const total = items.reduce((sum, i) => sum + i.product.sellingPrice * i.quantity, 0);
     res.json({ items: items.map(formatItem), total });
   } catch {
     res.status(500).json({ error: 'Failed to fetch cart' });
   }
 });
 
-// POST /api/storefront/cart — add variant to cart
+// POST /api/storefront/cart — add product to cart
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const { customerId, storeId } = req.customer!;
-    const { variant_id, quantity = 1 } = req.body;
+    const { product_id, quantity = 1 } = req.body;
 
-    if (!variant_id) { res.status(400).json({ error: 'variant_id is required' }); return; }
+    if (!product_id) { res.status(400).json({ error: 'product_id is required' }); return; }
     if (quantity < 1) { res.status(400).json({ error: 'quantity must be at least 1' }); return; }
 
-    const variant = await prisma.productVariant.findFirst({
-      where: { id: variant_id, product: { storeId } },
-      include: { inventory: { select: { qty: true, outOfStockLevel: true } } },
+    const product = await prisma.product.findFirst({
+      where: { id: product_id, storeId, isActive: true },
+      select: productSelect,
     });
-    if (!variant) { res.status(404).json({ error: 'Variant not found' }); return; }
-    if (!isVariantAvailable(variant)) { res.status(400).json({ error: 'Variant is out of stock' }); return; }
+    if (!product) { res.status(404).json({ error: 'Product not found' }); return; }
+    if (!product.inStock) { res.status(400).json({ error: 'Product is out of stock' }); return; }
 
     const existing = await prisma.cartItem.findUnique({
-      where: { customerId_variantId: { customerId, variantId: variant_id } },
+      where: { customerId_productId: { customerId, productId: product_id } },
     });
 
     const item = existing
       ? await prisma.cartItem.update({
-          where: { customerId_variantId: { customerId, variantId: variant_id } },
+          where: { customerId_productId: { customerId, productId: product_id } },
           data: { quantity: existing.quantity + quantity },
-          include: { variant: { select: variantSelect } },
+          include: { product: { select: productSelect } },
         })
       : await prisma.cartItem.create({
-          data: { customerId, variantId: variant_id, storeId, quantity },
-          include: { variant: { select: variantSelect } },
+          data: { customerId, productId: product_id, storeId, quantity },
+          include: { product: { select: productSelect } },
         });
 
     res.status(201).json({ item: formatItem(item) });
@@ -102,8 +87,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// PATCH /api/storefront/cart/:variantId — set quantity
-router.patch('/:variantId', async (req: Request, res: Response): Promise<void> => {
+// PATCH /api/storefront/cart/:productId — set quantity
+router.patch('/:productId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { customerId, storeId } = req.customer!;
     const { quantity } = req.body;
@@ -111,14 +96,14 @@ router.patch('/:variantId', async (req: Request, res: Response): Promise<void> =
     if (!quantity || quantity < 1) { res.status(400).json({ error: 'quantity must be at least 1' }); return; }
 
     const existing = await prisma.cartItem.findUnique({
-      where: { customerId_variantId: { customerId, variantId: (req.params.variantId as string) } },
+      where: { customerId_productId: { customerId, productId: req.params.productId as string } },
     });
     if (!existing || existing.storeId !== storeId) { res.status(404).json({ error: 'Cart item not found' }); return; }
 
     const item = await prisma.cartItem.update({
-      where: { customerId_variantId: { customerId, variantId: (req.params.variantId as string) } },
+      where: { customerId_productId: { customerId, productId: req.params.productId as string } },
       data: { quantity },
-      include: { variant: { select: variantSelect } },
+      include: { product: { select: productSelect } },
     });
 
     res.json({ item: formatItem(item) });
@@ -127,18 +112,18 @@ router.patch('/:variantId', async (req: Request, res: Response): Promise<void> =
   }
 });
 
-// DELETE /api/storefront/cart/:variantId
-router.delete('/:variantId', async (req: Request, res: Response): Promise<void> => {
+// DELETE /api/storefront/cart/:productId
+router.delete('/:productId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { customerId, storeId } = req.customer!;
 
     const existing = await prisma.cartItem.findUnique({
-      where: { customerId_variantId: { customerId, variantId: (req.params.variantId as string) } },
+      where: { customerId_productId: { customerId, productId: req.params.productId as string } },
     });
     if (!existing || existing.storeId !== storeId) { res.status(404).json({ error: 'Cart item not found' }); return; }
 
     await prisma.cartItem.delete({
-      where: { customerId_variantId: { customerId, variantId: (req.params.variantId as string) } },
+      where: { customerId_productId: { customerId, productId: req.params.productId as string } },
     });
 
     res.json({ message: 'Item removed from cart' });

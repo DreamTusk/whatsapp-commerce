@@ -5,21 +5,23 @@ meta {
 }
 
 put {
-  url: {{base_url_local}}/products/cmphymhwi00031hrbbsi0vagk
+  url: {{base_url_local}}/products/:id
   body: multipartForm
   auth: inherit
 }
 
 body:multipart-form {
-  name: Bunny Shirts
-  sort_order: 1
-  ~name_local: 
-  ~description: 
-  ~price: 
-  ~unit: 
-  ~category_id: 
-  ~in_stock: 
-  ~image: 
+  ~name:
+  ~name_local:
+  ~description:
+  ~selling_price:
+  ~original_price:
+  ~category_id:
+  ~brand_id:
+  ~sort_order:
+  ~is_active:
+  ~in_stock:
+  ~image:
 }
 
 settings {

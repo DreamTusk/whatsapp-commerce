@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+/* ── Theme variables ────────────────────────────────────────
+   These match ACTIVE_THEME in lib/theme.ts.
+   When admin changes theme, update these values too.
+   ────────────────────────────────────────────────────────── */
+:root {
+  --primary: #25D366;
+  --primary-dark: #1ebe5d;
+  --primary-light: #e7faf0;
+  --header-bg: #128C7E;
+  --header-text: #ffffff;
+  --badge: #ff6161;
+}
+
+/* ── Utilities ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Line clamp helpers */
+.line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

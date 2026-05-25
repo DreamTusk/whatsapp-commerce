@@ -47,7 +47,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <Link
               href="/products"
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 !categoryId ? 'bg-[#25D366] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#25D366] hover:text-[#25D366]'
               }`}
             >
@@ -57,7 +57,7 @@ export default async function ProductsPage({ searchParams }: Props) {
               <Link
                 key={cat.id}
                 href={`/products?category=${cat.id}`}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   categoryId === cat.id ? 'bg-[#25D366] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#25D366] hover:text-[#25D366]'
                 }`}
               >
@@ -89,25 +89,25 @@ export default async function ProductsPage({ searchParams }: Props) {
                       alt={p.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    {!p.in_stock && (
+                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-0.5 rounded-full border">Out of stock</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="h-36 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                  <div className="h-36 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center">
                     <span className="text-4xl">🛍️</span>
                   </div>
                 )}
                 <div className="p-3">
                   <p className="font-semibold text-gray-900 text-sm leading-tight truncate">{p.name}</p>
                   {p.name_local && <p className="text-xs text-gray-400 truncate mt-0.5">{p.name_local}</p>}
-                  <div className="flex items-center justify-between mt-2">
-                    <div>
-                      {p.price_range ? (
-                        p.price_range.min === p.price_range.max
-                          ? <span className="font-bold text-gray-900">₹{p.price_range.min}</span>
-                          : <span className="font-bold text-gray-900">₹{p.price_range.min} – ₹{p.price_range.max}</span>
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
-                      )}
-                    </div>
+                  <div className="flex items-baseline gap-1.5 mt-2">
+                    <span className="font-bold text-gray-900">₹{p.selling_price}</span>
+                    {p.original_price != null && p.original_price > p.selling_price && (
+                      <span className="text-xs text-gray-400 line-through">₹{p.original_price}</span>
+                    )}
                   </div>
                   <div className="mt-2 w-full bg-[#25D366] text-white text-xs font-semibold py-1.5 rounded-lg text-center group-hover:bg-[#1ebe5d] transition-colors">
                     View

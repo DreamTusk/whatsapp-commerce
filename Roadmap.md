@@ -8,3 +8,5 @@
 - [ ] **User Management** — list users, toggle status
 - [ ] **Landing Page & Waitlist** — marketing page, early access form
 - [ ] **Polish & Production** — skeletons, empty states, mobile, prod configs
+
+- [ ] **Customer App Customization** — admin can customize the banners, themes and custom invoice template

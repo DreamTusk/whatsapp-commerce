@@ -3,20 +3,9 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import StoreHeader from '@/components/store-header'
 import ProductDetailClient from '@/components/product-detail-client'
-import type { ProductVariant } from '@/types'
+import type { Product } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
-
-interface ProductDetail {
-  id: string
-  name: string
-  name_local: string | null
-  description: string | null
-  image_url: string | null
-  in_stock: boolean
-  category: { id: string; name: string; name_local: string | null } | null
-  variants: ProductVariant[]
-}
 
 interface Props {
   params: Promise<{ id: string }>
@@ -27,10 +16,10 @@ export default async function ProductDetailPage({ params }: Props) {
   const domain = headersList.get('x-store-domain') ?? ''
   const { id } = await params
 
-  let product: ProductDetail | null = null
+  let product: Product | null = null
 
   try {
-    const data = await apiFetch<{ product: ProductDetail }>(`/api/storefront/products/${id}`, domain)
+    const data = await apiFetch<{ product: Product }>(`/api/storefront/products/${id}`, domain)
     product = data.product
   } catch { /* not found or unavailable */ }
 
@@ -73,7 +62,7 @@ export default async function ProductDetailPage({ params }: Props) {
               className="w-full h-72 object-cover"
             />
           ) : (
-            <div className="w-full h-72 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+            <div className="w-full h-72 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center">
               <span className="text-7xl">🛍️</span>
             </div>
           )}
@@ -92,8 +81,12 @@ export default async function ProductDetailPage({ params }: Props) {
             <p className="text-sm text-gray-400 mt-0.5">{product.name_local}</p>
           )}
 
-          {/* Variant selector, price, stock, add to cart — all interactive */}
-          <ProductDetailClient productId={product.id} variants={product.variants} />
+          <ProductDetailClient
+            productId={product.id}
+            sellingPrice={product.selling_price}
+            originalPrice={product.original_price}
+            inStock={product.in_stock}
+          />
 
           {product.description && (
             <div className="mt-4 pt-4 border-t border-gray-100">

@@ -7,11 +7,11 @@ import { useCart } from '@/contexts/cart'
 import { clientFetch } from '@/lib/client-api'
 
 interface Props {
-  variantId: string
+  productId: string
   price: number
 }
 
-export default function AddToCartButton({ variantId, price }: Props) {
+export default function AddToCartButton({ productId, price }: Props) {
   const { requireAuth } = useAuth()
   const { refresh } = useCart()
   const router = useRouter()
@@ -23,7 +23,7 @@ export default function AddToCartButton({ variantId, price }: Props) {
     try {
       await clientFetch('/api/storefront/cart', {
         method: 'POST',
-        body: JSON.stringify({ variant_id: variantId }),
+        body: JSON.stringify({ product_id: productId }),
       })
       await refresh()
       setAdded(true)

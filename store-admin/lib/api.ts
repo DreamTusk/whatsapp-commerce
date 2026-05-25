@@ -1,16 +1,18 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
+import { getApiBaseUrl } from './config'
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 
 api.interceptors.request.use((config) => {
+  config.baseURL = getApiBaseUrl()
   const token = Cookies.get('access_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  config.headers['ngrok-skip-browser-warning'] = 'true'
   // Let the browser set Content-Type for FormData (needs the multipart boundary)
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type']
@@ -37,7 +39,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
+          `${getApiBaseUrl()}/api/auth/refresh`,
           { refresh_token: refreshToken }
         )
         Cookies.set('access_token', data.access_token, { expires: 1 / 36, sameSite: 'lax' })

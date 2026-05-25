@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 export function proxy(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
-  const domain = host.split(':')[0]
+  const domain = process.env.NEXT_PUBLIC_STORE_DOMAIN || host.split(':')[0]
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-store-domain', domain)

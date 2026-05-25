@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth'
 import { clientFetch } from '@/lib/client-api'
+import PageHeader from '@/components/page-header'
 import type { WishlistItem } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -68,16 +69,16 @@ export default function WishlistPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-10">
-      <div className="max-w-2xl mx-auto px-4 pt-6">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Wishlist</h1>
-            <p className="text-sm text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
-          </div>
-          <Link href="/products" className="text-sm text-[#25D366] font-medium hover:underline">
-            + Add more
+      <PageHeader
+        title={`Wishlist${items.length > 0 ? ` (${items.length})` : ''}`}
+        backHref="/products"
+        actions={
+          <Link href="/products" className="text-xs font-semibold px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: 'var(--primary)' }}>
+            + Add
           </Link>
-        </div>
+        }
+      />
+      <div className="max-w-2xl mx-auto px-4 pt-4">
 
         {items.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
@@ -99,27 +100,21 @@ export default function WishlistPage() {
                   <img
                     src={`${API_URL}${item.product.image_url}`}
                     alt={item.product.name}
-                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                    className="w-16 h-16 rounded-xl object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 text-2xl">
+                  <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 text-2xl">
                     🛍️
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-sm truncate">{item.product.name}</p>
-                  <p className="text-sm font-bold text-gray-900 mt-0.5">
-                    {item.product.price_range
-                      ? item.product.price_range.min === item.product.price_range.max
-                        ? `₹${item.product.price_range.min}`
-                        : `₹${item.product.price_range.min} – ₹${item.product.price_range.max}`
-                      : `₹${item.product.price}`}
-                  </p>
+                  <p className="text-sm font-bold text-gray-900 mt-0.5">₹{item.product.selling_price}</p>
                   {!item.product.in_stock && (
                     <span className="text-xs text-red-500 mt-0.5 block">Out of stock</span>
                   )}
                 </div>
-                <div className="flex flex-col gap-2 flex-shrink-0">
+                <div className="flex flex-col gap-2 shrink-0">
                   <button
                     onClick={() => router.push(`/products/${item.product.id}`)}
                     className="text-xs font-semibold px-3 py-1.5 bg-[#25D366] text-white rounded-lg hover:bg-[#1ebe5d] transition-colors"

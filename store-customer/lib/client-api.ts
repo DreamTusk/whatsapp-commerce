@@ -1,6 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
 function getDomain(): string {
+  if (process.env.NEXT_PUBLIC_STORE_DOMAIN) return process.env.NEXT_PUBLIC_STORE_DOMAIN
   if (typeof window === 'undefined') return ''
   return window.location.hostname
 }
@@ -22,6 +23,7 @@ export async function clientFetch<T>(path: string, options: RequestInit = {}): P
     headers: {
       'Content-Type': 'application/json',
       'x-store-domain': getDomain(),
+      'ngrok-skip-browser-warning': 'true',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },

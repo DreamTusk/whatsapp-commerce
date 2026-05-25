@@ -196,17 +196,9 @@ class ConversationService {
 
     const categoryId = selectedId.replace('cat_', '');
     const products = await prisma.product.findMany({
-      where: { categoryId, storeId: store.id, isActive: true, variants: { some: { isActive: true } } },
+      where: { categoryId, storeId: store.id, isActive: true },
       orderBy: { sortOrder: 'asc' },
       take: 10,
-      include: {
-        variants: {
-          where: { isActive: true },
-          orderBy: { sortOrder: 'asc' },
-          take: 1,
-          include: { inventory: { select: { qty: true, outOfStockLevel: true } } },
-        },
-      },
     });
 
     if (products.length === 0) {
@@ -225,14 +217,11 @@ class ConversationService {
     await whatsappService.sendInteractiveList(store, customerPhone, category!.name, 'Select a product to add to cart', 'View Products', [
       {
         title: category!.name,
-        rows: products.map((product) => {
-          const variant = product.variants[0];
-          return {
-            id: `prod_${product.id}`,
-            title: variant ? `${product.name} - ₹${variant.sellingPrice}` : product.name,
-            description: variant?.unit || product.description || '',
-          };
-        }),
+        rows: products.map((product) => ({
+          id: `prod_${product.id}`,
+          title: `${product.name} - ₹${product.sellingPrice}`,
+          description: product.unit || product.description || '',
+        })),
       },
     ]);
   }
@@ -244,38 +233,25 @@ class ConversationService {
     }
 
     const productId = input.selectedId.replace('prod_', '');
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        variants: {
-          where: { isActive: true },
-          orderBy: { sortOrder: 'asc' },
-          include: { inventory: { select: { qty: true, outOfStockLevel: true } } },
-        },
-      },
-    });
+    const product = await prisma.product.findUnique({ where: { id: productId } });
 
     if (!product) {
       await whatsappService.sendTextMessage(store, customerPhone, 'Sorry, this product is not available.');
       return;
     }
 
-    const variant = product.variants.find(v =>
-      v.inventory ? v.inventory.qty > v.inventory.outOfStockLevel : true
-    );
-
-    if (!variant) {
+    if (!product.inStock) {
       await whatsappService.sendTextMessage(store, customerPhone, 'Sorry, this product is out of stock.');
       return;
     }
 
     const cart = ((session.cartData as unknown as CartItem[]) || []);
-    const existingItem = cart.find((item) => item.variantId === variant.id);
+    const existingItem = cart.find((item) => item.productId === product.id);
 
     if (existingItem) {
       existingItem.quantity += 1;
     } else {
-      cart.push({ variantId: variant.id, productId: product.id, name: `${product.name} – ${variant.name}`, price: variant.sellingPrice, unit: variant.unit ?? undefined, quantity: 1 });
+      cart.push({ productId: product.id, name: product.name, price: product.sellingPrice, unit: product.unit ?? undefined, quantity: 1 });
     }
 
     await prisma.conversationSession.update({

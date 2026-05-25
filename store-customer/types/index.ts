@@ -6,15 +6,6 @@ export interface Category {
   sort_order: number
 }
 
-export interface ProductVariant {
-  id: string
-  name: string
-  selling_price: number
-  original_price: number | null
-  unit: string | null
-  in_stock: boolean
-}
-
 export interface Product {
   id: string
   name: string
@@ -24,8 +15,10 @@ export interface Product {
   in_stock: boolean
   sort_order: number
   category_id: string
-  price_range: { min: number; max: number } | null
-  variants: ProductVariant[]
+  category: { id: string; name: string; name_local: string | null } | null
+  brand: { id: string; name: string } | null
+  selling_price: number
+  original_price: number | null
 }
 
 export interface Store {
@@ -43,19 +36,14 @@ export interface Store {
 export interface CartItem {
   id: string
   quantity: number
-  variant: {
-    id: string
-    name: string
-    selling_price: number
-    original_price: number | null
-    unit: string | null
-    in_stock: boolean
-  }
   product: {
     id: string
     name: string
     name_local: string | null
     image_url: string | null
+    selling_price: number
+    original_price: number | null
+    in_stock: boolean
   }
 }
 
@@ -72,10 +60,8 @@ export interface WishlistItem {
     name_local: string | null
     image_url: string | null
     in_stock: boolean
-    price: number
+    selling_price: number
     original_price: number | null
-    unit: string | null
-    price_range: { min: number; max: number } | null
   }
 }
 
@@ -83,8 +69,6 @@ export interface OrderItem {
   id: string
   product_id: string
   product_name: string
-  variant_id: string | null
-  variant_name: string | null
   price: number
   quantity: number
   subtotal: number

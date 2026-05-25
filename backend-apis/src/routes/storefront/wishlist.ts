@@ -6,43 +6,28 @@ const router = express.Router();
 router.use(customerAuthMiddleware);
 
 const productSelect = {
-  id: true, name: true, nameLocal: true, imageUrl: true,
-  variants: {
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' as const },
-    select: {
-      id: true, sellingPrice: true, originalPrice: true, unit: true,
-      inventory: { select: { qty: true, outOfStockLevel: true } },
-    },
-  },
+  id: true, name: true, imageUrl: true,
+  sellingPrice: true, originalPrice: true, unit: true, inStock: true,
 };
 
 function formatWishlistItem(item: {
   id: string; createdAt: Date;
   product: {
-    id: string; name: string; nameLocal: string | null; imageUrl: string | null;
-    variants: { id: string; sellingPrice: number; originalPrice: number | null; unit: string | null; inventory: { qty: number; outOfStockLevel: number } | null }[];
+    id: string; name: string; imageUrl: string | null;
+    sellingPrice: number; originalPrice: number | null; unit: string | null; inStock: boolean;
   };
 }) {
-  const prices = item.product.variants.map(v => v.sellingPrice);
-  const inStock = item.product.variants.some(v =>
-    v.inventory ? v.inventory.qty > v.inventory.outOfStockLevel : true
-  );
-  const firstVariant = item.product.variants[0];
-
   return {
     id: item.id,
     created_at: item.createdAt,
     product: {
       id: item.product.id,
       name: item.product.name,
-      name_local: item.product.nameLocal,
       image_url: item.product.imageUrl,
-      in_stock: inStock,
-      price: firstVariant?.sellingPrice ?? 0,
-      original_price: firstVariant?.originalPrice ?? null,
-      unit: firstVariant?.unit ?? null,
-      price_range: prices.length > 0 ? { min: Math.min(...prices), max: Math.max(...prices) } : null,
+      selling_price: item.product.sellingPrice,
+      original_price: item.product.originalPrice,
+      unit: item.product.unit,
+      in_stock: item.product.inStock,
     },
   };
 }
@@ -97,12 +82,12 @@ router.delete('/:productId', async (req: Request, res: Response): Promise<void> 
     const { customerId, storeId } = req.customer!;
 
     const existing = await prisma.wishlistItem.findUnique({
-      where: { customerId_productId: { customerId, productId: (req.params.productId as string) } },
+      where: { customerId_productId: { customerId, productId: req.params.productId as string } },
     });
     if (!existing || existing.storeId !== storeId) { res.status(404).json({ error: 'Wishlist item not found' }); return; }
 
     await prisma.wishlistItem.delete({
-      where: { customerId_productId: { customerId, productId: (req.params.productId as string) } },
+      where: { customerId_productId: { customerId, productId: req.params.productId as string } },
     });
 
     res.json({ message: 'Item removed from wishlist' });

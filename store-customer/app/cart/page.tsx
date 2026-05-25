@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { clientFetch } from '@/lib/client-api'
+import PageHeader from '@/components/page-header'
 import type { Cart } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -33,13 +34,13 @@ export default function CartPage() {
 
   useEffect(() => { fetchCart() }, [fetchCart])
 
-  async function updateQty(variantId: string, qty: number) {
-    setUpdating(variantId)
+  async function updateQty(productId: string, qty: number) {
+    setUpdating(productId)
     try {
       if (qty === 0) {
-        await clientFetch(`/api/storefront/cart/${variantId}`, { method: 'DELETE' })
+        await clientFetch(`/api/storefront/cart/${productId}`, { method: 'DELETE' })
       } else {
-        await clientFetch(`/api/storefront/cart/${variantId}`, {
+        await clientFetch(`/api/storefront/cart/${productId}`, {
           method: 'PATCH',
           body: JSON.stringify({ quantity: qty }),
         })
@@ -89,25 +90,27 @@ export default function CartPage() {
 
   const items = cart?.items ?? []
 
+  const cartActions = (
+    <div className="flex items-center gap-1">
+      {items.length > 0 && (
+        <button onClick={clearCart} className="text-xs text-red-400 hover:text-red-600 transition-colors px-2 py-1 rounded-lg hover:bg-red-50">
+          Clear all
+        </button>
+      )}
+      <Link href="/products" className="text-xs font-semibold px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: 'var(--primary)' }}>
+        + Add
+      </Link>
+    </div>
+  )
+
   return (
     <main className="min-h-screen bg-gray-50 pb-32">
+      <PageHeader
+        title={`Cart${items.length > 0 ? ` (${items.length})` : ''}`}
+        backHref="/products"
+        actions={cartActions}
+      />
       <div className="max-w-2xl mx-auto">
-        <div className="px-4 pt-6 pb-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Your cart</h1>
-            <p className="text-sm text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {items.length > 0 && (
-              <button onClick={clearCart} className="text-sm text-red-400 hover:text-red-600 transition-colors">
-                Clear all
-              </button>
-            )}
-            <Link href="/products" className="text-sm text-[#25D366] font-medium hover:underline">
-              + Add more
-            </Link>
-          </div>
-        </div>
 
         {items.length === 0 ? (
           <div className="text-center py-20 text-gray-400 px-4">
@@ -125,7 +128,7 @@ export default function CartPage() {
           <div className="px-4 space-y-3">
             {items.map(item => (
               <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
-                <Link href={`/products/${item.product.id}`} className="flex-shrink-0">
+                <Link href={`/products/${item.product.id}`} className="shrink-0">
                   {item.product.image_url ? (
                     <img
                       src={`${API_URL}${item.product.image_url}`}
@@ -144,27 +147,25 @@ export default function CartPage() {
                       {item.product.name}
                     </p>
                   </Link>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {item.variant.name}{item.variant.unit ? ` / ${item.variant.unit}` : ''} · ₹{item.variant.selling_price}
-                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">₹{item.product.selling_price}</p>
                   <p className="text-sm font-bold text-gray-900 mt-1">
-                    ₹{item.variant.selling_price * item.quantity}
+                    ₹{item.product.selling_price * item.quantity}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
-                    disabled={updating === item.variant.id}
-                    onClick={() => updateQty(item.variant.id, item.quantity - 1)}
+                    disabled={updating === item.product.id}
+                    onClick={() => updateQty(item.product.id, item.quantity - 1)}
                     className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#25D366] hover:text-[#25D366] transition-colors disabled:opacity-40"
                   >
                     −
                   </button>
                   <span className="w-6 text-center text-sm font-semibold text-gray-900">
-                    {updating === item.variant.id ? '…' : item.quantity}
+                    {updating === item.product.id ? '…' : item.quantity}
                   </span>
                   <button
-                    disabled={updating === item.variant.id}
-                    onClick={() => updateQty(item.variant.id, item.quantity + 1)}
+                    disabled={updating === item.product.id}
+                    onClick={() => updateQty(item.product.id, item.quantity + 1)}
                     className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#25D366] hover:text-[#25D366] transition-colors disabled:opacity-40"
                   >
                     +
@@ -185,7 +186,7 @@ export default function CartPage() {
             </div>
             <button
               onClick={() => router.push('/checkout')}
-              className="flex-[2] bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+              className="flex-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold py-3 rounded-xl text-sm transition-colors"
             >
               Proceed to checkout →
             </button>

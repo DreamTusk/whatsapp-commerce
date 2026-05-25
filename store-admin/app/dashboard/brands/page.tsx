@@ -1,23 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Loader2, X, BookMarked } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, BookMarked, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Brand } from '@/types'
 
 export default function BrandsPage() {
+  const router = useRouter()
   const [brands, setBrands] = useState<Brand[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<Brand | null>(null)
-  const [name, setName] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [addName, setAddName] = useState('')
+  const [isSavingAdd, setIsSavingAdd] = useState(false)
 
   const [deleteTarget, setDeleteTarget] = useState<Brand | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -29,37 +30,20 @@ export default function BrandsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  function openAdd() {
-    setEditing(null)
-    setName('')
-    setModalOpen(true)
-  }
-
-  function openEdit(b: Brand) {
-    setEditing(b)
-    setName(b.name)
-    setModalOpen(true)
-  }
-
-  async function handleSave() {
-    if (!name.trim()) { toast.error('Brand name is required'); return }
-    setIsSaving(true)
+  async function handleAddBrand() {
+    if (!addName.trim()) { toast.error('Brand name is required'); return }
+    setIsSavingAdd(true)
     try {
-      if (editing) {
-        const res = await api.put(`/api/brands/${editing.id}`, { name: name.trim() })
-        setBrands(prev => prev.map(b => b.id === editing.id ? res.data.brand : b))
-        toast.success('Brand updated')
-      } else {
-        const res = await api.post('/api/brands', { name: name.trim() })
-        setBrands(prev => [...prev, res.data.brand])
-        toast.success('Brand created')
-      }
-      setModalOpen(false)
+      const res = await api.post('/api/brands', { name: addName.trim() })
+      setBrands(prev => [...prev, res.data.brand])
+      toast.success('Brand created')
+      setAddOpen(false)
+      setAddName('')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to save brand'
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create brand'
       toast.error(msg)
     } finally {
-      setIsSaving(false)
+      setIsSavingAdd(false)
     }
   }
 
@@ -80,17 +64,20 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Brands</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{brands.length} brands</p>
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 px-6 pt-6 pb-4 bg-gray-50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[26px] font-bold text-gray-900">Brands</h1>
+            <p className="text-base text-gray-500 mt-0.5">{brands.length} brands</p>
+          </div>
+          <Button onClick={() => { setAddName(''); setAddOpen(true) }} className="bg-[#25D366] hover:bg-[#1ebe5d] text-white gap-2">
+            <Plus className="w-4 h-4" /> Add brand
+          </Button>
         </div>
-        <Button onClick={openAdd} className="bg-[#25D366] hover:bg-[#1ebe5d] text-white gap-2">
-          <Plus className="w-4 h-4" /> Add brand
-        </Button>
       </div>
 
+      <div className="flex-1 min-h-0 px-6 pt-6 pb-4 flex flex-col">
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -98,16 +85,17 @@ export default function BrandsPage() {
       ) : brands.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <BookMarked className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-lg font-medium">No brands yet</p>
-          <p className="text-sm mt-1">Add brands to categorise your products by manufacturer</p>
+          <p className="text-xl font-medium">No brands yet</p>
+          <p className="text-base mt-1">Add brands to categorise your products by manufacturer</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 overflow-auto min-h-0">
+          <table className="w-full text-base min-w-[500px]">
+            <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Brand</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Products</th>
+                <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Brand</th>
+                <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Products</th>
                 <th className="px-4 py-3 w-20"></th>
               </tr>
             </thead>
@@ -117,7 +105,7 @@ export default function BrandsPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-[#25D366]">{b.name.charAt(0).toUpperCase()}</span>
+                        <span className="text-base font-bold text-[#25D366]">{b.name.charAt(0).toUpperCase()}</span>
                       </div>
                       <p className="font-medium text-gray-900">{b.name}</p>
                     </div>
@@ -125,10 +113,10 @@ export default function BrandsPage() {
                   <td className="px-4 py-3 text-gray-500">{b.product_count} product{b.product_count !== 1 ? 's' : ''}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
-                      <button onClick={() => openEdit(b)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                      <button onClick={() => router.push(`/dashboard/brands/${b.id}/edit`)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setDeleteTarget(b)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                      <button onClick={() => setDeleteTarget(b)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -137,38 +125,47 @@ export default function BrandsPage() {
               ))}
             </tbody>
           </table>
+          </div>
+          <div className="flex-shrink-0 px-4 py-2.5 bg-gray-50 rounded-b-2xl border-t border-gray-100">
+            <p className="text-base text-gray-500">{brands.length} brands</p>
+          </div>
         </div>
       )}
+      </div>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen} disablePointerDismissal>
+      {/* Add Brand Dialog */}
+      <Dialog open={addOpen} dismissible={false} onOpenChange={() => {}}>
         <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">{editing ? 'Edit brand' : 'Add brand'}</h3>
-              <button onClick={() => setModalOpen(false)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-50">
+              <h3 className="font-bold text-gray-900 text-lg">Add brand</h3>
+              <button onClick={() => { setAddOpen(false); setAddName('') }} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-1.5">
-              <Label>Brand name <span className="text-destructive">*</span></Label>
+              <Label className="text-base">Brand name <span className="text-destructive">*</span></Label>
               <Input
+                className="text-base h-11"
                 placeholder="e.g. Amul, Nestle"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSave()}
+                value={addName}
+                onChange={e => setAddName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddBrand()}
+                autoFocus
               />
             </div>
-            <div className="flex gap-3 pt-1">
-              <Button variant="outline" className="flex-1" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button className="flex-1 bg-[#25D366] hover:bg-[#1ebe5d] text-white" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {isSaving ? 'Saving…' : editing ? 'Save changes' : 'Add brand'}
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => { setAddOpen(false); setAddName('') }}>Cancel</Button>
+              <Button className="flex-1 bg-[#25D366] hover:bg-[#1ebe5d] text-white" onClick={handleAddBrand} disabled={isSavingAdd}>
+                {isSavingAdd ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSavingAdd ? 'Saving…' : 'Add brand'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Delete Brand Dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
         <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
           <div className="space-y-4">

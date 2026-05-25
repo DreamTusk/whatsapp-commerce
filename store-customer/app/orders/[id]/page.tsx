@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { clientFetch } from '@/lib/client-api'
+import PageHeader from '@/components/page-header'
 import type { Order } from '@/types'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
@@ -70,11 +71,11 @@ export default function OrderTrackingPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-10">
-      <div className="max-w-2xl mx-auto px-4 pt-6">
-        <Link href="/" className="text-sm text-[#25D366] font-medium hover:underline">← Home</Link>
+      <PageHeader title={order.order_number} backHref="/orders" />
+      <div className="max-w-2xl mx-auto px-4 pt-4">
 
         {/* Order confirmed banner */}
-        <div className={`mt-4 rounded-2xl p-5 text-white ${isCancelled ? 'bg-gray-400' : 'bg-gradient-to-br from-[#25D366] to-[#128C7E]'}`}>
+        <div className={`mt-4 rounded-2xl p-5 text-white ${isCancelled ? 'bg-gray-400' : 'bg-linear-to-br from-[#25D366] to-[#128C7E]'}`}>
           <p className="text-sm opacity-80">Order {isCancelled ? 'cancelled' : 'placed'}</p>
           <p className="text-2xl font-bold mt-1">{order.order_number}</p>
           <p className="text-sm opacity-75 mt-1">{formatDate(order.created_at)}</p>
@@ -90,7 +91,7 @@ export default function OrderTrackingPage() {
                 const active = currentStep === idx
                 return (
                   <div key={step.status} className="flex items-center gap-4">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0 transition-all ${
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg shrink-0 transition-all ${
                       done ? 'bg-[#25D366]/10' : 'bg-gray-100'
                     }`}>
                       {done ? step.icon : <span className="w-2.5 h-2.5 rounded-full bg-gray-300 block" />}

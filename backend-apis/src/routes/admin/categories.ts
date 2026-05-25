@@ -6,36 +6,56 @@ import upload from '../../middleware/upload.js';
 import storageService from '../../external-services/storage.js';
 
 const router = express.Router();
-
-const formatCategory = (cat: {
-  id: string; name: string; nameLocal: string | null; imageUrl: string | null;
-  sortOrder: number; isActive: boolean; storeId: string; createdAt: Date;
-}) => ({
-  id: cat.id,
-  name: cat.name,
-  name_local: cat.nameLocal,
-  image_url: cat.imageUrl,
-  sort_order: cat.sortOrder,
-  is_active: cat.isActive,
-  store_id: cat.storeId,
-  created_at: cat.createdAt,
-});
-
 router.use(authMiddleware);
 
-// GET /api/categories
+type RawCategory = {
+  id: string; name: string; imageUrl: string | null;
+  isActive: boolean; parentId: string | null; storeId: string; createdAt: Date;
+};
+
+function formatCategory(cat: RawCategory, children: RawCategory[] = []) {
+  return {
+    id: cat.id,
+    name: cat.name,
+    image_url: cat.imageUrl,
+    is_active: cat.isActive,
+    parent_id: cat.parentId,
+    store_id: cat.storeId,
+    created_at: cat.createdAt,
+    children: children.map(c => formatCategory(c)),
+  };
+}
+
+async function getStoreId(userId: string) {
+  const userStore = await prisma.userStore.findFirst({ where: { userId } });
+  return userStore?.storeId ?? null;
+}
+
+// GET /api/categories — top-level only, with children nested
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
-    const userStore = await prisma.userStore.findFirst({ where: { userId } });
-    if (!userStore) { res.status(404).json({ error: 'No store found' }); return; }
+    const storeId = await getStoreId(req.user!.userId);
+    if (!storeId) { res.status(404).json({ error: 'No store found' }); return; }
 
-    const categories = await prisma.category.findMany({
-      where: { storeId: userStore.storeId },
-      orderBy: { sortOrder: 'asc' },
+    const all = await prisma.category.findMany({
+      where: { storeId },
+      orderBy: { createdAt: 'asc' },
     });
 
-    res.json({ categories: categories.map(formatCategory) });
+    const childrenMap = new Map<string, RawCategory[]>();
+    for (const cat of all) {
+      if (cat.parentId) {
+        const arr = childrenMap.get(cat.parentId) ?? [];
+        arr.push(cat);
+        childrenMap.set(cat.parentId, arr);
+      }
+    }
+
+    const topLevel = all
+      .filter(c => !c.parentId)
+      .map(c => formatCategory(c, childrenMap.get(c.id) ?? []));
+
+    res.json({ categories: topLevel });
   } catch (err) {
     logger.error('GET /api/categories error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -45,26 +65,28 @@ router.get('/', async (req: Request, res: Response) => {
 // POST /api/categories
 router.post('/', upload.single('image'), async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
-    const userStore = await prisma.userStore.findFirst({ where: { userId } });
-    if (!userStore) { res.status(404).json({ error: 'No store found' }); return; }
+    const storeId = await getStoreId(req.user!.userId);
+    if (!storeId) { res.status(404).json({ error: 'No store found' }); return; }
 
-    const { name, name_local, sort_order, is_active } = req.body;
-    if (!name) { res.status(400).json({ error: 'name is required' }); return; }
+    const { name, is_active, parent_id } = req.body;
+    if (!name?.trim()) { res.status(400).json({ error: 'name is required' }); return; }
+
+    if (parent_id) {
+      const parent = await prisma.category.findFirst({ where: { id: parent_id, storeId } });
+      if (!parent) { res.status(404).json({ error: 'Parent category not found' }); return; }
+      if (parent.parentId) { res.status(400).json({ error: 'Only one level of sub-categories is allowed' }); return; }
+    }
 
     let imageUrl: string | null = null;
-    if (req.file) {
-      imageUrl = await storageService.uploadImage(req.file.buffer, 'categories');
-    }
+    if (req.file) imageUrl = await storageService.uploadImage(req.file.buffer, 'categories');
 
     const category = await prisma.category.create({
       data: {
-        name,
-        nameLocal: name_local || null,
+        name: name.trim(),
         imageUrl,
-        sortOrder: sort_order ? parseInt(sort_order) : 0,
         isActive: is_active !== undefined ? is_active === 'true' || is_active === true : true,
-        storeId: userStore.storeId,
+        parentId: parent_id || null,
+        storeId,
       },
     });
 
@@ -79,45 +101,31 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
 // PUT /api/categories/:id
 router.put('/:id', upload.single('image'), async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
-    const userStore = await prisma.userStore.findFirst({ where: { userId } });
-    if (!userStore) { res.status(404).json({ error: 'No store found' }); return; }
+    const storeId = await getStoreId(req.user!.userId);
+    if (!storeId) { res.status(404).json({ error: 'No store found' }); return; }
 
-    const existing = await prisma.category.findUnique({ where: { id: req.params.id as string } });
-    if (!existing || existing.storeId !== userStore.storeId) {
-      res.status(404).json({ error: 'Category not found' }); return;
+    const existing = await prisma.category.findFirst({ where: { id: req.params.id, storeId } });
+    if (!existing) { res.status(404).json({ error: 'Category not found' }); return; }
+
+    const { name, is_active, parent_id } = req.body;
+
+    if (parent_id !== undefined && parent_id) {
+      if (parent_id === req.params.id) { res.status(400).json({ error: 'Category cannot be its own parent' }); return; }
+      const parent = await prisma.category.findFirst({ where: { id: parent_id, storeId } });
+      if (!parent) { res.status(404).json({ error: 'Parent category not found' }); return; }
+      if (parent.parentId) { res.status(400).json({ error: 'Only one level of sub-categories is allowed' }); return; }
     }
-
-    const { name, name_local, sort_order, is_active } = req.body;
 
     let imageUrl: string | undefined = undefined;
-    if (req.file) {
-      imageUrl = await storageService.uploadImage(req.file.buffer, 'categories');
-    }
-
-    const newSortOrder = sort_order !== undefined ? parseInt(sort_order) : undefined;
-
-    // Swap sort_order if another category in this store already has the requested value
-    if (newSortOrder !== undefined && newSortOrder !== existing.sortOrder) {
-      const conflict = await prisma.category.findFirst({
-        where: { storeId: userStore.storeId, sortOrder: newSortOrder, id: { not: existing.id } },
-      });
-      if (conflict) {
-        await prisma.category.update({
-          where: { id: conflict.id },
-          data: { sortOrder: existing.sortOrder },
-        });
-      }
-    }
+    if (req.file) imageUrl = await storageService.uploadImage(req.file.buffer, 'categories');
 
     const category = await prisma.category.update({
-      where: { id: req.params.id as string },
+      where: { id: req.params.id },
       data: {
-        ...(name && { name }),
-        ...(name_local !== undefined && { nameLocal: name_local || null }),
+        ...(name && { name: name.trim() }),
         ...(imageUrl !== undefined && { imageUrl }),
-        ...(newSortOrder !== undefined && { sortOrder: newSortOrder }),
         ...(is_active !== undefined && { isActive: is_active === 'true' || is_active === true }),
+        ...(parent_id !== undefined && { parentId: parent_id || null }),
       },
     });
 
@@ -132,16 +140,20 @@ router.put('/:id', upload.single('image'), async (req: Request, res: Response) =
 // DELETE /api/categories/:id
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
-    const userStore = await prisma.userStore.findFirst({ where: { userId } });
-    if (!userStore) { res.status(404).json({ error: 'No store found' }); return; }
+    const storeId = await getStoreId(req.user!.userId);
+    if (!storeId) { res.status(404).json({ error: 'No store found' }); return; }
 
-    const existing = await prisma.category.findUnique({ where: { id: req.params.id as string } });
-    if (!existing || existing.storeId !== userStore.storeId) {
-      res.status(404).json({ error: 'Category not found' }); return;
+    const existing = await prisma.category.findFirst({
+      where: { id: req.params.id, storeId },
+      include: { children: true },
+    });
+    if (!existing) { res.status(404).json({ error: 'Category not found' }); return; }
+
+    if (existing.children.length > 0) {
+      res.status(400).json({ error: 'Delete all sub-categories first' }); return;
     }
 
-    await prisma.category.delete({ where: { id: req.params.id as string } });
+    await prisma.category.delete({ where: { id: req.params.id } });
     logger.info(`Category deleted: ${existing.name}`);
     res.json({ message: 'Category deleted successfully' });
   } catch (err) {

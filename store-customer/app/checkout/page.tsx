@@ -111,10 +111,11 @@ export default function CheckoutPage() {
     setPlacing(true)
     try {
       const combined = buildAddress(doorNo, street, city, addrState, country, pincode)
-      const items = cart!.items.map(i => ({ variant_id: i.variant.id, quantity: i.quantity }))
+      const items = cart!.items.map(i => ({ product_id: i.product.id, quantity: i.quantity }))
       const body: Record<string, unknown> = {
         items,
         address: combined,
+        name: name.trim() || undefined,
         door_no: doorNo.trim() || undefined,
         street: street.trim() || undefined,
         city: city.trim() || undefined,
@@ -208,10 +209,9 @@ export default function CheckoutPage() {
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-700">
                   {item.product.name}
-                  {item.variant.name && <span className="text-gray-400"> ({item.variant.name})</span>}
                   {' '}<span className="text-gray-400">× {item.quantity}</span>
                 </span>
-                <span className="font-medium text-gray-900">₹{item.variant.selling_price * item.quantity}</span>
+                <span className="font-medium text-gray-900">₹{item.product.selling_price * item.quantity}</span>
               </div>
             ))}
           </div>
@@ -418,7 +418,7 @@ export default function CheckoutPage() {
           </div>
           <button
             onClick={handlePlaceOrderClick}
-            className="flex-[2] bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+            className="flex-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold py-3 rounded-xl text-sm transition-colors"
           >
             Place order
           </button>
@@ -477,7 +477,7 @@ export default function CheckoutPage() {
               <button
                 onClick={confirmOrder}
                 disabled={placing}
-                className="flex-[2] h-11 bg-[#25D366] hover:bg-[#1ebe5d] disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
+                className="flex-2 h-11 bg-[#25D366] hover:bg-[#1ebe5d] disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
               >
                 {placing ? 'Placing…' : 'Confirm & place order'}
               </button>

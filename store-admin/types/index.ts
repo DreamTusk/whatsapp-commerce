@@ -13,6 +13,7 @@ export interface Store {
   address: string | null
   min_order_amount: number
   delivery_radius: number | null
+  is_active: boolean
   whatsapp_phone_number_id: string | null
   whatsapp_business_account_id: string | null
 }
@@ -27,12 +28,12 @@ export interface AuthResponse {
 export interface Category {
   id: string
   name: string
-  name_local: string | null
   image_url: string | null
-  sort_order: number
   is_active: boolean
+  parent_id: string | null
   store_id: string
   created_at: string
+  children: Category[]
 }
 
 export interface Brand {
@@ -42,61 +43,27 @@ export interface Brand {
   created_at: string
 }
 
-export interface ProductVariant {
-  id: string
-  product_id: string
-  name: string
-  cost_price: number | null
-  original_price: number | null
-  selling_price: number
-  tax_percentage: number
-  unit: string | null
-  is_active: boolean
-  sort_order: number
-  created_at: string
-  updated_at: string
-  inventory: {
-    qty: number
-    out_of_stock_level: number
-    updated_at: string
-  } | null
-}
-
 export interface Product {
   id: string
   name: string
-  name_local: string | null
   description: string | null
   image_url: string | null
   is_active: boolean
-  sort_order: number
+  selling_price: number
+  original_price: number | null
+  in_stock: boolean
+  discount_percent: number | null
   brand: { id: string; name: string } | null
   category: { id: string; name: string }
   store_id: string
-  variant_count: number
-  price_range: { min: number; max: number } | null
-  in_stock: boolean
   created_at: string
   updated_at: string
-  variants?: ProductVariant[]
-}
-
-export interface InventoryItem {
-  id: string
-  qty: number
-  out_of_stock_level: number
-  status: 'out' | 'low' | 'in_stock'
-  updated_at: string
-  variant: { id: string; name: string; selling_price: number; unit: string | null }
-  product: { id: string; name: string; image_url: string | null; category: { id: string; name: string } }
 }
 
 export interface OrderItem {
   id: string
   product_id: string
   product_name: string
-  variant_id: string | null
-  variant_name: string | null
   price: number
   quantity: number
   subtotal: number

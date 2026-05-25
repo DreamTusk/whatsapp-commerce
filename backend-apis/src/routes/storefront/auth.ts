@@ -121,6 +121,18 @@ router.get('/me', customerAuthMiddleware, async (req: Request, res: Response): P
   res.json({ customer: formatCustomer(customer) });
 });
 
+// PUT /api/storefront/auth/profile
+router.put('/profile', customerAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
+  const { name } = req.body;
+
+  const customer = await prisma.customer.update({
+    where: { id: req.customer!.customerId },
+    data: { name: name?.trim() || null },
+  });
+
+  res.json({ customer: formatCustomer(customer) });
+});
+
 // POST /api/storefront/auth/logout
 router.post('/logout', customerAuthMiddleware, async (_req: Request, res: Response): Promise<void> => {
   res.json({ message: 'Logged out successfully' });
