@@ -7,6 +7,7 @@ interface AuthContextValue {
   customer: Customer | null
   token: string | null
   isAuthenticated: boolean
+  initialized: boolean
   login: (token: string, customer: Customer) => void
   logout: () => void
   requireAuth: (action: () => void) => void
@@ -18,8 +19,10 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [initialized, setInitialized] = useState(false)
   const [otpOpen, setOtpOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
+  const [storeName, setStoreName] = useState<string | null>(null)
 
   useEffect(() => {
     const savedToken = localStorage.getItem('customer_token')
@@ -33,6 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('customer_data')
       }
     }
+    setInitialized(true)
+
+    // Fetch store name to display in auth modal
+    import('@/lib/client-api').then(({ clientFetch }) => {
+      clientFetch<{ store: { name: string } }>('/api/store/info')
+        .then(data => setStoreName(data.store.name))
+        .catch(() => {})
+    })
   }, [])
 
   const login = useCallback((newToken: string, newCustomer: Customer) => {
@@ -78,12 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ customer, token, isAuthenticated: !!token, login, logout, requireAuth, updateCustomer }}>
+    <AuthContext.Provider value={{ customer, token, isAuthenticated: !!token, initialized, login, logout, requireAuth, updateCustomer }}>
       {children}
       <OtpModal
         open={otpOpen}
         onClose={() => { setOtpOpen(false); setPendingAction(null) }}
         onSuccess={handleOtpSuccess}
+        storeName={storeName}
       />
     </AuthContext.Provider>
   )

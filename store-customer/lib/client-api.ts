@@ -1,5 +1,3 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
-
 function getDomain(): string {
   if (process.env.NEXT_PUBLIC_STORE_DOMAIN) return process.env.NEXT_PUBLIC_STORE_DOMAIN
   if (typeof window === 'undefined') return ''
@@ -18,12 +16,11 @@ interface ApiError {
 
 export async function clientFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(path, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       'x-store-domain': getDomain(),
-      'ngrok-skip-browser-warning': 'true',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },

@@ -124,6 +124,8 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
     let imageUrl: string | null = null;
     if (req.file) {
       imageUrl = await storageService.uploadImage(req.file.buffer, 'products');
+    } else if (req.body.image_url?.trim()) {
+      imageUrl = req.body.image_url.trim();
     }
 
     const product = await prisma.product.create({

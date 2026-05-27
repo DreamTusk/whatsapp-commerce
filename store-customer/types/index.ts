@@ -12,6 +12,7 @@ export interface Product {
   name_local: string | null
   description: string | null
   image_url: string | null
+  unit: string | null
   in_stock: boolean
   sort_order: number
   category_id: string
@@ -52,6 +53,22 @@ export interface Cart {
   total: number
 }
 
+export interface CustomerAddress {
+  id: string
+  label: string | null
+  address: string | null
+  door_no: string | null
+  street: string | null
+  city: string | null
+  state: string | null
+  country: string | null
+  pincode: string | null
+  latitude: number | null
+  longitude: number | null
+  is_default: boolean
+  created_at: string
+}
+
 export interface WishlistItem {
   id: string
   product: {
@@ -72,6 +89,7 @@ export interface OrderItem {
   price: number
   quantity: number
   subtotal: number
+  image_url: string | null
 }
 
 export interface Payment {
@@ -87,6 +105,8 @@ export interface Order {
   status: 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
   address: string | null
   notes: string | null
+  cancellation_reason: string | null
+  cancelled_by: string | null
   created_at: string
   items: OrderItem[]
   payment: Payment | null

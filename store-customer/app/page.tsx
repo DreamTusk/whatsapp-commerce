@@ -1,11 +1,13 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import { theme } from '@/lib/theme'
 import StoreHeader from '@/components/store-header'
+import ProductCard from '@/components/product-card'
 import type { Store, Category, Product } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+
+const scrollRow = 'flex gap-5 overflow-x-auto overflow-y-hidden pb-2 scrollbar-hide'
 
 export default async function HomePage() {
   const headersList = await headers()
@@ -49,157 +51,101 @@ export default async function HomePage() {
     ])
     categories = catData.categories
     products = prodData.products
-  } catch { /* show with whatever loaded */ }
+  } catch { /* show what we have */ }
+
+  // Group products by category
+  const productsByCategory = new Map<string, Product[]>()
+  products.forEach(p => {
+    const key = p.category_id ?? '__none__'
+    if (!productsByCategory.has(key)) productsByCategory.set(key, [])
+    productsByCategory.get(key)!.push(p)
+  })
+
+  const categoriesWithProducts = categories.filter(c => (productsByCategory.get(c.id)?.length ?? 0) > 0)
 
   return (
-    <main className="min-h-screen bg-gray-100">
+    <main className="min-h-screen pb-24">
       <StoreHeader domain={domain} />
 
-    
+      {/* ── Banner placeholder ── */}
+      <div className="page-x pt-4">
+        <div className="w-full h-32 sm:h-40 lg:h-52 rounded-2xl bg-gray-200 flex items-center justify-center">
+          <p className="text-sm text-gray-400 font-medium">Add banner here</p>
+        </div>
+      </div>
 
-      {/* ── Categories ── */}
-      {categories.length > 0 && (
-        <div className="bg-white shadow-sm">
-          <div className="max-w-5xl mx-auto px-4 pt-4 pb-3">
-            <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide">
-              {/* All */}
-              <Link href="/products" className="flex flex-col items-center gap-1.5 shrink-0 group">
-                <div
-                  className="w-15 h-15 rounded-full border-2 flex items-center justify-center transition-all group-hover:scale-105"
-                  style={{ borderColor: theme.primary, backgroundColor: theme.primaryLight }}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"
-                    style={{ color: theme.primary }}>
-                    <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                  </svg>
-                </div>
-                <span className="text-[11px] font-medium text-gray-700 text-center w-16 truncate">All</span>
-              </Link>
-
-              {categories.map(cat => (
-                <Link
-                  key={cat.id}
-                  href={`/products?category=${cat.id}`}
-                  className="flex flex-col items-center gap-1.5 shrink-0 group"
-                >
-                  <div className="w-15 h-15 rounded-full overflow-hidden border-2 border-gray-200 group-hover:border-current transition-all group-hover:scale-105"
-                    style={{ '--hover-color': theme.primary } as React.CSSProperties}>
-                    {cat.image_url ? (
-                      <img
-                        src={`${API_URL}${cat.image_url}`}
-                        alt={cat.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl"
-                        style={{ backgroundColor: theme.primaryLight }}>
-                        🛍️
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[11px] font-medium text-gray-700 text-center w-16 line-clamp-1">
-                    {cat.name}
-                  </span>
-                </Link>
+      {/* ── All products — first scrollable row ── */}
+      {products.length > 0 && (
+        <section className="mt-4 sm:mt-6 lg:mt-8">
+          <div className="flex items-center justify-between page-x mb-3">
+            <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold leading-tight lg:leading-[48px] tracking-[0%] text-gray-900 [font-family:var(--font-instrument-sans)]">All Products</h2>
+            <Link href="/products" className="flex items-center gap-[5px] lg:gap-[7px] text-[13px] sm:text-[14px] lg:text-[16px] font-medium leading-none tracking-[0px] text-indigo-500 [font-family:var(--font-instrument-sans)]"><span>See All</span><span>&gt;</span></Link>
+          </div>
+          <div className="page-x">
+            <div className={scrollRow}>
+              {products.slice(0, 12).map(p => (
+                <ProductCard key={p.id} product={p} source={{ type: 'all' }} width={210} height={409} />
               ))}
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ── Products ── */}
-      <div className="max-w-5xl mx-auto px-3 py-4">
-        {products.length === 0 ? (
-          <div className="bg-white rounded-2xl text-center py-20 px-6">
-            <p className="text-5xl mb-4">🛒</p>
-            <p className="font-semibold text-gray-600">No products yet</p>
-            <p className="text-sm text-gray-400 mt-1">Check back soon!</p>
+      {/* ── Category circles ── */}
+      {categories.length > 0 && (
+        <section className="mt-4 sm:mt-6 lg:mt-8">
+          <div className="flex items-center justify-between page-x mb-3">
+            <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold leading-tight lg:leading-[48px] tracking-[0%] text-gray-900 [font-family:var(--font-instrument-sans)]">Category</h2>
+            <Link href="/products" className="flex items-center gap-[5px] lg:gap-[7px] text-[13px] sm:text-[14px] lg:text-[16px] font-medium leading-none tracking-[0px] text-indigo-500 [font-family:var(--font-instrument-sans)]"><span>See All</span><span>&gt;</span></Link>
           </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-3 px-0.5">
-              <h2 className="font-bold text-gray-800 text-base">All Products</h2>
-              <Link
-                href="/products"
-                className="text-xs font-semibold"
-                style={{ color: theme.primary }}
-              >
-                View all →
+          {/*
+            justify-around distributes space evenly when items fit,
+            and falls back to left-packed when items overflow (scroll).
+            gap-4 ensures minimum spacing even in overflow/scroll state.
+          */}
+          <div className="page-x ">
+            <div className="flex flex-nowrap justify-around gap-5 overflow-x-auto overflow-y-hidden pb-5 scrollbar-hide">
+            {categories.map(cat => (
+              <Link key={cat.id} href={`/products?category=${cat.id}`} className="flex flex-col items-center gap-[10px] lg:gap-[15px] flex-shrink-0 w-[80px] sm:w-[110px] lg:w-[150px]">
+                <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full overflow-hidden bg-gray-100 border-2 border-white flex-shrink-0" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+                  {cat.image_url ? (
+                    <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xl lg:text-2xl">🛍️</div>
+                  )}
+                </div>
+                <span className="text-[11px] sm:text-[13px] lg:text-[16px] font-semibold leading-none tracking-[0%] text-gray-700 text-center w-full [font-family:var(--font-instrument-sans)]">{cat.name}</span>
               </Link>
+            ))}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-              {products.map(p => (
-                <ProductCard key={p.id} product={p} />
+          </div>
+        </section>
+      )}
+
+      {/* ── Per-category rows ── */}
+      {categoriesWithProducts.map(cat => (
+        <section key={cat.id} className="mt-6">
+          <div className="flex items-center justify-between page-x mb-3">
+            <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold leading-tight lg:leading-[48px] tracking-[0%] text-gray-900 [font-family:var(--font-instrument-sans)]">{cat.name}</h2>
+            <Link href={`/products?category=${cat.id}`} className="flex items-center gap-[5px] lg:gap-[7px] text-[13px] sm:text-[14px] lg:text-[16px] font-medium leading-none tracking-[0px] text-indigo-500 [font-family:var(--font-instrument-sans)]"><span>See All</span><span>&gt;</span></Link>
+          </div>
+          <div className="page-x">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {productsByCategory.get(cat.id)!.slice(0, 6).map(p => (
+                <ProductCard key={p.id} product={p} scrollable={false} height={409} source={{ type: 'category', id: cat.id, name: cat.name }} />
               ))}
             </div>
-          </>
-        )}
-      </div>
-    </main>
-  )
-}
-
-function ProductCard({ product: p }: { product: Product }) {
-  const discount =
-    p.original_price && p.original_price > p.selling_price
-      ? Math.round((1 - p.selling_price / p.original_price) * 100)
-      : null
-
-  return (
-    <Link
-      href={`/products/${p.id}`}
-      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
-    >
-      {/* Image */}
-      <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
-        {p.image_url ? (
-          <img
-            src={`${API_URL}${p.image_url}`}
-            alt={p.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-5xl">🛍️</div>
-        )}
-        {discount && (
-          <span
-            className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded"
-            style={{ backgroundColor: theme.badgeColor }}
-          >
-            {discount}% off
-          </span>
-        )}
-        {!p.in_stock && (
-          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded-full border border-gray-200">
-              Out of stock
-            </span>
           </div>
-        )}
-      </div>
+        </section>
+      ))}
 
-      {/* Details */}
-      <div className="p-2.5">
-        <p className="text-xs font-semibold text-gray-800 leading-snug line-clamp-2 min-h-8">
-          {p.name}
-        </p>
-        {p.name_local && (
-          <p className="text-[10px] text-gray-400 mt-0.5 truncate">{p.name_local}</p>
-        )}
-        <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
-          <span className="font-bold text-gray-900 text-sm">₹{p.selling_price}</span>
-          {p.original_price != null && p.original_price > p.selling_price && (
-            <span className="text-[11px] text-gray-400 line-through">₹{p.original_price}</span>
-          )}
+      {products.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-24 page-x">
+          <p className="text-5xl mb-4">🛒</p>
+          <p className="font-semibold text-gray-600">No products yet</p>
+          <p className="text-sm text-gray-400 mt-1">Check back soon!</p>
         </div>
-        <div
-          className="mt-2 w-full py-1.5 rounded-lg text-center text-[11px] font-bold text-white"
-          style={{ backgroundColor: theme.primary }}
-        >
-          View
-        </div>
-      </div>
-    </Link>
+      )}
+    </main>
   )
 }

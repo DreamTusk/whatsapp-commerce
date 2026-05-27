@@ -2,26 +2,31 @@ import { headers } from 'next/headers'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import StoreHeader from '@/components/store-header'
+import ProductCard from '@/components/product-card'
 import type { Product, Category } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
 interface Props {
-  searchParams: Promise<{ category?: string }>
+  searchParams: Promise<{ category?: string; search?: string }>
 }
 
 export default async function ProductsPage({ searchParams }: Props) {
   const headersList = await headers()
   const domain = headersList.get('x-store-domain') ?? ''
-  const { category: categoryId } = await searchParams
+  const { category: categoryId, search } = await searchParams
 
   let products: Product[] = []
   let categories: Category[] = []
 
   try {
-    const params = categoryId ? `?category_id=${categoryId}` : ''
+    const params = new URLSearchParams()
+    if (categoryId) params.set('category_id', categoryId)
+    if (search) params.set('search', search)
+    const qs = params.toString()
+
     const [prodData, catData] = await Promise.all([
-      apiFetch<{ products: Product[] }>(`/api/storefront/products${params}`, domain),
+      apiFetch<{ products: Product[] }>(`/api/storefront/products${qs ? `?${qs}` : ''}`, domain),
       apiFetch<{ categories: Category[] }>('/api/storefront/categories', domain),
     ])
     products = prodData.products
@@ -31,92 +36,114 @@ export default async function ProductsPage({ searchParams }: Props) {
   const activeCategory = categories.find(c => c.id === categoryId)
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    // Full viewport height, flex column so header + panels fit exactly
+    <main className="h-screen flex flex-col overflow-hidden">
+
       <StoreHeader domain={domain} />
 
-      {/* Breadcrumb */}
-      <div className="max-w-2xl mx-auto px-4 pt-4 flex items-center gap-2 text-sm">
-        <Link href="/" className="text-[#25D366] font-medium hover:underline">Home</Link>
-        <span className="text-gray-300">/</span>
-        <span className="text-gray-600">{activeCategory?.name ?? 'All Products'}</span>
-      </div>
+      {/* Panel row — fills remaining height, each column scrolls independently */}
+      <div className="page-x flex flex-1 min-h-0 bg-gray-50">
 
-      {/* Category tabs */}
-      {categories.length > 0 && (
-        <div className="max-w-2xl mx-auto px-4 mt-3">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <Link
-              href="/products"
-              className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                !categoryId ? 'bg-[#25D366] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#25D366] hover:text-[#25D366]'
-              }`}
-            >
+        {/* ── Category sidebar (scrolls on its own) ── */}
+        <aside className="w-[80px] sm:w-[100px] lg:w-[250px] flex-shrink-0 bg-white border-r border-gray-100 overflow-y-auto scrollbar-hide">
+
+          {/* All */}
+          <Link
+            href="/products"
+            className={`flex flex-col lg:flex-row items-center gap-1 lg:gap-3 px-1 lg:px-4 py-3 border-r-2 transition-colors ${
+              !categoryId && !search
+                ? 'border-indigo-500 bg-indigo-50'
+                : 'border-transparent hover:bg-gray-50'
+            }`}
+          >
+            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">
+              🛍️
+            </div>
+            <span className={`text-[10px] sm:text-[11px] lg:text-sm font-semibold text-center lg:text-left line-clamp-2 leading-tight ${!categoryId && !search ? 'text-indigo-600' : 'text-gray-600'}`}>
               All
-            </Link>
-            {categories.map(cat => (
+            </span>
+          </Link>
+
+          {categories.map(cat => {
+            const active = categoryId === cat.id
+            const imgSrc = cat.image_url
+              ? (cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`)
+              : null
+            return (
               <Link
                 key={cat.id}
                 href={`/products?category=${cat.id}`}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  categoryId === cat.id ? 'bg-[#25D366] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#25D366] hover:text-[#25D366]'
+                className={`flex flex-col lg:flex-row items-center gap-1 lg:gap-3 px-1 lg:px-4 py-3 border-r-2 transition-colors ${
+                  active
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-transparent hover:bg-gray-50'
                 }`}
               >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-2xl mx-auto px-4 py-4">
-        {products.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-4xl mb-3">🛍️</p>
-            <p className="font-medium">No products available</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {products.map(p => (
-              <Link
-                key={p.id}
-                href={`/products/${p.id}`}
-                className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
-              >
-                {p.image_url ? (
-                  <div className="relative h-36 overflow-hidden bg-gray-50">
-                    <img
-                      src={`${API_URL}${p.image_url}`}
-                      alt={p.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {!p.in_stock && (
-                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-0.5 rounded-full border">Out of stock</span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-36 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-                    <span className="text-4xl">🛍️</span>
-                  </div>
-                )}
-                <div className="p-3">
-                  <p className="font-semibold text-gray-900 text-sm leading-tight truncate">{p.name}</p>
-                  {p.name_local && <p className="text-xs text-gray-400 truncate mt-0.5">{p.name_local}</p>}
-                  <div className="flex items-baseline gap-1.5 mt-2">
-                    <span className="font-bold text-gray-900">₹{p.selling_price}</span>
-                    {p.original_price != null && p.original_price > p.selling_price && (
-                      <span className="text-xs text-gray-400 line-through">₹{p.original_price}</span>
-                    )}
-                  </div>
-                  <div className="mt-2 w-full bg-[#25D366] text-white text-xs font-semibold py-1.5 rounded-lg text-center group-hover:bg-[#1ebe5d] transition-colors">
-                    View
-                  </div>
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+                  {imgSrc ? (
+                    <img src={imgSrc} alt={cat.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-lg">🛍️</div>
+                  )}
                 </div>
+                <span className={`text-[10px] sm:text-[11px] lg:text-sm font-semibold text-center lg:text-left line-clamp-2 leading-tight ${active ? 'text-indigo-600' : 'text-gray-600'}`}>
+                  {cat.name}
+                </span>
               </Link>
-            ))}
+            )
+          })}
+        </aside>
+
+        {/* ── Products area (scrolls on its own) ── */}
+        <div className="flex-1 min-w-0 overflow-y-auto px-3 lg:px-6 pt-4 pb-20 lg:pb-8">
+
+          {/* Header row */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="font-bold text-gray-900 text-base lg:text-xl">
+                {search
+                  ? `Results for "${search}"`
+                  : activeCategory
+                  ? `Buy ${activeCategory.name}`
+                  : 'All Products'}
+              </h1>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {products.length} item{products.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            {search && (
+              <Link href="/products" className="text-xs font-semibold text-indigo-500 hover:text-indigo-700">
+                Clear
+              </Link>
+            )}
           </div>
-        )}
+
+          {/* Products grid */}
+          {products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+              <p className="text-4xl mb-3">🛍️</p>
+              <p className="font-semibold text-gray-600">No products found</p>
+              {search && <p className="text-sm mt-1">Try a different search term</p>}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              {products.map(p => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  scrollable={false}
+                  width={210}
+                  height={409}
+                  source={activeCategory
+                    ? { type: 'category', id: activeCategory.id, name: activeCategory.name }
+                    : { type: 'products' }
+                  }
+                />
+              ))}
+            </div>
+          )}
+
+        </div>
       </div>
     </main>
   )

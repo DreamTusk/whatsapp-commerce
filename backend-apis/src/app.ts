@@ -13,6 +13,7 @@ import storefrontAuthRouter from './routes/storefront/auth.js';
 import storefrontOrdersRouter from './routes/storefront/orders.js';
 import storefrontCartRouter from './routes/storefront/cart.js';
 import storefrontWishlistRouter from './routes/storefront/wishlist.js';
+import storefrontAddressesRouter from './routes/storefront/addresses.js';
 import adminOrdersRouter from './routes/admin/orders.js';
 import adminCustomersRouter from './routes/admin/customers.js';
 import adminBrandsRouter from './routes/admin/brands.js';
@@ -27,15 +28,17 @@ const allowedOrigins = [
   'http://localhost:3002',
   'http://localhost:3003',
   'https://x60r4ghj-3001.inc1.devtunnels.ms',
-  'https://ed80-2409-40f4-1120-794e-8cb6-3675-3f36-5824.ngrok-free.app'
+  'https://x60r4ghj-3002.inc1.devtunnels.ms',
+  'https://14b2-120-60-199-220.ngrok-free.app'
 ];
 
 const localhostSubdomainPattern = /^http:\/\/[a-z0-9-]+\.localhost:\d+$/;
 const ngrokPattern = /^https:\/\/[a-z0-9-]+\.ngrok-free\.app$/;
+const devtunnelsPattern = /^https:\/\/[a-z0-9]+-\d+\.[a-z0-9]+\.devtunnels\.ms$/;
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || localhostSubdomainPattern.test(origin) || ngrokPattern.test(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || localhostSubdomainPattern.test(origin) || ngrokPattern.test(origin) || devtunnelsPattern.test(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: origin ${origin} not allowed`));
@@ -79,6 +82,7 @@ app.use('/api/storefront/auth', storefrontAuthRouter);
 app.use('/api/storefront/orders', storefrontOrdersRouter);
 app.use('/api/storefront/cart', storefrontCartRouter);
 app.use('/api/storefront/wishlist', storefrontWishlistRouter);
+app.use('/api/storefront/addresses', storefrontAddressesRouter);
 app.use('/api/storefront/categories', storefrontCategoriesRouter);
 app.use('/api/storefront/products', storefrontProductsRouter);
 app.use('/api/webhook', webhookRouter);

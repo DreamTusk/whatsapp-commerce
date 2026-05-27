@@ -34,10 +34,10 @@ export default function PageHeader({ title, backHref, actions }: Props) {
         {/* Optional action buttons (e.g. Clear all) */}
         {actions && <div className="flex items-center gap-1 flex-shrink-0">{actions}</div>}
 
-        {/* Home — always visible, essential on desktop where there's no bottom nav */}
+        {/* Home — hidden on mobile (bottom nav covers it), visible on desktop */}
         <Link
           href="/"
-          className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0"
+          className="hidden lg:flex w-9 h-9 items-center justify-center rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0"
           aria-label="Home"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"

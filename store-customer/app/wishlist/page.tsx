@@ -78,7 +78,7 @@ export default function WishlistPage() {
           </Link>
         }
       />
-      <div className="max-w-2xl mx-auto px-4 pt-4">
+      <div className="page-x pt-4">
 
         {items.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
@@ -98,7 +98,7 @@ export default function WishlistPage() {
               <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
                 {item.product.image_url ? (
                   <img
-                    src={`${API_URL}${item.product.image_url}`}
+                    src={item.product.image_url.startsWith('http') ? item.product.image_url : `${API_URL}${item.product.image_url}`}
                     alt={item.product.name}
                     className="w-16 h-16 rounded-xl object-cover shrink-0"
                   />

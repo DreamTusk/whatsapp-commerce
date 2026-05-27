@@ -15,9 +15,10 @@ interface Props {
   open: boolean
   onClose: () => void
   onSuccess: (token: string, customer: Customer) => void
+  storeName?: string | null
 }
 
-export default function OtpModal({ open, onClose, onSuccess }: Props) {
+export default function OtpModal({ open, onClose, onSuccess, storeName }: Props) {
   const [step, setStep] = useState<'phone' | 'otp' | 'name'>('phone')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
@@ -116,7 +117,14 @@ export default function OtpModal({ open, onClose, onSuccess }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6 shadow-xl">
+      <div className="relative bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden">
+
+        <div className="p-6">
+        {storeName && (
+          <p className="text-center text-3xl font-normal text-violet-600 mb-5" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
+            {storeName}
+          </p>
+        )}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-gray-900">
             {step === 'phone' ? 'Sign in to continue' : step === 'otp' ? 'Enter OTP' : 'Your name'}
@@ -141,14 +149,14 @@ export default function OtpModal({ open, onClose, onSuccess }: Props) {
                 onChange={e => setPhone(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                 placeholder="+91 98765 43210"
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
+                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               onClick={handleSendOtp}
               disabled={loading}
-              className="w-full h-11 bg-[#25D366] hover:bg-[#1ebe5d] disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
+              className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
             >
               {loading ? 'Sending…' : 'Send OTP'}
             </button>
@@ -170,14 +178,14 @@ export default function OtpModal({ open, onClose, onSuccess }: Props) {
                 onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
                 placeholder="● ● ● ● ● ●"
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
+                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               onClick={handleVerifyOtp}
               disabled={loading}
-              className="w-full h-11 bg-[#25D366] hover:bg-[#1ebe5d] disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
+              className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
             >
               {loading ? 'Verifying…' : 'Verify & continue'}
             </button>
@@ -202,13 +210,13 @@ export default function OtpModal({ open, onClose, onSuccess }: Props) {
                 onChange={e => setName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSaveName()}
                 placeholder="e.g. Rahul"
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
+                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
               />
             </div>
             <button
               onClick={handleSaveName}
               disabled={loading}
-              className="w-full h-11 bg-[#25D366] hover:bg-[#1ebe5d] disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
+              className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
             >
               {loading ? 'Saving…' : 'Continue'}
             </button>
@@ -220,6 +228,7 @@ export default function OtpModal({ open, onClose, onSuccess }: Props) {
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   )

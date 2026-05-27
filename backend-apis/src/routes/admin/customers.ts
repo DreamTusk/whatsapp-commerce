@@ -38,7 +38,6 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       name: c.name,
       phone: c.phone,
       email: c.email,
-      address: c.address,
       order_count: c._count.orders,
       total_spent: totalMap.get(c.id) ?? 0,
       last_order_at: c.orders[0]?.createdAt ?? null,

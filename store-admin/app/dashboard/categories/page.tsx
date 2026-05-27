@@ -258,7 +258,7 @@ export default function CategoriesPage() {
                             <span className="w-5 flex-shrink-0" />
                           )}
                           {cat.image_url ? (
-                            <img src={`${API_URL}${cat.image_url}`} alt={cat.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                            <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                               <ImagePlus className="w-4 h-4 text-gray-300" />
@@ -306,7 +306,7 @@ export default function CategoriesPage() {
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2 pl-9">
                             {child.image_url ? (
-                              <img src={`${API_URL}${child.image_url}`} alt={child.name} className="w-8 h-8 rounded-md object-cover flex-shrink-0" />
+                              <img src={child.image_url.startsWith('http') ? child.image_url : `${API_URL}${child.image_url}`} alt={child.name} className="w-8 h-8 rounded-md object-cover flex-shrink-0" />
                             ) : (
                               <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
                                 <ImagePlus className="w-3 h-3 text-gray-300" />

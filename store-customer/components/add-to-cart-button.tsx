@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useCartDrawer } from '@/contexts/cart-drawer'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { clientFetch } from '@/lib/client-api'
@@ -14,7 +14,7 @@ interface Props {
 export default function AddToCartButton({ productId, price }: Props) {
   const { requireAuth } = useAuth()
   const { refresh } = useCart()
-  const router = useRouter()
+  const { openCart } = useCartDrawer()
   const [loading, setLoading] = useState(false)
   const [added, setAdded] = useState(false)
 
@@ -41,7 +41,7 @@ export default function AddToCartButton({ productId, price }: Props) {
       </div>
       {added ? (
         <button
-          onClick={() => router.push('/cart')}
+          onClick={openCart}
           className="flex-[2] bg-green-500 text-white font-semibold py-3 rounded-xl text-sm"
         >
           Added ✓ View cart
@@ -50,7 +50,7 @@ export default function AddToCartButton({ productId, price }: Props) {
         <button
           onClick={() => requireAuth(doAdd)}
           disabled={loading}
-          className="flex-[2] bg-[#25D366] hover:bg-[#1ebe5d] active:bg-[#17a84f] disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+          className="flex-[2] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
         >
           {loading ? 'Adding…' : 'Add to cart'}
         </button>

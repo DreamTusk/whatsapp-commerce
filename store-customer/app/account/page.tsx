@@ -1,17 +1,17 @@
 import { headers } from 'next/headers'
 import StoreHeader from '@/components/store-header'
-import OrderDetailClient from './order-detail-client'
+import AccountClient from './account-client'
 
-export default async function OrderDetailPage() {
+export default async function AccountPage() {
   const headersList = await headers()
   const domain = headersList.get('x-store-domain') ?? ''
 
   return (
-    <main className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
+    <main className="min-h-screen bg-white">
       <div className="hidden lg:block">
         <StoreHeader domain={domain} />
       </div>
-      <OrderDetailClient />
+      <AccountClient />
     </main>
   )
 }

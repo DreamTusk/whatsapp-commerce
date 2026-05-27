@@ -118,7 +118,7 @@ export default function EditCategoryPage() {
                 {imagePreview ? (
                   <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
                 ) : category.image_url ? (
-                  <img src={`${API_URL}${category.image_url}`} alt="current" className="w-full h-full object-cover" />
+                  <img src={category.image_url.startsWith('http') ? category.image_url : `${API_URL}${category.image_url}`} alt="current" className="w-full h-full object-cover" />
                 ) : (
                   <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#25D366] transition-colors" />
                 )}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
   const domain = process.env.NEXT_PUBLIC_STORE_DOMAIN || host.split(':')[0]
 

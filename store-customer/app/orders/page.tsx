@@ -76,7 +76,7 @@ export default function OrdersPage() {
   return (
     <main className="min-h-screen bg-gray-50 pb-10">
       <PageHeader title="My Orders" backHref="/" />
-      <div className="max-w-2xl mx-auto px-4 pt-4">
+      <div className="page-x pt-4">
 
         {orders.length === 0 ? (
           <div className="text-center py-20">

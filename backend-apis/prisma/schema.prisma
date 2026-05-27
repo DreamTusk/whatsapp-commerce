@@ -54,16 +54,17 @@ model Store {
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
-  brands        Brand[]
-  categories    Category[]
-  products      Product[]
-  orders        Order[]
-  customers     Customer[]
-  cartItems     CartItem[]
-  wishlistItems WishlistItem[]
-  customerOtps  CustomerOtp[]
-  userStores    UserStore[]
-  storeInvites  StoreInvite[]
+  brands            Brand[]
+  categories        Category[]
+  products          Product[]
+  orders            Order[]
+  customers         Customer[]
+  cartItems         CartItem[]
+  wishlistItems     WishlistItem[]
+  customerOtps      CustomerOtp[]
+  userStores        UserStore[]
+  storeInvites      StoreInvite[]
+  customerAddresses CustomerAddress[]
 }
 
 model User {
@@ -178,15 +179,6 @@ model Customer {
   phone     String?
   email     String?
   name      String?
-  address   String?
-  doorNo    String?
-  street    String?
-  city      String?
-  state     String?
-  country   String?
-  pincode   String?
-  latitude  Float?
-  longitude Float?
   storeId   String
   store     Store    @relation(fields: [storeId], references: [id])
   createdAt DateTime @default(now())
@@ -196,8 +188,30 @@ model Customer {
   cartItems     CartItem[]
   wishlistItems WishlistItem[]
   sessions      ConversationSession[]
+  addresses     CustomerAddress[]
 
   @@unique([phone, storeId])
+}
+
+model CustomerAddress {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id])
+  label      String?
+  address    String?
+  doorNo     String?
+  street     String?
+  city       String?
+  state      String?
+  country    String?
+  pincode    String?
+  latitude   Float?
+  longitude  Float?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model CustomerOtp {
@@ -244,6 +258,7 @@ model Order {
   notes              String?
   altPhone           String?
   cancellationReason String?
+  cancelledBy        String?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 

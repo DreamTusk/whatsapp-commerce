@@ -135,7 +135,7 @@ export default function EditProductPage() {
                 {imagePreview ? (
                   <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
                 ) : product.image_url ? (
-                  <img src={`${API_URL}${product.image_url}`} alt="current" className="w-full h-full object-cover" />
+                  <img src={product.image_url.startsWith('http') ? product.image_url : `${API_URL}${product.image_url}`} alt="current" className="w-full h-full object-cover" />
                 ) : (
                   <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#25D366] transition-colors" />
                 )}

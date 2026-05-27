@@ -22,6 +22,7 @@ async function generateOrderNumber(storeId: string): Promise<string> {
 const formatOrderItem = (item: {
   id: string; productId: string; productName: string;
   price: number; quantity: number; subtotal: number;
+  product: { imageUrl: string | null };
 }) => ({
   id: item.id,
   product_id: item.productId,
@@ -29,12 +30,14 @@ const formatOrderItem = (item: {
   price: item.price,
   quantity: item.quantity,
   subtotal: item.subtotal,
+  image_url: item.product.imageUrl ?? null,
 });
 
 const formatOrder = (o: {
   id: string; orderNumber: string; totalAmount: number; status: string;
   address: string | null; notes: string | null; createdAt: Date; updatedAt: Date;
-  items: { id: string; productId: string; productName: string; price: number; quantity: number; subtotal: number }[];
+  cancellationReason: string | null; cancelledBy: string | null;
+  items: { id: string; productId: string; productName: string; price: number; quantity: number; subtotal: number; product: { imageUrl: string | null } }[];
   payment: { method: string; status: string; paidAt: Date | null } | null;
 }) => ({
   id: o.id,
@@ -43,6 +46,8 @@ const formatOrder = (o: {
   status: o.status,
   address: o.address,
   notes: o.notes,
+  cancellation_reason: o.cancellationReason,
+  cancelled_by: o.cancelledBy,
   created_at: o.createdAt,
   updated_at: o.updatedAt,
   items: o.items.map(formatOrderItem),
@@ -59,7 +64,7 @@ router.get('/', customerAuthMiddleware, async (req: Request, res: Response): Pro
     const { customerId } = req.customer!;
     const orders = await prisma.order.findMany({
       where: { customerId },
-      include: { items: true, payment: true },
+      include: { items: { include: { product: { select: { imageUrl: true } } } }, payment: true },
       orderBy: { createdAt: 'desc' },
     });
     res.json({ orders: orders.map(formatOrder) });
@@ -78,12 +83,30 @@ router.post('/', customerAuthMiddleware, async (req: Request, res: Response): Pr
     const store = await getStore(domain);
     if (!store || store.id !== storeId) { res.status(404).json({ error: 'Store not found' }); return; }
 
-    const { items, address, notes, alt_phone, name, door_no, street, city, state, country, pincode, payment_method = 'COD', latitude, longitude } = req.body;
+    const { items, address_id, address, notes, alt_phone, name, door_no, street, city, state, country, pincode, payment_method = 'COD', latitude, longitude } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       res.status(400).json({ error: 'items array is required' }); return;
     }
-    if (!address) { res.status(400).json({ error: 'address is required' }); return; }
+
+    // Resolve delivery address — either from saved address book or raw fields
+    let deliveryAddress = { address, doorNo: door_no, street, city, state, country, pincode, latitude, longitude };
+
+    if (address_id) {
+      const saved = await prisma.customerAddress.findFirst({
+        where: { id: address_id, customerId, storeId },
+      });
+      if (!saved) { res.status(404).json({ error: 'Saved address not found' }); return; }
+      deliveryAddress = {
+        address: saved.address, doorNo: saved.doorNo, street: saved.street,
+        city: saved.city, state: saved.state, country: saved.country,
+        pincode: saved.pincode, latitude: saved.latitude, longitude: saved.longitude,
+      };
+    }
+
+    if (!deliveryAddress.address && !deliveryAddress.street && !deliveryAddress.city) {
+      res.status(400).json({ error: 'address or address_id is required' }); return;
+    }
 
     const method = payment_method.toUpperCase() === 'ONLINE' ? PaymentMethod.ONLINE : PaymentMethod.COD;
 
@@ -130,21 +153,21 @@ router.post('/', customerAuthMiddleware, async (req: Request, res: Response): Pr
             storeId,
             totalAmount,
             status: OrderStatus.NEW,
-            address,
+            address: deliveryAddress.address ?? null,
             notes: notes ?? null,
             altPhone: typeof alt_phone === 'string' && alt_phone.trim() ? alt_phone.trim() : null,
-            doorNo: door_no?.trim() || null,
-            street: street?.trim() || null,
-            city: city?.trim() || null,
-            state: state?.trim() || null,
-            country: country?.trim() || null,
-            pincode: pincode?.trim() || null,
-            latitude: typeof latitude === 'number' ? latitude : null,
-            longitude: typeof longitude === 'number' ? longitude : null,
+            doorNo: deliveryAddress.doorNo?.trim() || null,
+            street: deliveryAddress.street?.trim() || null,
+            city: deliveryAddress.city?.trim() || null,
+            state: deliveryAddress.state?.trim() || null,
+            country: deliveryAddress.country?.trim() || null,
+            pincode: deliveryAddress.pincode?.trim() || null,
+            latitude: typeof deliveryAddress.latitude === 'number' ? deliveryAddress.latitude : null,
+            longitude: typeof deliveryAddress.longitude === 'number' ? deliveryAddress.longitude : null,
             items: { create: orderItemsData },
             payment: { create: { method, status: PaymentStatus.PENDING } },
           },
-          include: { items: true, payment: true },
+          include: { items: { include: { product: { select: { imageUrl: true } } } }, payment: true },
         });
         break;
       } catch (err) {
@@ -153,19 +176,9 @@ router.post('/', customerAuthMiddleware, async (req: Request, res: Response): Pr
       }
     }
 
-    await prisma.customer.update({
-      where: { id: customerId },
-      data: {
-        ...(name?.trim() ? { name: name.trim() } : {}),
-        address,
-        doorNo: door_no?.trim() || null,
-        street: street?.trim() || null,
-        city: city?.trim() || null,
-        state: state?.trim() || null,
-        country: country?.trim() || null,
-        pincode: pincode?.trim() || null,
-      },
-    });
+    if (name?.trim()) {
+      await prisma.customer.update({ where: { id: customerId }, data: { name: name.trim() } });
+    }
 
     await prisma.cartItem.deleteMany({ where: { customerId, storeId } });
 
@@ -176,13 +189,36 @@ router.post('/', customerAuthMiddleware, async (req: Request, res: Response): Pr
   }
 });
 
+// PATCH /api/storefront/orders/:id/cancel
+router.patch('/:id/cancel', customerAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { customerId } = req.customer!;
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id as string, customerId },
+    });
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+    if (!['NEW', 'CONFIRMED'].includes(order.status)) {
+      res.status(400).json({ error: 'Order cannot be cancelled at this stage' }); return;
+    }
+    const { reason } = req.body;
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: { status: OrderStatus.CANCELLED, cancelledBy: 'CUSTOMER', cancellationReason: reason?.trim() || null },
+      include: { items: { include: { product: { select: { imageUrl: true } } } }, payment: true },
+    });
+    res.json({ order: formatOrder(updated) });
+  } catch {
+    res.status(500).json({ error: 'Failed to cancel order' });
+  }
+});
+
 // GET /api/storefront/orders/:id
 router.get('/:id', customerAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { customerId } = req.customer!;
     const order = await prisma.order.findFirst({
       where: { id: req.params.id as string, customerId },
-      include: { items: true, payment: true },
+      include: { items: { include: { product: { select: { imageUrl: true } } } }, payment: true },
     });
 
     if (!order) { res.status(404).json({ error: 'Order not found' }); return; }

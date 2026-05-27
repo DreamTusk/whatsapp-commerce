@@ -90,7 +90,7 @@ export default function ProductDetailPage() {
             <div className="flex items-start gap-6">
               {product.image_url ? (
                 <img
-                  src={`${API_URL}${product.image_url}`}
+                  src={product.image_url.startsWith('http') ? product.image_url : `${API_URL}${product.image_url}`}
                   alt={product.name}
                   className="w-32 h-32 rounded-2xl object-cover flex-shrink-0"
                 />

@@ -39,7 +39,7 @@ const formatOrder = (o: {
   doorNo: string | null; street: string | null; city: string | null;
   state: string | null; country: string | null; pincode: string | null;
   latitude: number | null; longitude: number | null;
-  notes: string | null; altPhone: string | null; cancellationReason?: string | null;
+  notes: string | null; altPhone: string | null; cancellationReason?: string | null; cancelledBy?: string | null;
   createdAt: Date; updatedAt: Date;
   customer: { name: string | null; phone: string | null };
   items: { id: string; productId: string; productName: string; price: number; quantity: number; subtotal: number }[];
@@ -63,6 +63,7 @@ const formatOrder = (o: {
   notes: o.notes,
   alt_phone: o.altPhone,
   cancellation_reason: o.cancellationReason,
+  cancelled_by: o.cancelledBy ?? null,
   created_at: o.createdAt,
   updated_at: o.updatedAt,
   customer: { name: o.customer.name, phone: o.customer.phone },
@@ -189,9 +190,10 @@ router.put('/:id/status', async (req: Request, res: Response): Promise<void> => 
     });
     if (!existing) { res.status(404).json({ error: 'Order not found' }); return; }
 
-    const updateData: { status: OrderStatus; cancellationReason?: string } = { status };
+    const updateData: { status: OrderStatus; cancellationReason?: string; cancelledBy?: string } = { status };
     if (status === OrderStatus.CANCELLED) {
       updateData.cancellationReason = cancellation_reason.trim();
+      updateData.cancelledBy = 'STORE';
     }
 
     const order = await prisma.order.update({

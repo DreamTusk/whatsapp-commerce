@@ -5,16 +5,16 @@ import StoreHeader from '@/components/store-header'
 import ProductDetailClient from '@/components/product-detail-client'
 import type { Product } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
-
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ from?: string; catId?: string; catName?: string }>
 }
 
-export default async function ProductDetailPage({ params }: Props) {
+export default async function ProductDetailPage({ params, searchParams }: Props) {
   const headersList = await headers()
   const domain = headersList.get('x-store-domain') ?? ''
   const { id } = await params
+  const { from, catId, catName } = await searchParams
 
   let product: Product | null = null
 
@@ -30,7 +30,7 @@ export default async function ProductDetailPage({ params }: Props) {
         <div className="flex flex-col items-center justify-center py-24 text-gray-400">
           <p className="text-4xl mb-3">🔍</p>
           <p className="font-medium">Product not found</p>
-          <Link href="/products" className="mt-4 text-sm text-[#25D366] font-medium hover:underline">
+          <Link href="/products" className="mt-4 text-sm text-indigo-500 font-medium hover:underline">
             Browse products
           </Link>
         </div>
@@ -38,64 +38,42 @@ export default async function ProductDetailPage({ params }: Props) {
     )
   }
 
+  // Build breadcrumbs based on navigation source
+  const breadcrumbs: { label: string; href: string | null }[] = [
+    { label: 'Home', href: '/' },
+  ]
+
+  if (catId && catName) {
+    breadcrumbs.push({ label: decodeURIComponent(catName), href: `/products?category=${catId}` })
+  } else if (from === 'all') {
+    breadcrumbs.push({ label: 'All Products', href: '/products' })
+  } else if (from === 'products') {
+    breadcrumbs.push({ label: 'Products', href: '/products' })
+  } else if (product.category) {
+    breadcrumbs.push({ label: product.category.name, href: `/products?category=${product.category.id}` })
+  } else {
+    breadcrumbs.push({ label: 'Products', href: '/products' })
+  }
+
+  breadcrumbs.push({ label: product.name, href: null })
+
   return (
-    <main className="min-h-screen bg-gray-50 pb-28">
-      <StoreHeader domain={domain} />
-
-      <div className="max-w-2xl mx-auto px-4 pt-4">
-        <Link
-          href={product.category ? `/products?category=${product.category.id}` : '/products'}
-          className="inline-flex items-center gap-1.5 text-sm text-[#25D366] font-medium hover:underline"
-        >
-          <span>←</span>
-          <span>{product.category?.name ?? 'Products'}</span>
-        </Link>
+    <main>
+      <div className="hidden lg:block">
+        <StoreHeader domain={domain} />
       </div>
-
-      <div className="max-w-2xl mx-auto">
-        {/* Product image */}
-        <div className="mt-3 mx-4 rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
-          {product.image_url ? (
-            <img
-              src={`${API_URL}${product.image_url}`}
-              alt={product.name}
-              className="w-full h-72 object-cover"
-            />
-          ) : (
-            <div className="w-full h-72 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-              <span className="text-7xl">🛍️</span>
-            </div>
-          )}
-        </div>
-
-        {/* Product info */}
-        <div className="mx-4 mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          {product.category && (
-            <span className="inline-block text-xs font-medium text-[#25D366] bg-[#25D366]/10 px-2.5 py-1 rounded-full mb-3">
-              {product.category.name}
-            </span>
-          )}
-
-          <h1 className="text-xl font-bold text-gray-900 leading-snug">{product.name}</h1>
-          {product.name_local && (
-            <p className="text-sm text-gray-400 mt-0.5">{product.name_local}</p>
-          )}
-
-          <ProductDetailClient
-            productId={product.id}
-            sellingPrice={product.selling_price}
-            originalPrice={product.original_price}
-            inStock={product.in_stock}
-          />
-
-          {product.description && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-sm font-semibold text-gray-700 mb-1">About this product</p>
-              <p className="text-sm text-gray-500 leading-relaxed">{product.description}</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <ProductDetailClient
+        productId={product.id}
+        productName={product.name}
+        productImage={product.image_url ?? null}
+        sellingPrice={product.selling_price}
+        originalPrice={product.original_price ?? null}
+        inStock={product.in_stock}
+        unit={product.unit ?? null}
+        description={product.description ?? null}
+        categoryName={product.category?.name ?? null}
+        breadcrumbs={breadcrumbs}
+      />
     </main>
   )
 }

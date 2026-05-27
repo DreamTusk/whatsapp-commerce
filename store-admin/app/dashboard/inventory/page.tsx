@@ -114,7 +114,7 @@ export default function InventoryPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {product.image_url ? (
-                        <img src={`${API_URL}${product.image_url}`} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                        <img src={product.image_url.startsWith('http') ? product.image_url : `${API_URL}${product.image_url}`} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-9 h-9 rounded-lg bg-gray-100 flex-shrink-0" />
                       )}
