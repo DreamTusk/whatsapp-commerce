@@ -4,8 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
+import { useWishlist } from '@/contexts/wishlist'
 import { clientFetch } from '@/lib/client-api'
-import { addToGuestCart } from '@/lib/guest-cart'
+import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
 import type { Product } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -31,10 +32,12 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
       ? `/products/${p.id}?catId=${source.id}&catName=${encodeURIComponent(source.name)}`
       : `/products/${p.id}?from=products`
     : `/products/${p.id}`
-  const { isAuthenticated } = useAuth()
-  const { refresh } = useCart()
+  const { isAuthenticated, requireAuth } = useAuth()
+  const { refresh, items: cartItems } = useCart()
+  const { has: isWishlisted, toggle: toggleWishlist } = useWishlist()
   const [loading, setLoading] = useState(false)
   const [added, setAdded] = useState(false)
+  const cartQty = cartItems[p.id] ?? 0
 
   const hasDiscount = p.original_price != null && p.original_price > p.selling_price
   const discountPct = hasDiscount
@@ -67,6 +70,37 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
     }
   }
 
+  async function handleIncrease() {
+    if (!isAuthenticated) { updateGuestQty(p.id, cartQty + 1); await refresh(); return }
+    setLoading(true)
+    try {
+      await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty + 1 }) })
+      await refresh()
+    } catch { /* silent */ } finally { setLoading(false) }
+  }
+
+  async function handleDecrease() {
+    if (!isAuthenticated) { updateGuestQty(p.id, cartQty - 1); await refresh(); return }
+    setLoading(true)
+    try {
+      if (cartQty <= 1) {
+        await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'DELETE' })
+      } else {
+        await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty - 1 }) })
+      }
+      await refresh()
+    } catch { /* silent */ } finally { setLoading(false) }
+  }
+
+  async function handleRemove() {
+    if (!isAuthenticated) { updateGuestQty(p.id, 0); await refresh(); return }
+    setLoading(true)
+    try {
+      await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'DELETE' })
+      await refresh()
+    } catch { /* silent */ } finally { setLoading(false) }
+  }
+
   return (
     <div
       className={`bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col ${scrollable ? 'flex-shrink-0' : 'w-full'}`}
@@ -77,33 +111,43 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
       }}
     >
       {/* Image */}
-      <Link
-        href={productHref}
-        className="relative block flex-shrink-0 bg-gray-50 overflow-hidden"
+      <div
+        className="relative flex-shrink-0 bg-gray-50 overflow-hidden"
         style={{ height: imgHeight ? `${imgHeight}px` : undefined }}
       >
-        {p.image_url ? (
-          <img
-            src={p.image_url.startsWith('http') ? p.image_url : `${API_URL}${p.image_url}`}
-            alt={p.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-3xl lg:text-4xl">🛍️</div>
-        )}
+        <Link href={productHref} className="block w-full h-full">
+          {p.image_url ? (
+            <img
+              src={p.image_url.startsWith('http') ? p.image_url : `${API_URL}${p.image_url}`}
+              alt={p.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-3xl lg:text-4xl">🛍️</div>
+          )}
+        </Link>
         {discountPct && (
-          <div className="absolute top-0 left-0 w-[42%] py-[5%] bg-rose-500 rounded-br-xl flex items-center justify-center">
+          <div className="absolute top-0 left-0 w-[42%] py-[5%] bg-rose-500 rounded-br-xl flex items-center justify-center pointer-events-none">
             <span className="text-[9px] sm:text-[10px] lg:text-xs font-bold text-white">{discountPct}% off</span>
           </div>
         )}
+        {/* Wishlist heart */}
+        <button
+          onClick={() => requireAuth(() => toggleWishlist(p.id))}
+          className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white transition-colors z-10"
+        >
+          <svg className={`w-3.5 h-3.5 transition-colors ${isWishlisted(p.id) ? 'text-rose-500' : 'text-gray-400'}`} fill={isWishlisted(p.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </button>
         {!p.in_stock && (
-          <div className="absolute inset-0 bg-white/65 flex items-center justify-center">
+          <div className="absolute inset-0 bg-white/65 flex items-center justify-center pointer-events-none">
             <span className="text-[10px] font-semibold text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">
               Out of stock
             </span>
           </div>
         )}
-      </Link>
+      </div>
 
       {/* Info */}
       <div className="flex flex-col gap-[8px] lg:gap-[11px] p-2 lg:p-3 flex-1">
@@ -113,7 +157,7 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
           </p>
         </Link>
 
-        <p className="text-[9px] sm:text-[10px] text-gray-400 truncate -mt-1">
+        <p className="text-[11px] sm:text-[12px] lg:text-[13px] text-gray-400 truncate -mt-1">
           {p.unit ?? ' '}
         </p>
 
@@ -124,37 +168,58 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
           )}
         </div>
 
-        <button
-          onClick={handleAdd}
-          disabled={loading || !p.in_stock || added}
-          className={`mt-auto w-full h-[34px] sm:h-[40px] lg:h-[48px] flex items-center justify-center gap-[6px] lg:gap-[8px] px-[6px] lg:px-[8px] rounded-lg border transition-all font-semibold text-[11px] sm:text-[13px] lg:text-[16px] leading-none tracking-[0px] text-center [font-family:var(--font-instrument-sans)] ${
-            added
-              ? 'bg-green-500 border-green-500 text-white'
-              : loading
-              ? 'border-indigo-300 text-indigo-400'
-              : !p.in_stock
-              ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-              : 'border-indigo-400 text-indigo-600 bg-transparent hover:bg-indigo-500 hover:border-indigo-500 hover:text-white active:bg-indigo-600'
-          }`}
-        >
-          {loading ? (
-            <div className="w-3 h-3 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
-          ) : added ? (
-            <>
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-              </svg>
-              Added!
-            </>
-          ) : (
-            <>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 5H3m4 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
-              </svg>
-              Add to cart
-            </>
-          )}
-        </button>
+        {cartQty > 0 ? (
+          <div className="mt-auto w-full h-[40px] sm:h-[46px] lg:h-[52px] flex items-center justify-between rounded-lg border border-indigo-400 overflow-hidden [font-family:var(--font-instrument-sans)]">
+            <button onClick={cartQty === 1 ? handleRemove : handleDecrease} disabled={loading}
+              className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40"
+            >
+              {loading
+                ? <div className="w-3.5 h-3.5 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                : cartQty === 1
+                ? <svg className="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                : <span className="text-xl font-bold">−</span>
+              }
+            </button>
+            <span className="text-[13px] sm:text-[14px] lg:text-[15px] font-bold text-gray-900">{cartQty}</span>
+            <button onClick={handleIncrease} disabled={loading || !p.in_stock}
+              className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40 text-xl font-bold"
+            >
+              {loading ? <div className="w-3.5 h-3.5 border border-indigo-400 border-t-transparent rounded-full animate-spin" /> : '+'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleAdd}
+            disabled={loading || !p.in_stock || added}
+            className={`mt-auto w-full h-[40px] sm:h-[46px] lg:h-[52px] flex items-center justify-center gap-[6px] lg:gap-[8px] px-[6px] lg:px-[8px] rounded-lg border transition-all font-semibold text-[12px] sm:text-[14px] lg:text-[16px] leading-none tracking-[0px] text-center [font-family:var(--font-instrument-sans)] ${
+              added
+                ? 'bg-green-500 border-green-500 text-white'
+                : loading
+                ? 'border-indigo-300 text-indigo-400'
+                : !p.in_stock
+                ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                : 'border-indigo-400 text-indigo-600 bg-transparent hover:bg-indigo-500 hover:border-indigo-500 hover:text-white active:bg-indigo-600'
+            }`}
+          >
+            {loading ? (
+              <div className="w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
+            ) : added ? (
+              <>
+                <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                </svg>
+                Added!
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 5H3m4 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
+                </svg>
+                Add to cart
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   )

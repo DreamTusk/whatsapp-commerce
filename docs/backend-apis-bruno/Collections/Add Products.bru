@@ -1,0 +1,26 @@
+meta {
+  name: Add Products (Manual)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url_local}}/collections/:id/products
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: COLLECTION_ID
+}
+
+body:json {
+  {
+    "product_ids": ["PRODUCT_ID_1", "PRODUCT_ID_2"]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

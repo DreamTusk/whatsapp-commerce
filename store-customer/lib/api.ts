@@ -12,7 +12,7 @@ export async function apiFetch<T>(
       'x-store-domain': domain,
       ...(options?.headers ?? {}),
     },
-    next: { revalidate: 60 },
+    cache: 'no-store',
   })
 
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`)

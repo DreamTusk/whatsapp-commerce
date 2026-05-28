@@ -59,7 +59,7 @@ export default function EditBrandPage() {
     return (
       <div className="text-center py-40 text-gray-400">
         <p className="text-lg font-medium">Brand not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-base text-[#25D366] hover:underline cursor-pointer">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-base text-[#6366f1] hover:underline cursor-pointer">Go back</button>
       </div>
     )
   }
@@ -89,7 +89,7 @@ export default function EditBrandPage() {
           </div>
 
           <Button
-            className="bg-[#25D366] hover:bg-[#1ebe5d] text-white w-full h-11 text-base"
+            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
             onClick={handleSave}
             disabled={isSaving}
           >

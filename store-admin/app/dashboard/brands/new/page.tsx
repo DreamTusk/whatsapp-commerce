@@ -56,7 +56,7 @@ export default function NewBrandPage() {
           </div>
 
           <Button
-            className="bg-[#25D366] hover:bg-[#1ebe5d] text-white w-full h-11 text-base"
+            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
             onClick={handleSave}
             disabled={isSaving}
           >

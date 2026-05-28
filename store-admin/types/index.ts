@@ -106,6 +106,30 @@ export interface Order {
   payment: Payment | null
 }
 
+export interface CollectionFilter {
+  field: 'price' | 'category_id' | 'brand_id' | 'name' | 'in_stock'
+  operator: 'eq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains'
+  value: string | number | boolean
+}
+
+export interface CollectionCriteria {
+  match: 'all' | 'any'
+  filters: CollectionFilter[]
+}
+
+export interface Collection {
+  id: string
+  name: string
+  type: 'manual' | 'auto'
+  criteria: CollectionCriteria | null
+  is_active: boolean
+  display_order: number
+  image_url: string | null
+  product_count?: number
+  created_at: string
+  updated_at: string
+}
+
 export interface ApiError {
   error: string
 }

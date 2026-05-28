@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
-import { addToGuestCart } from '@/lib/guest-cart'
+import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -33,12 +33,14 @@ export default function ProductDetailClient({
 }: Props) {
   const router = useRouter()
   const { isAuthenticated, requireAuth } = useAuth()
-  const { refresh } = useCart()
+  const { refresh, items: cartItems } = useCart()
   const { openCart } = useCartDrawer()
 
-  const [qty, setQty] = useState(1)
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
+  const [cartLoading, setCartLoading] = useState(false)
+
+  const cartQty = cartItems[productId] ?? 0
   const [wishlisted, setWishlisted] = useState(false)
   const [wishlistLoading, setWishlistLoading] = useState(false)
 
@@ -57,12 +59,10 @@ export default function ProductDetailClient({
 
   async function addToCart() {
     if (!isAuthenticated) {
-      for (let i = 0; i < qty; i++) {
-        addToGuestCart({
-          product_id: productId, name: productName, image_url: productImage,
-          selling_price: sellingPrice, original_price: originalPrice, in_stock: inStock,
-        })
-      }
+      addToGuestCart({
+        product_id: productId, name: productName, image_url: productImage,
+        selling_price: sellingPrice, original_price: originalPrice, in_stock: inStock,
+      })
       await refresh()
       setAdded(true)
       setTimeout(() => setAdded(false), 2000)
@@ -70,18 +70,47 @@ export default function ProductDetailClient({
     }
     setAdding(true)
     try {
-      for (let i = 0; i < qty; i++) {
-        await clientFetch('/api/storefront/cart', {
-          method: 'POST',
-          body: JSON.stringify({ product_id: productId }),
-        })
-      }
+      await clientFetch('/api/storefront/cart', {
+        method: 'POST',
+        body: JSON.stringify({ product_id: productId }),
+      })
       await refresh()
       setAdded(true)
       setTimeout(() => setAdded(false), 2000)
     } catch { /* silent */ } finally {
       setAdding(false)
     }
+  }
+
+  async function handleIncrease() {
+    if (!isAuthenticated) { updateGuestQty(productId, cartQty + 1); await refresh(); return }
+    setCartLoading(true)
+    try {
+      await clientFetch(`/api/storefront/cart/${productId}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty + 1 }) })
+      await refresh()
+    } catch { /* silent */ } finally { setCartLoading(false) }
+  }
+
+  async function handleDecrease() {
+    if (!isAuthenticated) { updateGuestQty(productId, cartQty - 1); await refresh(); return }
+    setCartLoading(true)
+    try {
+      if (cartQty <= 1) {
+        await clientFetch(`/api/storefront/cart/${productId}`, { method: 'DELETE' })
+      } else {
+        await clientFetch(`/api/storefront/cart/${productId}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty - 1 }) })
+      }
+      await refresh()
+    } catch { /* silent */ } finally { setCartLoading(false) }
+  }
+
+  async function removeFromCart() {
+    if (!isAuthenticated) { updateGuestQty(productId, 0); await refresh(); return }
+    setCartLoading(true)
+    try {
+      await clientFetch(`/api/storefront/cart/${productId}`, { method: 'DELETE' })
+      await refresh()
+    } catch { /* silent */ } finally { setCartLoading(false) }
   }
 
   async function toggleWishlist() {
@@ -105,6 +134,22 @@ export default function ProductDetailClient({
   const imgSrc = productImage
     ? (productImage.startsWith('http') ? productImage : `${API_URL}${productImage}`)
     : null
+
+  const CartStepper = ({ className }: { className?: string }) => (
+    <div className={`flex items-center justify-between rounded-xl border border-indigo-400 overflow-hidden [font-family:var(--font-instrument-sans)] ${className}`}>
+      <button onClick={handleDecrease} disabled={cartLoading}
+        className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40 text-xl font-bold"
+      >
+        {cartLoading ? <div className="w-4 h-4 border border-indigo-400 border-t-transparent rounded-full animate-spin" /> : '−'}
+      </button>
+      <span className="text-base font-bold text-gray-900">{cartQty}</span>
+      <button onClick={handleIncrease} disabled={cartLoading || !inStock}
+        className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40 text-xl font-bold"
+      >
+        {cartLoading ? <div className="w-4 h-4 border border-indigo-400 border-t-transparent rounded-full animate-spin" /> : '+'}
+      </button>
+    </div>
+  )
 
   const AddToCartBtn = ({ className }: { className?: string }) => (
     added ? (
@@ -223,7 +268,23 @@ export default function ProductDetailClient({
 
         {/* Fixed bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg px-4 py-3 z-40 flex flex-col gap-2">
-          <AddToCartBtn className="w-full py-3.5" />
+          {cartQty > 0 ? (
+            <>
+              <CartStepper className="w-full h-[52px]" />
+              <button
+                onClick={removeFromCart}
+                disabled={cartLoading}
+                className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors disabled:opacity-40"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Remove from cart
+              </button>
+            </>
+          ) : (
+            <AddToCartBtn className="w-full py-3.5" />
+          )}
           <button
             onClick={() => requireAuth(toggleWishlist)}
             disabled={wishlistLoading}
@@ -305,26 +366,6 @@ export default function ProductDetailClient({
                 </p>
               )}
 
-              {/* Qty selector */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-gray-600">Quantity</span>
-                <div className="flex items-center gap-3 bg-gray-100 rounded-xl px-1 py-1">
-                  <button
-                    onClick={() => setQty(q => Math.max(1, q - 1))}
-                    className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-gray-700 hover:bg-gray-50 transition-colors font-bold"
-                  >
-                    −
-                  </button>
-                  <span className="text-sm font-bold text-gray-900 w-6 text-center">{qty}</span>
-                  <button
-                    onClick={() => setQty(q => q + 1)}
-                    className="w-8 h-8 rounded-lg bg-indigo-500 shadow-sm flex items-center justify-center text-white hover:bg-indigo-600 transition-colors font-bold"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
               {description && (
                 <div className="border-t border-gray-100 pt-4">
                   <p className="text-sm font-semibold text-gray-700 mb-2">Description</p>
@@ -334,7 +375,23 @@ export default function ProductDetailClient({
 
               {/* Buttons */}
               <div className="flex flex-col gap-3 mt-auto">
-                <AddToCartBtn className="w-full py-4 text-base" />
+                {cartQty > 0 ? (
+                  <>
+                    <CartStepper className="w-full h-[56px]" />
+                    <button
+                      onClick={removeFromCart}
+                      disabled={cartLoading}
+                      className="w-full py-4 rounded-xl border border-rose-200 text-rose-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Remove from cart
+                    </button>
+                  </>
+                ) : (
+                  <AddToCartBtn className="w-full py-4 text-base" />
+                )}
                 <button
                   onClick={() => requireAuth(toggleWishlist)}
                   disabled={wishlistLoading}

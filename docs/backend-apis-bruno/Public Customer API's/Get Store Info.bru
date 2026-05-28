@@ -14,6 +14,13 @@ headers {
   x-store-domain: freshmart.localhost
 }
 
+docs {
+  Response now includes a `collections` array alongside `store`.
+  Each collection has: id, name, type (manual|auto), image_url, products[].
+  Collections are ordered by display_order (asc), only is_active=true ones are returned.
+  Auto collections have their products resolved live via criteria at request time.
+}
+
 settings {
   encodeUrl: true
   timeout: 0

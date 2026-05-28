@@ -94,7 +94,7 @@ function ResetPasswordForm() {
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 mb-6 lg:hidden">
-          <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xs">DT</span>
           </div>
           <span className="font-bold text-gray-900">DT Commerce</span>
@@ -122,7 +122,7 @@ function ResetPasswordForm() {
                 onChange={(e) => handleOtpChange(i, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(i, e)}
                 onPaste={handlePaste}
-                className="w-12 h-14 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent transition-all"
+                className="w-12 h-14 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent transition-all"
               />
             ))}
           </div>
@@ -184,7 +184,7 @@ function ResetPasswordForm() {
 
         <Button
           type="submit"
-          className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+          className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

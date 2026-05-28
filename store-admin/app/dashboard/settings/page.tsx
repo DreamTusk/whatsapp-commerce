@@ -102,13 +102,13 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label className="text-base">Logo</Label>
             <label className="flex items-center gap-4 cursor-pointer group w-fit">
-              <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-gray-200 group-hover:border-[#25D366] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+              <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
                 {currentLogo ? (
                   <img src={currentLogo} alt="logo" className="w-full h-full object-cover" />
                 ) : (
                   <div className="flex flex-col items-center gap-1">
-                    <Store className="w-6 h-6 text-gray-300 group-hover:text-[#25D366] transition-colors" />
-                    <ImagePlus className="w-4 h-4 text-gray-300 group-hover:text-[#25D366] transition-colors" />
+                    <Store className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                    <ImagePlus className="w-4 h-4 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
                   </div>
                 )}
               </div>
@@ -131,7 +131,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => isActive ? setDeactivateConfirm(true) : setIsActive(true)}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 cursor-pointer ${
-                isActive ? 'bg-[#25D366]' : 'bg-gray-200'
+                isActive ? 'bg-[#6366f1]' : 'bg-gray-200'
               }`}
             >
               <span
@@ -201,7 +201,7 @@ export default function SettingsPage() {
           </div>
 
           <Button
-            className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white h-11 text-base"
+            className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white h-11 text-base"
             onClick={handleSave}
             disabled={isSaving}
           >

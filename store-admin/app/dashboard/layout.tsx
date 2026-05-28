@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   LayoutDashboard, ShoppingBag, Package, Tag, Users, Settings,
-  LogOut, Pencil, Menu, X, Store, BookMarked, Warehouse,
+  LogOut, Pencil, Menu, X, Store, BookMarked, Warehouse, Layers,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
@@ -17,8 +17,9 @@ const NAV_ITEMS = [
   { label: 'Products',   href: '/dashboard/products',   icon: Package },
   { label: 'Inventory',  href: '/dashboard/inventory',  icon: Warehouse },
   { label: 'Brands',     href: '/dashboard/brands',     icon: BookMarked },
-  { label: 'Categories', href: '/dashboard/categories', icon: Tag },
-  { label: 'Customers',  href: '/dashboard/customers',  icon: Users },
+  { label: 'Categories',   href: '/dashboard/categories',   icon: Tag },
+  { label: 'Collections',  href: '/dashboard/collections',  icon: Layers },
+  { label: 'Customers',    href: '/dashboard/customers',    icon: Users },
   { label: 'Settings',   href: '/dashboard/settings',   icon: Settings },
 ]
 
@@ -72,8 +73,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {store.logo ? (
               <img src={store.logo} alt={store.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
             ) : (
-              <div className="w-10 h-10 bg-[#25D366]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Store className="w-5 h-5 text-[#25D366]" />
+              <div className="w-10 h-10 bg-[#6366f1]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Store className="w-5 h-5 text-[#6366f1]" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -102,7 +103,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-medium transition-colors ${
                 active
-                  ? 'bg-[#25D366]/10 text-[#25D366]'
+                  ? 'bg-[#6366f1]/10 text-[#6366f1]'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
@@ -176,8 +177,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {store?.logo ? (
             <img src={store.logo} alt={store.name} className="w-7 h-7 rounded-lg object-cover" />
           ) : (
-            <div className="w-7 h-7 bg-[#25D366]/10 rounded-lg flex items-center justify-center">
-              <Store className="w-4 h-4 text-[#25D366]" />
+            <div className="w-7 h-7 bg-[#6366f1]/10 rounded-lg flex items-center justify-center">
+              <Store className="w-4 h-4 text-[#6366f1]" />
             </div>
           )}
           <span className="font-semibold text-gray-900 text-sm truncate">{store?.name ?? ''}</span>

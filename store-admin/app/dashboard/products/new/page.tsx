@@ -103,11 +103,11 @@ export default function NewProductPage() {
             <div className="space-y-1.5">
               <Label className="text-base">Image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
               <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#25D366] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
                   {imagePreview ? (
                     <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
                   ) : (
-                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#25D366] transition-colors" />
+                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
                   )}
                 </div>
                 <span className="text-base text-gray-500 group-hover:text-gray-700">
@@ -169,7 +169,7 @@ export default function NewProductPage() {
               <select
                 value={categoryId}
                 onChange={e => setCategoryId(e.target.value)}
-                className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
               >
                 <option value="">Select category</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -181,7 +181,7 @@ export default function NewProductPage() {
               <select
                 value={brandId}
                 onChange={e => setBrandId(e.target.value)}
-                className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
               >
                 <option value="">No brand</option>
                 {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -232,7 +232,7 @@ export default function NewProductPage() {
             </div>
 
             <Button
-              className="bg-[#25D366] hover:bg-[#1ebe5d] text-white w-full h-11 text-base"
+              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
               onClick={handleSave}
               disabled={isSaving}
             >

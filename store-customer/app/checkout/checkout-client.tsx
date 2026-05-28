@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
-import PageHeader from '@/components/page-header'
 import type { Cart, Order } from '@/types'
 
 type LocationState = 'idle' | 'requesting' | 'granted' | 'denied'
@@ -380,12 +379,8 @@ export default function CheckoutClient() {
 
   return (
     <>
-      <div className="lg:hidden">
-        <PageHeader title="Checkout" />
-      </div>
-
-      {/* ── Mobile / tablet: single column ── */}
-      <div className="lg:hidden page-x py-5 space-y-4">
+      {/* ── Single column (mobile + desktop) ── */}
+      <div className="page-x py-5 pb-28 lg:pb-8 space-y-4 lg:max-w-[900px] lg:mx-auto">
         {orderSummarySection}
         {contactSection}
         {addressSection}
@@ -396,30 +391,10 @@ export default function CheckoutClient() {
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
-      </div>
-
-      {/* ── Desktop: two columns ── */}
-      <div className="hidden lg:flex page-x gap-6 py-8 items-start">
-        {/* Left: forms */}
-        <div className="flex-1 min-w-0 space-y-4">
-          {contactSection}
-          {addressSection}
-          {notesSection}
-          {error && (
-            <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-        </div>
-        {/* Right: summary + payment + CTA (sticky) */}
-        <div className="w-80 flex-shrink-0 space-y-4 sticky top-20">
-          {orderSummarySection}
-          {paymentSection}
-          <button onClick={handlePlaceOrderClick}
-            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-4 rounded-xl text-sm transition-colors shadow-sm">
-            Place order · ₹{cart?.total ?? 0}
-          </button>
-        </div>
+        <button onClick={handlePlaceOrderClick}
+          className="hidden lg:block w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-4 rounded-xl text-sm transition-colors shadow-sm">
+          Place order · ₹{cart?.total ?? 0}
+        </button>
       </div>
 
       {/* ── Mobile fixed bottom bar ── */}

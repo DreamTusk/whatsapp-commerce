@@ -1,0 +1,36 @@
+meta {
+  name: Update Collection
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{base_url_local}}/collections/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: COLLECTION_ID
+}
+
+body:json {
+  {
+    "name": "Updated Name",
+    "limit": 20,
+    "is_active": true,
+    "display_order": 0,
+    "image_url": null,
+    "criteria": {
+      "match": "all",
+      "filters": [
+        { "field": "price", "operator": "lt", "value": 500 }
+      ]
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

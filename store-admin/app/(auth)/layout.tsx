@@ -6,14 +6,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex">
       <AuthGuard />
       {/* Brand panel — hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#25D366] flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#6366f1] flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full" />
         <div className="absolute -bottom-32 -right-16 w-[28rem] h-[28rem] bg-white/10 rounded-full" />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-[#25D366] font-bold text-sm">DT</span>
+              <span className="text-[#6366f1] font-bold text-sm">DT</span>
             </div>
             <span className="text-white text-xl font-bold tracking-tight">DT Commerce</span>
           </div>

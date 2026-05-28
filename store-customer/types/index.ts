@@ -1,3 +1,11 @@
+export interface StoreCollection {
+  id: string
+  name: string
+  type: 'manual' | 'auto'
+  image_url: string | null
+  products: Product[]
+}
+
 export interface Category {
   id: string
   name: string

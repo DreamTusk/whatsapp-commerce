@@ -71,7 +71,7 @@ export default function BrandsPage() {
             <h1 className="text-[26px] font-bold text-gray-900">Brands</h1>
             <p className="text-base text-gray-500 mt-0.5">{brands.length} brands</p>
           </div>
-          <Button onClick={() => { setAddName(''); setAddOpen(true) }} className="bg-[#25D366] hover:bg-[#1ebe5d] text-white gap-2">
+          <Button onClick={() => { setAddName(''); setAddOpen(true) }} className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2">
             <Plus className="w-4 h-4" /> Add brand
           </Button>
         </div>
@@ -104,8 +104,8 @@ export default function BrandsPage() {
                 <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-base font-bold text-[#25D366]">{b.name.charAt(0).toUpperCase()}</span>
+                      <div className="w-8 h-8 rounded-lg bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-base font-bold text-[#6366f1]">{b.name.charAt(0).toUpperCase()}</span>
                       </div>
                       <p className="font-medium text-gray-900">{b.name}</p>
                     </div>
@@ -156,7 +156,7 @@ export default function BrandsPage() {
             </div>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => { setAddOpen(false); setAddName('') }}>Cancel</Button>
-              <Button className="flex-1 bg-[#25D366] hover:bg-[#1ebe5d] text-white" onClick={handleAddBrand} disabled={isSavingAdd}>
+              <Button className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white" onClick={handleAddBrand} disabled={isSavingAdd}>
                 {isSavingAdd ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {isSavingAdd ? 'Saving…' : 'Add brand'}
               </Button>

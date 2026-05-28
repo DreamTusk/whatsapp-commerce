@@ -90,7 +90,7 @@ export default function CreateStorePage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-[#25D366] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+          <div className="w-14 h-14 bg-[#6366f1] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
             <Store className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Set up your store</h1>
@@ -104,11 +104,11 @@ export default function CreateStorePage() {
             <div className="space-y-1.5">
               <Label>Store logo <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
               <label className="flex items-center gap-4 cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#25D366] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
                   {logoPreview ? (
                     <img src={logoPreview} alt="preview" className="w-full h-full object-cover" />
                   ) : (
-                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#25D366] transition-colors" />
+                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
                   )}
                 </div>
                 <div>
@@ -149,7 +149,7 @@ export default function CreateStorePage() {
             {/* Domain — slug editable, base domain read-only */}
             <div className="space-y-1.5">
               <Label htmlFor="slug">Store subdomain <span className="text-destructive">*</span></Label>
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#25D366] focus-within:border-transparent">
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#6366f1] focus-within:border-transparent">
                 <input
                   id="slug"
                   type="text"
@@ -220,7 +220,7 @@ export default function CreateStorePage() {
 
             <Button
               type="submit"
-              className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white mt-2"
+              className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white mt-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

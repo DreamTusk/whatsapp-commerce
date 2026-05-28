@@ -14,10 +14,13 @@ import storefrontOrdersRouter from './routes/storefront/orders.js';
 import storefrontCartRouter from './routes/storefront/cart.js';
 import storefrontWishlistRouter from './routes/storefront/wishlist.js';
 import storefrontAddressesRouter from './routes/storefront/addresses.js';
+import storefrontCollectionsRouter from './routes/storefront/collections.js';
 import adminOrdersRouter from './routes/admin/orders.js';
 import adminCustomersRouter from './routes/admin/customers.js';
 import adminBrandsRouter from './routes/admin/brands.js';
 import adminInventoryRouter from './routes/admin/inventory.js';
+import adminDashboardRouter from './routes/admin/dashboard.js';
+import adminCollectionsRouter from './routes/admin/collections.js';
 import logger from './utils/logger.js';
 import prisma from './utils/db.js';
 
@@ -64,6 +67,8 @@ app.use('/api/orders', adminOrdersRouter);
 app.use('/api/customers', adminCustomersRouter);
 app.use('/api/brands', adminBrandsRouter);
 app.use('/api/inventory', adminInventoryRouter);
+app.use('/api/dashboard', adminDashboardRouter);
+app.use('/api/collections', adminCollectionsRouter);
 // Block all storefront routes if the store is inactive
 app.use('/api/storefront', async (req, res, next) => {
   const domain = req.headers['x-store-domain'] as string;
@@ -85,6 +90,7 @@ app.use('/api/storefront/wishlist', storefrontWishlistRouter);
 app.use('/api/storefront/addresses', storefrontAddressesRouter);
 app.use('/api/storefront/categories', storefrontCategoriesRouter);
 app.use('/api/storefront/products', storefrontProductsRouter);
+app.use('/api/storefront/collections', storefrontCollectionsRouter);
 app.use('/api/webhook', webhookRouter);
 
 app.use((req, res) => {

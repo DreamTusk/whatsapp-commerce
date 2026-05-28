@@ -66,7 +66,7 @@ export default function CustomersPage() {
             placeholder="Search by name, phone or address…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
+            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
           />
         </div>
       </div>
@@ -100,8 +100,8 @@ export default function CustomersPage() {
                 <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-base font-bold text-[#25D366]">
+                      <div className="w-8 h-8 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-base font-bold text-[#6366f1]">
                           {(c.name ?? c.phone ?? '?').charAt(0).toUpperCase()}
                         </span>
                       </div>
@@ -118,7 +118,7 @@ export default function CustomersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-base font-semibold px-2 py-1 rounded-full ${
-                      c.order_count > 0 ? 'bg-[#25D366]/10 text-[#25D366]' : 'bg-gray-100 text-gray-400'
+                      c.order_count > 0 ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'bg-gray-100 text-gray-400'
                     }`}>
                       {c.order_count}
                     </span>

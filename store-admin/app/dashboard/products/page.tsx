@@ -159,11 +159,11 @@ export default function ProductsPage() {
               <div className="space-y-1.5">
                 <Label className="text-base">Image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
                 <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#25D366] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+                  <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
                     {formImagePreview ? (
                       <img src={formImagePreview} alt="preview" className="w-full h-full object-cover" />
                     ) : (
-                      <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#25D366] transition-colors" />
+                      <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
                     )}
                   </div>
                   <span className="text-base text-gray-500 group-hover:text-gray-700">
@@ -226,7 +226,7 @@ export default function ProductsPage() {
                 <select
                   value={formCategoryId}
                   onChange={e => setFormCategoryId(e.target.value)}
-                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
                 >
                   <option value="">Select category</option>
                   {categories.map(c =>
@@ -246,7 +246,7 @@ export default function ProductsPage() {
                 <select
                   value={formBrandId}
                   onChange={e => setFormBrandId(e.target.value)}
-                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
                 >
                   <option value="">No brand</option>
                   {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -287,7 +287,7 @@ export default function ProductsPage() {
               </div>
 
               <Button
-                className="bg-[#25D366] hover:bg-[#1ebe5d] text-white w-full h-11 text-base"
+                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
                 onClick={handleAddProduct}
                 disabled={formIsSaving}
               >
@@ -311,7 +311,7 @@ export default function ProductsPage() {
             <h1 className="text-[26px] font-bold text-gray-900">Products</h1>
             <p className="text-base text-gray-500 mt-0.5">{products.length} products</p>
           </div>
-          <Button onClick={openForm} className="bg-[#25D366] hover:bg-[#1ebe5d] text-white gap-2">
+          <Button onClick={openForm} className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2">
             <Plus className="w-4 h-4" /> Add product
           </Button>
         </div>
@@ -323,7 +323,7 @@ export default function ProductsPage() {
             <button
               onClick={() => handleFilterChange('')}
               className={`px-3 py-1.5 rounded-full text-base font-medium transition-colors cursor-pointer ${
-                !filterCategory ? 'bg-[#25D366] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                !filterCategory ? 'bg-[#6366f1] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               All
@@ -335,7 +335,7 @@ export default function ProductsPage() {
                     key={child.id}
                     onClick={() => handleFilterChange(child.id)}
                     className={`px-3 py-1.5 rounded-full text-base font-medium transition-colors cursor-pointer ${
-                      filterCategory === child.id ? 'bg-[#25D366] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      filterCategory === child.id ? 'bg-[#6366f1] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
                     {child.name}
@@ -346,7 +346,7 @@ export default function ProductsPage() {
                   key={cat.id}
                   onClick={() => handleFilterChange(cat.id)}
                   className={`px-3 py-1.5 rounded-full text-base font-medium transition-colors cursor-pointer ${
-                    filterCategory === cat.id ? 'bg-[#25D366] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    filterCategory === cat.id ? 'bg-[#6366f1] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {cat.name}
@@ -371,13 +371,15 @@ export default function ProductsPage() {
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
             <div className="flex-1 overflow-auto min-h-0">
-            <table className="w-full text-base min-w-[900px]">
+            <table className="w-full text-base min-w-[1060px]">
               <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
                 <tr>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Product</th>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Category</th>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden md:table-cell">Brand</th>
-                  <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Price</th>
+                  <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Selling Price</th>
+                  <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Original Price</th>
+                  <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Offer</th>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Stock</th>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Status</th>
                   <th className="px-4 py-3 w-8"></th>
@@ -406,14 +408,14 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-base hidden sm:table-cell">{p.category.name}</td>
                     <td className="px-4 py-3 text-gray-500 text-base hidden md:table-cell">{p.brand?.name ?? <span className="text-gray-300">—</span>}</td>
+                    <td className="px-4 py-3 text-base font-semibold text-gray-900">₹{p.selling_price}</td>
+                    <td className="px-4 py-3 text-base text-gray-400">
+                      {p.original_price != null && p.original_price > p.selling_price ? `₹${p.original_price}` : <span className="text-gray-200">—</span>}
+                    </td>
                     <td className="px-4 py-3 text-base">
-                      <span className="font-semibold text-gray-900">₹{p.selling_price}</span>
-                      {p.original_price != null && p.original_price > p.selling_price && (
-                        <span className="ml-1 text-gray-400 line-through">₹{p.original_price}</span>
-                      )}
-                      {p.discount_percent != null && (
-                        <span className="ml-1 text-green-600 font-medium">{p.discount_percent}% off</span>
-                      )}
+                      {p.discount_percent != null
+                        ? <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-600">{p.discount_percent}% off</span>
+                        : <span className="text-gray-200">—</span>}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className={`text-base font-medium px-2.5 py-1 rounded-full ${

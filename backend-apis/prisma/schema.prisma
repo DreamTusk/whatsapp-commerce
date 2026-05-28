@@ -4,6 +4,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum CollectionType {
+  MANUAL
+  AUTO
+}
+
 enum Role {
   OWNER
   MANAGER
@@ -65,6 +70,7 @@ model Store {
   userStores        UserStore[]
   storeInvites      StoreInvite[]
   customerAddresses CustomerAddress[]
+  collections       Collection[]
 }
 
 model User {
@@ -169,9 +175,10 @@ model Product {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  orderItems    OrderItem[]
-  wishlistItems WishlistItem[]
-  cartItems     CartItem[]
+  orderItems         OrderItem[]
+  wishlistItems      WishlistItem[]
+  cartItems          CartItem[]
+  collectionProducts CollectionProduct[]
 }
 
 model Customer {
@@ -330,4 +337,32 @@ model MessageLog {
   content       Json
   whatsappMsgId String?
   createdAt     DateTime @default(now())
+}
+
+model Collection {
+  id           String         @id @default(cuid())
+  storeId      String
+  store        Store          @relation(fields: [storeId], references: [id])
+  name         String
+  type         CollectionType
+  criteria     Json?
+  isActive     Boolean        @default(true)
+  displayOrder Int            @default(0)
+  imageUrl     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  products CollectionProduct[]
+}
+
+model CollectionProduct {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  position     Int        @default(0)
+  addedAt      DateTime   @default(now())
+
+  @@unique([collectionId, productId])
 }

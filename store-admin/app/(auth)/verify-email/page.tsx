@@ -113,13 +113,13 @@ function VerifyEmailForm() {
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 mb-6 lg:hidden">
-          <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xs">DT</span>
           </div>
           <span className="font-bold text-gray-900">DT Commerce</span>
         </div>
         <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-4">
-          <MailCheck className="w-6 h-6 text-[#25D366]" />
+          <MailCheck className="w-6 h-6 text-[#6366f1]" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
         <p className="text-sm text-gray-500">
@@ -142,14 +142,14 @@ function VerifyEmailForm() {
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
               onPaste={handlePaste}
-              className="w-12 h-14 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent transition-all"
+              className="w-12 h-14 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent transition-all"
             />
           ))}
         </div>
 
         <Button
           onClick={handleSubmit}
-          className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+          className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -165,7 +165,7 @@ function VerifyEmailForm() {
           <button
             onClick={handleResend}
             disabled={isResending}
-            className="text-[#25D366] font-medium hover:underline disabled:opacity-50"
+            className="text-[#6366f1] font-medium hover:underline disabled:opacity-50"
           >
             {isResending ? 'Sending…' : 'Resend code'}
           </button>

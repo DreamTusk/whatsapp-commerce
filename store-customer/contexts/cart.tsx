@@ -3,16 +3,18 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 import { clientFetch } from '@/lib/client-api'
 import { useAuth } from './auth'
-import { getGuestCart, guestCartCount, clearGuestCart } from '@/lib/guest-cart'
+import { getGuestCart, clearGuestCart } from '@/lib/guest-cart'
 
 interface CartContextValue {
   count: number
+  items: Record<string, number>
   refresh: () => Promise<void>
   syncGuestCart: () => Promise<void>
 }
 
 const CartContext = createContext<CartContextValue>({
   count: 0,
+  items: {},
   refresh: async () => {},
   syncGuestCart: async () => {},
 })
@@ -20,17 +22,28 @@ const CartContext = createContext<CartContextValue>({
 export function CartProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, initialized } = useAuth()
   const [count, setCount] = useState(0)
+  const [items, setItems] = useState<Record<string, number>>({})
   const wasInitialized = useRef(false)
 
   const refreshFromDb = useCallback(async () => {
     try {
-      const data = await clientFetch<{ items: { quantity: number }[] }>('/api/storefront/cart')
+      const data = await clientFetch<{ items: { quantity: number; product: { id: string } }[] }>('/api/storefront/cart')
       setCount(data.items.reduce((sum, i) => sum + i.quantity, 0))
-    } catch { setCount(0) }
+      const map: Record<string, number> = {}
+      for (const i of data.items) map[i.product.id] = i.quantity
+      setItems(map)
+    } catch { setCount(0); setItems({}) }
   }, [])
 
   const refresh = useCallback(async () => {
-    if (!isAuthenticated) { setCount(guestCartCount()); return }
+    if (!isAuthenticated) {
+      const guestItems = getGuestCart()
+      setCount(guestItems.reduce((sum, i) => sum + i.quantity, 0))
+      const map: Record<string, number> = {}
+      for (const i of guestItems) map[i.product_id] = i.quantity
+      setItems(map)
+      return
+    }
     await refreshFromDb()
   }, [isAuthenticated, refreshFromDb])
 
@@ -59,7 +72,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, initialized])
 
   return (
-    <CartContext.Provider value={{ count, refresh, syncGuestCart }}>
+    <CartContext.Provider value={{ count, items, refresh, syncGuestCart }}>
       {children}
     </CartContext.Provider>
   )

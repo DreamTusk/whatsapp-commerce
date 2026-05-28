@@ -37,6 +37,17 @@
   .page-x-l { padding-left: 5%; }
 }
 
+/* ── Hide scrollbars globally ── */
+html, body, * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Cursor ── */
 button, a, [role="button"], label[for], select {
   cursor: pointer;

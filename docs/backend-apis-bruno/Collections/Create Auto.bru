@@ -1,0 +1,47 @@
+meta {
+  name: Create Auto Collection
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url_local}}/collections
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Budget Picks",
+    "type": "auto",
+    "limit": 20,
+    "display_order": 1,
+    "image_url": null,
+    "criteria": {
+      "match": "all",
+      "filters": [
+        { "field": "price", "operator": "lt", "value": 300 },
+        { "field": "in_stock", "operator": "eq", "value": true }
+      ]
+    }
+  }
+}
+
+docs {
+  ## Supported criteria fields
+  | field        | operators                        |
+  |--------------|----------------------------------|
+  | price        | lt, lte, gt, gte, eq             |
+  | category_id  | eq                               |
+  | brand_id     | eq                               |
+  | name         | contains                         |
+  | in_stock     | eq (true / false)                |
+
+  match: "all" = AND between filters
+  match: "any" = OR between filters
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

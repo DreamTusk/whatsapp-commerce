@@ -60,7 +60,7 @@ export default function SignupPage() {
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 mb-6 lg:hidden">
-          <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xs">DT</span>
           </div>
           <span className="font-bold text-gray-900">DT Commerce</span>
@@ -129,7 +129,7 @@ export default function SignupPage() {
 
         <Button
           type="submit"
-          className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+          className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -139,7 +139,7 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{' '}
-        <Link href="/login" className="text-[#25D366] font-medium hover:underline">
+        <Link href="/login" className="text-[#6366f1] font-medium hover:underline">
           Sign in
         </Link>
       </p>

@@ -87,7 +87,7 @@ export default function LoginPage() {
       <div className="space-y-8">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-6 lg:hidden">
-            <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">DT</span>
             </div>
             <span className="font-bold text-gray-900">DT Commerce</span>
@@ -106,7 +106,7 @@ export default function LoginPage() {
         <div className="space-y-3">
           <Button
             onClick={handleSendOtp}
-            className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+            className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
             disabled={isSending}
           >
             {isSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -130,7 +130,7 @@ export default function LoginPage() {
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 mb-6 lg:hidden">
-          <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xs">DT</span>
           </div>
           <span className="font-bold text-gray-900">DT Commerce</span>
@@ -161,7 +161,7 @@ export default function LoginPage() {
             <Label htmlFor="password">Password</Label>
             <Link
               href="/forgot-password"
-              className="text-xs text-[#25D366] hover:underline font-medium"
+              className="text-xs text-[#6366f1] hover:underline font-medium"
             >
               Forgot password?
             </Link>
@@ -192,7 +192,7 @@ export default function LoginPage() {
 
         <Button
           type="submit"
-          className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+          className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -202,7 +202,7 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-gray-500">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-[#25D366] font-medium hover:underline">
+        <Link href="/signup" className="text-[#6366f1] font-medium hover:underline">
           Create one
         </Link>
       </p>

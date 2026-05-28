@@ -1,0 +1,27 @@
+meta {
+  name: Create Manual Collection
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/collections
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Staff Picks",
+    "type": "manual",
+    "limit": 20,
+    "display_order": 0,
+    "image_url": null,
+    "product_ids": []
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -80,7 +80,7 @@ export default function InventoryPage() {
             placeholder="Search product or category…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
+            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
           />
         </div>
       </div>

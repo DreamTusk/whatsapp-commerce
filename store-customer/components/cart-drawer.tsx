@@ -65,7 +65,7 @@ export default function CartDrawer() {
     fetchAddresses().then(addrs => {
       if (!addrs?.length || selectedAddressRef.current) return
       const def = addrs.find(a => a.is_default) ?? addrs[0]
-      if (def) setSelectedAddress({ id: def.id, label: def.label, address: def.address, city: def.city, pincode: def.pincode })
+      if (def) setSelectedAddress({ id: def.id, label: def.label, door_no: def.door_no, street: def.street, address: def.address, city: def.city, state: def.state, country: def.country, pincode: def.pincode, latitude: def.latitude, longitude: def.longitude })
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isAuthenticated])
@@ -100,7 +100,7 @@ export default function CartDrawer() {
   }
 
   function pickAddress(addr: CustomerAddress) {
-    const sel: SelectedAddress = { id: addr.id, label: addr.label, address: addr.address, city: addr.city, pincode: addr.pincode }
+    const sel: SelectedAddress = { id: addr.id, label: addr.label, door_no: addr.door_no, street: addr.street, address: addr.address, city: addr.city, state: addr.state, country: addr.country, pincode: addr.pincode, latitude: addr.latitude, longitude: addr.longitude }
     setSelectedAddress(sel)
     setShowAddressPicker(false)
   }
@@ -232,24 +232,29 @@ export default function CartDrawer() {
               {/* Cart items */}
               {items.map(item => (
                 <div key={item.id} className="flex items-center gap-3 py-2">
-                  {item.product.image_url ? (
-                    <img
-                      src={item.product.image_url.startsWith('http') ? item.product.image_url : `${API_URL}${item.product.image_url}`}
-                      alt={item.product.name}
-                      className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-gray-100"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0">
-                      🛍️
+                  <button
+                    onClick={() => { closeCart(); router.push(`/products/${item.product.id}`) }}
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                  >
+                    {item.product.image_url ? (
+                      <img
+                        src={item.product.image_url.startsWith('http') ? item.product.image_url : `${API_URL}${item.product.image_url}`}
+                        alt={item.product.name}
+                        className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0">
+                        🛍️
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{item.product.name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">₹{item.product.selling_price} each</p>
+                      <p className="text-sm font-bold text-gray-900 mt-0.5">
+                        ₹{item.product.selling_price * item.quantity}
+                      </p>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{item.product.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">₹{item.product.selling_price} each</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">
-                      ₹{item.product.selling_price * item.quantity}
-                    </p>
-                  </div>
+                  </button>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
                       disabled={updating === item.product.id}

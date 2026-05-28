@@ -123,7 +123,7 @@ export default function OrderDetailPage() {
     return (
       <div className="text-center py-40 text-gray-400">
         <p className="text-lg font-medium">Order not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-base text-[#25D366] hover:underline cursor-pointer">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-base text-[#6366f1] hover:underline cursor-pointer">Go back</button>
       </div>
     )
   }
@@ -157,7 +157,7 @@ export default function OrderDetailPage() {
           </div>
           {canAct && nextLabel && (
             <Button
-              className="flex-shrink-0 bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+              className="flex-shrink-0 bg-[#6366f1] hover:bg-[#4f46e5] text-white"
               onClick={handleAdvance}
               disabled={isAdvancing}
             >
@@ -205,7 +205,7 @@ export default function OrderDetailPage() {
                   href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-base text-[#25D366] hover:underline font-medium"
+                  className="inline-flex items-center gap-1.5 text-base text-[#6366f1] hover:underline font-medium"
                 >
                   <MapPin className="w-4 h-4" /> View on map
                 </a>

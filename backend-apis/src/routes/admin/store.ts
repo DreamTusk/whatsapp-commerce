@@ -5,6 +5,7 @@ import logger from '../../utils/logger.js';
 import sendEmail from '../../workers/email.js';
 import upload from '../../middleware/upload.js';
 import storageService from '../../external-services/storage.js';
+import { buildCriteriaWhere } from '../../utils/collection-criteria.js';
 
 const router = express.Router();
 
@@ -32,6 +33,17 @@ const formatStore = (store: {
   updated_at: store.updatedAt,
 });
 
+const formatProductPublic = (p: any) => ({
+  id: p.id,
+  name: p.name,
+  image_url: p.imageUrl,
+  selling_price: p.sellingPrice,
+  original_price: p.originalPrice,
+  unit: p.unit,
+  in_stock: p.inStock,
+  category_id: p.categoryId,
+});
+
 // GET /api/store/info — public, no auth, resolves store by x-store-domain header
 router.get('/info', async (req: Request, res: Response) => {
   const domain = req.headers['x-store-domain'] as string;
@@ -45,6 +57,40 @@ router.get('/info', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'Store not found' });
       return;
     }
+
+    // Resolve active collections with their products
+    const rawCollections = await prisma.collection.findMany({
+      where: { storeId: store.id, isActive: true },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    const collections = await Promise.all(
+      rawCollections.map(async (c) => {
+        let products: any[] = [];
+        if (c.type === 'MANUAL') {
+          const cp = await prisma.collectionProduct.findMany({
+            where: { collectionId: c.id },
+            orderBy: { position: 'asc' },
+            include: { product: true },
+          });
+          products = cp.map(({ product }) => formatProductPublic(product));
+        } else {
+          const ps = await prisma.product.findMany({
+            where: buildCriteriaWhere(c.criteria, store.id),
+            orderBy: { createdAt: 'desc' },
+          });
+          products = ps.map(formatProductPublic);
+        }
+        return {
+          id: c.id,
+          name: c.name,
+          type: c.type.toLowerCase(),
+          image_url: c.imageUrl,
+          products,
+        };
+      })
+    );
+
     res.json({
       store: {
         id: store.id,
@@ -57,6 +103,7 @@ router.get('/info', async (req: Request, res: Response) => {
         delivery_radius: store.deliveryRadius,
         is_active: store.isActive,
       },
+      collections,
     });
   } catch (err) {
     logger.error('GET /api/store/info error:', err);

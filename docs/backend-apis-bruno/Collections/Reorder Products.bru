@@ -1,0 +1,26 @@
+meta {
+  name: Reorder Products (Manual)
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{base_url_local}}/collections/:id/products/reorder
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: COLLECTION_ID
+}
+
+body:json {
+  {
+    "product_ids": ["PRODUCT_ID_1", "PRODUCT_ID_2", "PRODUCT_ID_3"]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Remove Product (Manual)
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{base_url_local}}/collections/:id/products/:productId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: COLLECTION_ID
+  productId: PRODUCT_ID
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

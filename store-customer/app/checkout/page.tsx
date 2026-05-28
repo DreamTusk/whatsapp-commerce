@@ -8,9 +8,7 @@ export default async function CheckoutPage() {
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
-      <div className="hidden lg:block">
-        <StoreHeader domain={domain} />
-      </div>
+      <StoreHeader domain={domain} />
       <CheckoutClient />
     </main>
   )

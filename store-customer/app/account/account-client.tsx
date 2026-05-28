@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
+import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
@@ -30,6 +31,14 @@ const STATUS_COLOR: Record<string, string> = {
   NEW: 'text-yellow-600', CONFIRMED: 'text-blue-600', OUT_FOR_DELIVERY: 'text-purple-600',
   DELIVERED: 'text-green-600', CANCELLED: 'text-gray-400',
 }
+const TRACKING_STEPS = [
+  { status: 'NEW', label: 'Order placed' },
+  { status: 'CONFIRMED', label: 'Confirmed' },
+  { status: 'OUT_FOR_DELIVERY', label: 'Out for delivery' },
+  { status: 'DELIVERED', label: 'Delivered' },
+]
+const TRACKING_ORDER: Record<string, number> = { NEW: 0, CONFIRMED: 1, OUT_FOR_DELIVERY: 2, DELIVERED: 3, CANCELLED: -1 }
+const CANCEL_REASONS = ['Changed my mind', 'Ordered by mistake', 'Found a better price', 'Delivery taking too long', 'Other']
 const BUBBLE_COLORS = [
   'bg-orange-100 text-orange-600', 'bg-red-100 text-red-600', 'bg-yellow-100 text-yellow-700',
   'bg-green-100 text-green-700', 'bg-blue-100 text-blue-600', 'bg-violet-100 text-violet-600',
@@ -45,12 +54,13 @@ function formatDateTime(iso: string) {
 export default function AccountClient() {
   const { customer, isAuthenticated, initialized, requireAuth, logout, updateCustomer } = useAuth()
   const { refresh: cartRefresh } = useCart()
+  const { openCart } = useCartDrawer()
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams.get('tab')
-    return (t === 'profile' || t === 'orders' || t === 'addresses' || t === 'wishlist') ? t : 'orders'
+    return (t === 'profile' || t === 'orders' || t === 'addresses' || t === 'wishlist') ? t : 'profile'
   })
   const [mobilePanelOpen, setMobilePanelOpen] = useState(() => !!searchParams.get('tab'))
 
@@ -73,6 +83,13 @@ export default function AccountClient() {
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [orderAgainLoading, setOrderAgainLoading] = useState<string | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrderLoading, setSelectedOrderLoading] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [showCancelSheet, setShowCancelSheet] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelOther, setCancelOther] = useState('')
 
   // Wishlist
   const [wishlist, setWishlist] = useState<WishlistItem[]>([])
@@ -124,7 +141,33 @@ export default function AccountClient() {
   useEffect(() => { if (tab === 'addresses' && isAuthenticated) fetchAddresses() }, [tab, isAuthenticated, fetchAddresses])
   useEffect(() => { if (tab === 'wishlist' && isAuthenticated) fetchWishlist() }, [tab, isAuthenticated, fetchWishlist])
 
-  function openTab(t: Tab) { setTab(t); setMobilePanelOpen(true); setShowAddrForm(false); setEditingAddress(null) }
+  function openTab(t: Tab) { setTab(t); setMobilePanelOpen(true); setShowAddrForm(false); setEditingAddress(null); setSelectedOrderId(null); setSelectedOrder(null) }
+
+  async function selectOrder(id: string) {
+    setSelectedOrderId(id)
+    setSelectedOrder(null)
+    setSelectedOrderLoading(true)
+    try {
+      const d = await clientFetch<{ order: Order }>(`/api/storefront/orders/${id}`)
+      setSelectedOrder(d.order)
+    } catch { /* ignore */ } finally { setSelectedOrderLoading(false) }
+  }
+
+  function backToOrders() { setSelectedOrderId(null); setSelectedOrder(null) }
+
+  async function cancelSelectedOrder() {
+    if (!selectedOrderId) return
+    const reason = cancelReason === 'Other' ? cancelOther.trim() : cancelReason
+    setCancelling(true)
+    try {
+      const d = await clientFetch<{ order: Order }>(`/api/storefront/orders/${selectedOrderId}/cancel`, {
+        method: 'PATCH', body: JSON.stringify({ reason: reason || null }),
+      })
+      setSelectedOrder(d.order)
+      setOrders(prev => prev.map(o => o.id === selectedOrderId ? { ...o, status: d.order.status } : o))
+      setShowCancelSheet(false)
+    } catch { alert('Could not cancel. Try again.') } finally { setCancelling(false) }
+  }
 
   async function saveProfile() {
     setProfileSaving(true); setProfileError('')
@@ -143,8 +186,8 @@ export default function AccountClient() {
     try {
       for (const item of order.items)
         await clientFetch('/api/storefront/cart', { method: 'POST', body: JSON.stringify({ product_id: item.product_id }) })
-      await cartRefresh(); router.push('/cart')
-    } catch { setOrderAgainLoading(null) }
+      await cartRefresh(); openCart()
+    } catch { /* ignore */ } finally { setOrderAgainLoading(null) }
   }
 
   async function removeFromWishlist(productId: string) {
@@ -180,7 +223,13 @@ export default function AccountClient() {
   }
 
   async function saveAddress() {
-    if (!addrForm.address.trim() && !addrForm.street.trim() && !addrForm.city.trim()) { setAddrFormError('Enter at least address, street, or city'); return }
+    if (!addrForm.door_no.trim()) { setAddrFormError('Door No is required'); return }
+    if (!addrForm.street.trim()) { setAddrFormError('Street is required'); return }
+    if (!addrForm.address.trim()) { setAddrFormError('Area / Landmark is required'); return }
+    if (!addrForm.city.trim()) { setAddrFormError('City is required'); return }
+    if (!addrForm.pincode.trim()) { setAddrFormError('Pincode is required'); return }
+    if (!addrForm.state.trim()) { setAddrFormError('State is required'); return }
+    if (!addrForm.country.trim()) { setAddrFormError('Country is required'); return }
     setAddrSaving(true); setAddrFormError('')
     try {
       const payload = { label: addrForm.label, door_no: addrForm.door_no.trim() || null, street: addrForm.street.trim() || null, address: addrForm.address.trim() || null, city: addrForm.city.trim() || null, state: addrForm.state.trim() || null, country: addrForm.country.trim() || null, pincode: addrForm.pincode.trim() || null, is_default: addrForm.is_default }
@@ -370,46 +419,64 @@ export default function AccountClient() {
   )
 
   // Mobile Orders
-  const mobileOrdersScreen = (
+  const renderMobileOrdersScreen = () => (
     <>
-      {mobileBackHeader('Orders')}
-      <div className="pb-24">
-        {ordersLoading ? (
-          <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
-        ) : orders.length === 0 ? (
-          <div className="text-center py-16 px-6 text-gray-400">
-            <p className="text-4xl mb-3">📦</p>
-            <p className="font-semibold text-gray-600">No orders yet</p>
-            <Link href="/products" className="mt-5 inline-block bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">Browse products</Link>
-          </div>
+      {selectedOrderId ? (
+        selectedOrderLoading ? (
+          <>
+            {mobileBackHeader('Order Detail')}
+            <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+          </>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {orders.map(order => (
-              <Link key={order.id} href={`/orders/${order.id}`} className="block px-4 py-4 bg-white hover:bg-gray-50 transition-colors">
-                {/* Row 1: Order ID + date */}
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-sm font-semibold text-gray-800">{order.order_number}</p>
-                  <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
-                </div>
-                {/* Row 2: status + Order Again */}
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className={`flex items-center gap-1.5 text-sm font-semibold ${STATUS_COLOR[order.status] ?? 'text-gray-500'}`}>
-                    {order.status === 'DELIVERED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                    {order.status === 'CANCELLED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                    {STATUS_LABEL[order.status] ?? order.status}
-                  </span>
-                  <span className="text-xs font-semibold text-gray-400 flex items-center gap-1">
-                    View details
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </span>
-                </div>
-                {/* Row 3: amount */}
-                <p className="text-sm font-bold text-gray-900">₹{order.total_amount}</p>
-              </Link>
-            ))}
+          <div className="pb-24 overflow-auto">{orderDetailPanel}</div>
+        )
+      ) : (
+        <>
+          {mobileBackHeader('Orders')}
+          <div className="pb-24">
+            {ordersLoading ? (
+              <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+            ) : orders.length === 0 ? (
+              <div className="text-center py-16 px-6 text-gray-400">
+                <p className="text-4xl mb-3">📦</p>
+                <p className="font-semibold text-gray-600">No orders yet</p>
+                <Link href="/products" className="mt-5 inline-block bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">Browse products</Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {orders.map(order => (
+                  <div key={order.id} className="relative px-4 py-4 bg-white hover:bg-gray-50 transition-colors">
+                    <button onClick={() => selectOrder(order.id)} className="absolute inset-0" aria-label={`View order ${order.order_number}`} />
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-sm font-semibold text-gray-800">{order.order_number}</p>
+                      <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className={`flex items-center gap-1.5 text-sm font-semibold ${STATUS_COLOR[order.status] ?? 'text-gray-500'}`}>
+                        {order.status === 'DELIVERED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                        {order.status === 'CANCELLED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                        {STATUS_LABEL[order.status] ?? order.status}
+                      </span>
+                      <p className="text-sm font-bold text-gray-900">₹{order.total_amount}</p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                        View details
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </span>
+                      <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
+                        className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl bg-violet-100 text-violet-700 hover:bg-violet-200 disabled:opacity-50 transition-colors"
+                      >
+                        {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-violet-400 border-t-transparent rounded-full animate-spin inline-block" /> Adding…</span> : 'Order Again'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </>
   )
 
@@ -538,7 +605,7 @@ export default function AccountClient() {
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors mb-0.5 ${active ? 'bg-white text-indigo-600' : 'text-gray-600 hover:bg-white/60'}`}
             >
               <span className={`flex-shrink-0 ${active ? 'text-indigo-500' : 'text-gray-400'}`}>{item.icon}</span>
-              <span className="text-sm font-medium">{item.id === 'orders' ? 'Order Management' : item.label}</span>
+              <span className="text-sm font-medium">{item.id === 'orders' ? 'Orders' : item.label}</span>
             </button>
           )
         })}
@@ -555,20 +622,10 @@ export default function AccountClient() {
   )
 
   // ── DESKTOP CONTENT ──────────────────────────────────────────────────────────
-  const desktopBackBtn = (
-    <button onClick={() => router.back()} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
-      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-    </button>
-  )
-
-  const DESKTOP_LABELS: Record<Tab, string> = { profile: 'Profile', orders: 'Order History', addresses: 'Addresses', wishlist: 'Wishlist' }
 
   // Desktop profile
   const desktopProfilePanel = (
     <div className="flex flex-col h-full p-4 gap-3">
-      <div className="bg-white rounded-xl">
-        <div className="flex items-center gap-2 px-5 py-4">{desktopBackBtn}<h2 className="font-semibold text-gray-900 text-base">{DESKTOP_LABELS.profile}</h2></div>
-      </div>
       <div className="bg-white rounded-xl p-5 space-y-4 flex-1">
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1.5">Name <span className="text-red-500">*</span></label>
@@ -595,13 +652,193 @@ export default function AccountClient() {
     </div>
   )
 
-  // Desktop orders
-  const desktopOrdersPanel = (
-    <div className="flex flex-col h-full p-4 gap-3">
-      <div className="bg-white rounded-xl">
-        <div className="flex items-center gap-2 px-5 py-4">{desktopBackBtn}<h2 className="font-semibold text-gray-900 text-base">{DESKTOP_LABELS.orders}</h2></div>
+  // Order detail panel (shared between desktop + mobile)
+  const orderDetailPanel = selectedOrder ? (() => {
+    const o = selectedOrder
+    const isCancelled = o.status === 'CANCELLED'
+    const canCancel = o.status === 'NEW' || o.status === 'CONFIRMED'
+    const currentStep = TRACKING_ORDER[o.status] ?? -1
+
+    // Vertical tracker — used in the right-side card on desktop, and below details on mobile
+    const verticalTracker = isCancelled ? (
+      <div className="p-3 bg-red-50 rounded-xl">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </div>
+          <div>
+            <p className="font-semibold text-red-600 text-sm">Order cancelled</p>
+            <p className="text-xs text-red-400 mt-0.5">{o.cancelled_by === 'CUSTOMER' ? 'Cancelled by you' : o.cancelled_by === 'STORE' ? 'Cancelled by store' : 'This order has been cancelled'}</p>
+          </div>
+        </div>
+        {o.cancellation_reason && <p className="mt-2 text-xs text-red-500 bg-red-100 rounded-lg px-3 py-2"><span className="font-semibold">Reason: </span>{o.cancellation_reason}</p>}
       </div>
-      <div className="bg-white rounded-xl p-4 flex-1">
+    ) : (
+      <div className="flex flex-col h-full">
+        {TRACKING_STEPS.map((step, idx) => {
+          const done = currentStep >= idx
+          const active = currentStep === idx
+          const isLast = idx === TRACKING_STEPS.length - 1
+          return (
+            <div key={step.status} className={`flex gap-3 ${!isLast ? 'flex-1' : ''}`}>
+              <div className="flex flex-col items-center">
+                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-indigo-500 border-indigo-500' : 'bg-white border-gray-200'} ${active ? 'ring-4 ring-indigo-100' : ''}`}>
+                  {done && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                </div>
+                {!isLast && <div className={`w-0.5 flex-1 my-1 rounded-full ${currentStep > idx ? 'bg-indigo-400' : 'bg-gray-100'}`} />}
+              </div>
+              <div className="pt-0.5">
+                <p className={`text-sm font-medium leading-tight ${done ? 'text-indigo-600' : 'text-gray-400'}`}>{step.label}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+
+    return (
+      <div className="flex flex-col h-full">
+        {/* Back */}
+        <div className="flex-shrink-0 px-5 pt-4 pb-3 border-b border-gray-100">
+          <button onClick={backToOrders} className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            Back to orders
+          </button>
+        </div>
+
+        {/* Two-column on desktop, single on mobile */}
+        <div className="flex-1 overflow-auto min-h-0">
+          <div className="p-4 flex flex-col lg:flex-row gap-4 lg:items-start">
+
+            {/* LEFT: order details */}
+            <div className="flex-1 min-w-0 space-y-3">
+              {/* Header */}
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Order number</p>
+                    <p className="font-bold text-gray-900 text-lg leading-tight">{o.order_number}</p>
+                    <p className="text-xs text-gray-400 mt-1">{formatDateTime(o.created_at)}</p>
+                  </div>
+                  <span className={`mt-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex-shrink-0 ${isCancelled ? 'bg-red-50 text-red-500' : o.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                    {STATUS_LABEL[o.status] ?? o.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="bg-white rounded-xl overflow-hidden border border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 pt-4 pb-3">Items ordered</p>
+                <div className="divide-y divide-gray-50">
+                  {o.items.map(item => (
+                    <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                        {item.image_url ? <img src={item.image_url} alt={item.product_name} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-gray-400">{item.product_name.charAt(0).toUpperCase()}</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{item.product_name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Qty {item.quantity} × ₹{item.price}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 flex-shrink-0">₹{item.subtotal}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+                  <p className="text-sm font-semibold text-gray-600">Total</p>
+                  <p className="text-base font-bold text-gray-900">₹{o.total_amount}</p>
+                </div>
+              </div>
+
+              {/* Address */}
+              {o.address && (
+                <div className="bg-white rounded-xl p-4 border border-gray-100">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery address</p>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <p className="text-sm text-gray-700 leading-relaxed">{o.address}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment */}
+              {o.payment && (
+                <div className="bg-white rounded-xl p-4 border border-gray-100">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Payment</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700">{o.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}</p>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${o.payment.status === 'PAID' ? 'bg-green-50 text-green-600' : o.payment.status === 'FAILED' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'}`}>
+                      {o.payment.status === 'PENDING' ? 'Pay on delivery' : o.payment.status}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Tracking — mobile only (shown below details, hidden on desktop) */}
+              <div className="lg:hidden bg-white rounded-xl p-4 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Order tracking</p>
+                {verticalTracker}
+              </div>
+
+              {/* Cancel */}
+              {canCancel && (
+                <button onClick={() => { setCancelReason(''); setCancelOther(''); setShowCancelSheet(true) }} className="w-full text-center bg-red-50 hover:bg-red-100 text-red-500 font-semibold py-3 rounded-xl text-sm transition-colors">
+                  Cancel order
+                </button>
+              )}
+            </div>
+
+            {/* RIGHT: tracking card — desktop only */}
+            <div className="hidden lg:flex flex-col w-[200px] flex-shrink-0 self-stretch">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 flex-1 flex flex-col">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex-shrink-0">Order tracking</p>
+                <div className="flex-1">{verticalTracker}</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Cancel sheet */}
+        {showCancelSheet && (
+          <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setShowCancelSheet(false)} />
+            <div className="relative w-full lg:max-w-md bg-white rounded-t-3xl lg:rounded-2xl p-6 shadow-xl">
+              <h3 className="font-bold text-gray-900 text-base mb-1">Cancel order</h3>
+              <p className="text-sm text-gray-500 mb-5">Please select a reason</p>
+              <div className="space-y-2 mb-4">
+                {CANCEL_REASONS.map(r => (
+                  <button key={r} onClick={() => setCancelReason(r)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-medium text-left transition-colors ${cancelReason === r ? 'border-red-400 bg-red-50 text-red-700' : 'border-gray-100 text-gray-700 hover:border-gray-200'}`}>
+                    <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${cancelReason === r ? 'border-red-500 bg-red-500' : 'border-gray-300'}`}>{cancelReason === r && <span className="w-1.5 h-1.5 rounded-full bg-white" />}</span>
+                    {r}
+                  </button>
+                ))}
+              </div>
+              {cancelReason === 'Other' && <textarea value={cancelOther} onChange={e => setCancelOther(e.target.value)} placeholder="Tell us more…" rows={2} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-100 transition-colors mb-4 resize-none" />}
+              <div className="flex gap-3">
+                <button onClick={() => setShowCancelSheet(false)} className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Go back</button>
+                <button onClick={cancelSelectedOrder} disabled={cancelling || !cancelReason || (cancelReason === 'Other' && !cancelOther.trim())} className="flex-1 h-11 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
+                  {cancelling ? 'Cancelling…' : 'Confirm cancel'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  })() : null
+
+  // Desktop orders
+  const desktopOrdersPanel = selectedOrderId ? (
+    <div className="flex flex-col h-full">
+      {selectedOrderLoading ? (
+        <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+      ) : (
+        orderDetailPanel
+      )}
+    </div>
+  ) : (
+    <div className="flex flex-col h-full p-4 gap-3">
+      <div className="bg-white rounded-xl p-4 flex-1 overflow-auto">
         {ordersLoading ? (
           <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
         ) : orders.length === 0 ? (
@@ -613,9 +850,8 @@ export default function AccountClient() {
           <div className="space-y-3">
             {orders.map(order => (
               <div key={order.id} className="relative border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                <Link href={`/orders/${order.id}`} className="absolute inset-0 rounded-2xl" aria-label={`View order ${order.order_number}`} />
+                <button onClick={() => selectOrder(order.id)} className="absolute inset-0 rounded-2xl" aria-label={`View order ${order.order_number}`} />
                 <div className="flex items-center justify-between gap-4">
-                  {/* Left: images → status → date */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2.5">
                       {order.items.slice(0, 3).map((item, i) => (
@@ -634,7 +870,6 @@ export default function AccountClient() {
                     </span>
                     <p className="text-xs text-gray-400">Order placed {formatDate(order.created_at)}</p>
                   </div>
-                  {/* Right: price → Order Again (relative z-10 so it sits above the Link overlay) */}
                   <div className="relative z-10 flex flex-col items-end justify-center gap-3 flex-shrink-0">
                     <p className="font-bold text-gray-900 text-base">₹{order.total_amount}</p>
                     <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
@@ -684,9 +919,6 @@ export default function AccountClient() {
 
   const desktopAddressesPanel = (
     <div className="flex flex-col h-full p-4 gap-3">
-      <div className="bg-white rounded-xl">
-        <div className="flex items-center gap-2 px-5 py-4">{desktopBackBtn}<h2 className="font-semibold text-gray-900 text-base flex-1">{DESKTOP_LABELS.addresses}</h2></div>
-      </div>
       {showAddrForm ? (
         <div className="bg-white rounded-xl p-5 flex-1">
           <p className="text-sm font-bold text-gray-900 mb-4">{editingAddress ? 'Edit address' : 'Add New Address'}</p>
@@ -712,9 +944,6 @@ export default function AccountClient() {
   // Desktop wishlist
   const desktopWishlistPanel = (
     <div className="flex flex-col h-full p-4 gap-3">
-      <div className="bg-white rounded-xl">
-        <div className="flex items-center gap-2 px-5 py-4">{desktopBackBtn}<h2 className="font-semibold text-gray-900 text-base">{DESKTOP_LABELS.wishlist}</h2></div>
-      </div>
       <div className="bg-white rounded-xl p-4 flex-1">
         {wishlistLoading ? (
           <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
@@ -759,7 +988,7 @@ export default function AccountClient() {
         {!mobilePanelOpen ? mobileSidebar : (
           <>
             {tab === 'profile' && mobileProfileScreen}
-            {tab === 'orders' && mobileOrdersScreen}
+            {tab === 'orders' && renderMobileOrdersScreen()}
             {tab === 'addresses' && mobileAddressesScreen}
             {tab === 'wishlist' && mobileWishlistScreen}
           </>

@@ -1,0 +1,20 @@
+meta {
+  name: Get Collection by ID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url_local}}/collections/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: COLLECTION_ID
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

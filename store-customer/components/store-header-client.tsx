@@ -164,10 +164,13 @@ export default function StoreHeaderClient({ store }: Props) {
   }
 
   async function saveAddress() {
-    if (!form.address.trim() && !form.street.trim() && !form.city.trim()) {
-      setFormError('Enter at least address, street, or city')
-      return
-    }
+    if (!form.door_no.trim()) { setFormError('Door No is required'); return }
+    if (!form.street.trim()) { setFormError('Street is required'); return }
+    if (!form.address.trim()) { setFormError('Area / Landmark is required'); return }
+    if (!form.city.trim()) { setFormError('City is required'); return }
+    if (!form.pincode.trim()) { setFormError('Pincode is required'); return }
+    if (!form.state.trim()) { setFormError('State is required'); return }
+    if (!form.country.trim()) { setFormError('Country is required'); return }
     setSaving(true)
     setFormError('')
     try {
@@ -267,81 +270,96 @@ export default function StoreHeaderClient({ store }: Props) {
           </button>
         </div>
 
-        {/* ── Desktop (lg+): single row ── */}
-        <div className="hidden lg:flex w-full h-[70px] px-[10px] items-center justify-center">
-          <div className="w-full max-w-[1360px] px-10 h-[50px] flex items-center justify-between gap-[40px]">
+        {/* ── Desktop (lg+): single row, page-x aligned ── */}
+        <div className="hidden lg:flex w-full h-[70px] px-[5%] items-center gap-8">
 
             {/* Left: logo + store name + divider + location */}
-            <div className="flex items-center gap-[16px] flex-shrink-0">
-              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
                 {store.logo && (
                   <img src={store.logo.startsWith('http') ? store.logo : `${API_URL}${store.logo}`} alt={store.name} className="w-8 h-8 rounded-xl object-cover" />
                 )}
-                <span className="text-[32px] font-normal leading-none tracking-normal text-violet-600 truncate" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
+                <span className="text-[30px] font-normal leading-none tracking-normal text-violet-600" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
                   {store.name}
                 </span>
               </Link>
-              <div className="w-px h-4 bg-gray-300" />
-              <button onClick={openPicker} className="w-[126px] h-[20px] flex items-center gap-[5px] hover:opacity-70 transition-opacity flex-shrink-0">
-                <span className="text-sm font-medium text-gray-700 truncate flex-1 min-w-0">{addressLine}</span>
-                <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <div className="w-px h-5 bg-gray-300 flex-shrink-0" />
+              <button onClick={openPicker} className="flex items-center gap-1.5 hover:opacity-70 transition-opacity min-w-0">
+                <svg className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700 truncate max-w-[140px]">{addressLine}</span>
+                <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
             </div>
 
-            {/* Center: Search */}
-            <div className="flex-1 min-w-0 flex justify-center">
+            {/* Center: Search — grows to fill */}
+            <div className="flex-1">
               <SearchBar />
             </div>
 
-            {/* Right: Orders + Wishlist + Cart + Auth */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Right: Orders + Wishlist + Cart + Auth — right-aligned */}
+            <div className="flex items-center gap-1 justify-end">
               <button
                 onClick={() => requireAuth(() => router.push('/account?tab=orders'))}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
                 aria-label="Orders"
               >
                 <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
+                <span className="text-[10px] font-medium text-gray-600 leading-none">Orders</span>
               </button>
               <button
                 onClick={() => requireAuth(() => router.push('/account?tab=wishlist'))}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
                 aria-label="Wishlist"
               >
                 <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
+                <span className="text-[10px] font-medium text-gray-600 leading-none">Wishlist</span>
               </button>
-              <button onClick={openCart} className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors" aria-label="Cart">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 5H3m4 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
-                </svg>
-                {count > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                    {count > 99 ? '99+' : count}
-                  </span>
-                )}
+              <button
+                onClick={openCart}
+                className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+                aria-label="Cart"
+              >
+                <div className="relative">
+                  <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 5H3m4 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
+                  </svg>
+                  {count > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                      {count > 99 ? '99+' : count}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] font-medium text-gray-600 leading-none">Cart</span>
               </button>
+              <div className="w-px h-8 bg-gray-200 mx-1 flex-shrink-0" />
               {isAuthenticated && customer ? (
                 <Link
                   href="/account"
-                  className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center hover:bg-indigo-600 transition-colors flex-shrink-0"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
                   aria-label="Account"
                 >
-                  <span className="text-sm font-bold text-white leading-none">
-                    {(customer.name ?? customer.phone).charAt(0).toUpperCase()}
-                  </span>
+                  <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[11px] font-bold text-white leading-none">
+                      {(customer.name ?? customer.phone).charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-600 leading-none">Profile</span>
                 </Link>
               ) : (
-                <button onClick={() => requireAuth(() => {})} className="text-xs font-semibold text-indigo-600 px-3 py-1.5 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 transition-colors whitespace-nowrap">
+                <button onClick={() => requireAuth(() => {})} className="text-xs font-semibold text-indigo-600 px-4 py-2 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 transition-colors whitespace-nowrap ml-1">
                   Sign in
                 </button>
               )}
             </div>
-          </div>
         </div>
 
       </header>

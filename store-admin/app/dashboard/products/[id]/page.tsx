@@ -52,7 +52,7 @@ export default function ProductDetailPage() {
       <div className="text-center py-40 text-gray-400">
         <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
         <p className="text-lg font-medium">Product not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-sm text-[#25D366] hover:underline cursor-pointer">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-sm text-[#6366f1] hover:underline cursor-pointer">Go back</button>
       </div>
     )
   }
