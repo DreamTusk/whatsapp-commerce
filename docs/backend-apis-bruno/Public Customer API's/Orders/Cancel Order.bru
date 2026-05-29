@@ -1,0 +1,30 @@
+meta {
+  name: Cancel Order
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url_local}}/storefront/orders/order_id_here/cancel
+  body: json
+  auth: bearer
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+body:json {
+  {
+    "reason": "Changed my mind"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

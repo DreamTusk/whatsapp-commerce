@@ -1,0 +1,23 @@
+meta {
+  name: Create Invite
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url_local}}/invite
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "newmember@example.com",
+    "role": "MANAGER"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

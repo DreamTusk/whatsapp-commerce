@@ -1,0 +1,37 @@
+meta {
+  name: Update Address
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url_local}}/storefront/addresses/address_id_here
+  body: json
+  auth: bearer
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+body:json {
+  {
+    "label": "Office",
+    "door_no": "5",
+    "street": "Nelson Manickam Road",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "country": "India",
+    "pincode": "600029",
+    "is_default": false
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

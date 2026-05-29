@@ -1,0 +1,30 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url_local}}/storefront/auth/profile
+  body: json
+  auth: bearer
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+body:json {
+  {
+    "name": "Venkatesh"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

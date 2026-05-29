@@ -1,0 +1,22 @@
+meta {
+  name: Create Brand
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/brands
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Amul"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

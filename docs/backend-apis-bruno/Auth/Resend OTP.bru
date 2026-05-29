@@ -1,0 +1,22 @@
+meta {
+  name: Resend OTP
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url_local}}/auth/resend-otp
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "venkatesh.r@dreamtusk.com"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,24 @@
+meta {
+  name: Get Addresses
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_local}}/storefront/addresses
+  body: none
+  auth: bearer
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,22 @@
+meta {
+  name: Logout
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url_local}}/auth/logout
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "refresh_token": "your_refresh_token_here"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

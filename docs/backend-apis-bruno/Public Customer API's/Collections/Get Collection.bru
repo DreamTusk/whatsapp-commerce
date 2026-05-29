@@ -1,0 +1,20 @@
+meta {
+  name: Get Collection
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_local}}/storefront/collections/collection_id_here
+  body: none
+  auth: none
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

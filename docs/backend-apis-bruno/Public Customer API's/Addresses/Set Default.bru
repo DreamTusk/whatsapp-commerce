@@ -1,0 +1,24 @@
+meta {
+  name: Set Default Address
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url_local}}/storefront/addresses/address_id_here/default
+  body: none
+  auth: bearer
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

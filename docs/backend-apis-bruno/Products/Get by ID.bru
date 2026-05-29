@@ -1,0 +1,16 @@
+meta {
+  name: Get Product by ID
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url_local}}/products/product_id_here
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

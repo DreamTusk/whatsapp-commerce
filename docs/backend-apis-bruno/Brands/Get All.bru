@@ -1,0 +1,16 @@
+meta {
+  name: Get All Brands
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_local}}/brands
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

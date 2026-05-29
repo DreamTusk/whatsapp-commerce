@@ -1,0 +1,16 @@
+meta {
+  name: Cancel Invite
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{base_url_local}}/invite/invite_id_here
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

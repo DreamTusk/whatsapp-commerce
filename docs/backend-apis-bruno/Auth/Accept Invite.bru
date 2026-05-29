@@ -1,0 +1,24 @@
+meta {
+  name: Accept Invite
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url_local}}/auth/accept-invite
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "token": "your_invite_token_here",
+    "name": "New Member",
+    "password": "password123"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

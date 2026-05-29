@@ -1,0 +1,26 @@
+meta {
+  name: Reorder Collections
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{base_url_local}}/collections/reorder
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "collection_ids": [
+      "collection_id_1",
+      "collection_id_2",
+      "collection_id_3"
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

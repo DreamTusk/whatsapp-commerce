@@ -1,0 +1,368 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum CollectionType {
+  MANUAL
+  AUTO
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  SALES_EXECUTIVE
+  EMPLOYEE
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  ONLINE
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id                        String   @id @default(cuid())
+  name                      String
+  phone                     String   @unique
+  whatsappPhoneNumberId     String?  @unique
+  whatsappBusinessAccountId String?
+  whatsappAccessToken       String?
+  domain                    String?  @unique
+  catalogId                 String?
+  address                   String?
+  logo                      String?
+  minOrderAmount            Float    @default(0)
+  deliveryRadius            Float?
+  isActive                  Boolean  @default(true)
+  customerAuthMethods       String[] @default(["PHONE_OTP"])
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  brands            Brand[]
+  categories        Category[]
+  products          Product[]
+  orders            Order[]
+  customers         Customer[]
+  cartItems         CartItem[]
+  wishlistItems     WishlistItem[]
+  customerOtps      CustomerOtp[]
+  userStores        UserStore[]
+  storeInvites      StoreInvite[]
+  customerAddresses CustomerAddress[]
+  collections       Collection[]
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  password         String
+  isVerified       Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  userStores       UserStore[]
+  refreshTokens    RefreshToken[]
+  otpVerifications OtpVerification[]
+}
+
+model OtpVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  otp       String
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model UserStore {
+  id        String   @id @default(cuid())
+  userId    String
+  storeId   String
+  role      Role     @default(OWNER)
+  user      User     @relation(fields: [userId], references: [id])
+  store     Store    @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, storeId])
+}
+
+model StoreInvite {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  email     String
+  role      Role     @default(EMPLOYEE)
+  token     String   @unique
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, storeId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id])
+  products  Product[]
+  createdAt DateTime  @default(now())
+
+  @@unique([name, storeId])
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String
+  imageUrl  String?
+  isActive  Boolean    @default(true)
+  parentId  String?
+  parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryChildren")
+  storeId   String
+  store     Store      @relation(fields: [storeId], references: [id])
+  products  Product[]
+  createdAt DateTime   @default(now())
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  imageUrl      String?
+  isActive      Boolean  @default(true)
+  sellingPrice  Float    @default(0)
+  originalPrice Float?
+  unit          String?
+  inStock       Boolean  @default(true)
+  brandId       String?
+  brand         Brand?   @relation(fields: [brandId], references: [id])
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  storeId       String
+  store         Store    @relation(fields: [storeId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orderItems         OrderItem[]
+  wishlistItems      WishlistItem[]
+  cartItems          CartItem[]
+  collectionProducts CollectionProduct[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  phone     String?
+  email     String?
+  name      String?
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders        Order[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  sessions      ConversationSession[]
+  addresses     CustomerAddress[]
+
+  @@unique([phone, storeId])
+}
+
+model CustomerAddress {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id])
+  label      String?
+  address    String?
+  doorNo     String?
+  street     String?
+  city       String?
+  state      String?
+  country    String?
+  pincode    String?
+  latitude   Float?
+  longitude  Float?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CustomerOtp {
+  id        String   @id @default(cuid())
+  phone     String
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  otp       String
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model ConversationSession {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  state      String   @default("WELCOME")
+  cartData   Json     @default("[]")
+  storeId    String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Order {
+  id                 String      @id @default(cuid())
+  orderNumber        String
+  customerId         String
+  customer           Customer    @relation(fields: [customerId], references: [id])
+  storeId            String
+  store              Store       @relation(fields: [storeId], references: [id])
+  totalAmount        Float
+  status             OrderStatus @default(NEW)
+  address            String?
+  doorNo             String?
+  street             String?
+  city               String?
+  state              String?
+  country            String?
+  pincode            String?
+  latitude           Float?
+  longitude          Float?
+  notes              String?
+  altPhone           String?
+  cancellationReason String?
+  cancelledBy        String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  items   OrderItem[]
+  payment Payment?
+
+  @@unique([storeId, orderNumber])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id])
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  productName String
+  price       Float
+  quantity    Int
+  subtotal    Float
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id])
+  method            PaymentMethod
+  status            PaymentStatus @default(PENDING)
+  razorpayLinkId    String?
+  razorpayPaymentId String?
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model CartItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id])
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([customerId, productId])
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+}
+
+model MessageLog {
+  id            String   @id @default(cuid())
+  storeId       String
+  customerPhone String
+  direction     String
+  messageType   String
+  content       Json
+  whatsappMsgId String?
+  createdAt     DateTime @default(now())
+}
+
+model Collection {
+  id           String         @id @default(cuid())
+  storeId      String
+  store        Store          @relation(fields: [storeId], references: [id])
+  name         String
+  type         CollectionType
+  criteria     Json?
+  isActive     Boolean        @default(true)
+  displayOrder Int            @default(0)
+  imageUrl     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  products CollectionProduct[]
+}
+
+model CollectionProduct {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  position     Int        @default(0)
+  addedAt      DateTime   @default(now())
+
+  @@unique([collectionId, productId])
+}

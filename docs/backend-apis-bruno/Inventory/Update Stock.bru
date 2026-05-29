@@ -1,0 +1,22 @@
+meta {
+  name: Update Stock
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{base_url_local}}/inventory/product_id_here
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "in_stock": false
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

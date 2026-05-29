@@ -1,0 +1,37 @@
+meta {
+  name: Create Address
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/storefront/addresses
+  body: json
+  auth: bearer
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+body:json {
+  {
+    "label": "Home",
+    "door_no": "12A",
+    "street": "Anna Nagar Main Road",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "country": "India",
+    "pincode": "600040",
+    "is_default": true
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
