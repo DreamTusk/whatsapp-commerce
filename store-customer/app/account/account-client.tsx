@@ -58,6 +58,8 @@ export default function AccountClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams.get('tab')
     return (t === 'profile' || t === 'orders' || t === 'addresses' || t === 'wishlist') ? t : 'profile'
@@ -252,8 +254,13 @@ export default function AccountClient() {
   }
 
   function confirmLogout() {
-    if (!window.confirm('Are you sure you want to logout?')) return
-    logout(); router.push('/')
+    setLogoutConfirmOpen(true)
+  }
+
+  function handleLogoutConfirmed() {
+    setLogoutConfirmOpen(false)
+    logout()
+    router.push('/')
   }
 
   async function setDefaultAddress(id: string) {
@@ -1007,6 +1014,31 @@ export default function AccountClient() {
           {tab === 'wishlist' && desktopWishlistPanel}
         </div>
       </div>
+
+      {/* Logout confirmation */}
+      {logoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setLogoutConfirmOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Sign out?</h3>
+            <p className="text-sm text-gray-500 mb-5">You will be signed out of your account.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogoutConfirmed}
+                className="flex-1 h-11 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

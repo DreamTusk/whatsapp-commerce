@@ -14,6 +14,7 @@
     "start:prod": "node dist/main",
     "seed": "ts-node -r tsconfig-paths/register prisma/seeds/seed.ts",
     "add-products": "ts-node -r tsconfig-paths/register prisma/seeds/add-products.ts",
+    "add-banners": "ts-node -r tsconfig-paths/register prisma/seeds/add-banners.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",

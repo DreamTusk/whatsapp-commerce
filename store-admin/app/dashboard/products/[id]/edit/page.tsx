@@ -7,6 +7,7 @@ import { ArrowLeft, ImagePlus, Loader2, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
 import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
 
@@ -199,14 +200,10 @@ export default function EditProductPage() {
               className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
             >
               <option value="">Select category</option>
-              {categories.map(c =>
-                c.children && c.children.length > 0 ? (
-                  <optgroup key={c.id} label={c.name}>
-                    {c.children.map(ch => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
-                  </optgroup>
-                ) : (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                )
+              {categories.flatMap(c =>
+                c.children && c.children.length > 0
+                  ? c.children.map(ch => <option key={ch.id} value={ch.id}>{c.name} — {ch.name}</option>)
+                  : [<option key={c.id} value={c.id}>{c.name}</option>]
               )}
             </select>
           </div>

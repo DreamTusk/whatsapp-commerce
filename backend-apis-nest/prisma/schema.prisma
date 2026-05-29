@@ -9,6 +9,12 @@ enum CollectionType {
   AUTO
 }
 
+enum BannerType {
+  PRODUCT
+  COLLECTION
+  URL
+}
+
 enum Role {
   OWNER
   MANAGER
@@ -71,6 +77,7 @@ model Store {
   storeInvites      StoreInvite[]
   customerAddresses CustomerAddress[]
   collections       Collection[]
+  banners           Banner[]
 }
 
 model User {
@@ -179,6 +186,7 @@ model Product {
   wishlistItems      WishlistItem[]
   cartItems          CartItem[]
   collectionProducts CollectionProduct[]
+  banners            Banner[]
 }
 
 model Customer {
@@ -353,6 +361,7 @@ model Collection {
   updatedAt    DateTime       @updatedAt
 
   products CollectionProduct[]
+  banners  Banner[]
 }
 
 model CollectionProduct {
@@ -365,4 +374,28 @@ model CollectionProduct {
   addedAt      DateTime   @default(now())
 
   @@unique([collectionId, productId])
+}
+
+model Banner {
+  id           String     @id @default(cuid())
+  storeId      String
+  store        Store      @relation(fields: [storeId], references: [id])
+  name         String
+  type         BannerType
+  imageUrl     String?
+  isActive     Boolean    @default(true)
+  displayOrder Int        @default(0)
+
+  productId    String?
+  product      Product?    @relation(fields: [productId], references: [id])
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id])
+  url          String?
+
+  startsAt     DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([storeId])
 }

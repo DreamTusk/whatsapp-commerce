@@ -15,10 +15,15 @@ headers {
 }
 
 docs {
-  Response now includes a `collections` array alongside `store`.
-  Each collection has: id, name, type (manual|auto), image_url, products[].
-  Collections are ordered by display_order (asc), only is_active=true ones are returned.
-  Auto collections have their products resolved live via criteria at request time.
+  Response includes store, banners, and collections in one request.
+
+  banners[]: id, name, type (product|collection|url), image_url, product_id, collection_id, url
+  - Only active banners within their starts_at / expires_at window are returned.
+  - Ordered by display_order asc.
+
+  collections[]: id, name, type (manual|auto), image_url, products[]
+  - Only is_active=true collections returned, ordered by display_order asc.
+  - Auto collections resolve products live via criteria.
 }
 
 settings {

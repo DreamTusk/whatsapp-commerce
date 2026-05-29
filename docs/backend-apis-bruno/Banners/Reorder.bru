@@ -1,0 +1,26 @@
+meta {
+  name: Reorder Banners
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url_local}}/banners/reorder
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "banner_ids": [
+      "banner_id_1",
+      "banner_id_2",
+      "banner_id_3"
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

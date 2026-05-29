@@ -62,10 +62,25 @@ export class StoreService {
     const store = await this.prisma.store.findUnique({ where: { domain } });
     if (!store) throw new NotFoundException('Store not found');
 
-    const rawCollections = await this.prisma.collection.findMany({
-      where: { storeId: store.id, isActive: true },
-      orderBy: { displayOrder: 'asc' },
-    });
+    const now = new Date();
+
+    const [rawCollections, rawBanners] = await Promise.all([
+      this.prisma.collection.findMany({
+        where: { storeId: store.id, isActive: true },
+        orderBy: { displayOrder: 'asc' },
+      }),
+      this.prisma.banner.findMany({
+        where: {
+          storeId: store.id,
+          isActive: true,
+          AND: [
+            { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+            { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          ],
+        },
+        orderBy: { displayOrder: 'asc' },
+      }),
+    ]);
 
     const collections = await Promise.all(
       rawCollections.map(async (c) => {
@@ -94,6 +109,16 @@ export class StoreService {
       }),
     );
 
+    const banners = rawBanners.map((b) => ({
+      id: b.id,
+      name: b.name,
+      type: b.type.toLowerCase(),
+      image_url: b.imageUrl,
+      product_id: b.productId,
+      collection_id: b.collectionId,
+      url: b.url,
+    }));
+
     return {
       store: {
         id: store.id,
@@ -106,6 +131,7 @@ export class StoreService {
         delivery_radius: store.deliveryRadius,
         is_active: store.isActive,
       },
+      banners,
       collections,
     };
   }

@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const STORE_ID = 'cmpqr7x5c00056eatwmxphxwf';
+const STORE_ID = 'cmpqsvajf0005etuohdixtgli';
 
 async function main(): Promise<void> {
   console.log('Adding categories, brands and products to store:', STORE_ID);

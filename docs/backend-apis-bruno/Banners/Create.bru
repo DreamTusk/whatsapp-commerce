@@ -1,0 +1,27 @@
+meta {
+  name: Create Banner
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/banners
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  name: Summer Sale
+  type: collection
+  collection_id: collection_id_here
+  image_url: https://picsum.photos/seed/banner1/800/400
+  is_active: true
+  display_order: 0
+  expires_at: 2026-12-31T00:00:00.000Z
+  image:
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

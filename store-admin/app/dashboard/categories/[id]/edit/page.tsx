@@ -7,6 +7,7 @@ import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
 import api from '@/lib/api'
 import type { Category } from '@/types'
 
@@ -144,7 +145,7 @@ export default function EditCategoryPage() {
             <select
               value={parentId}
               onChange={e => setParentId(e.target.value)}
-              className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer"
+              className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
             >
               <option value="">None (top-level)</option>
               {parentOptions.map(c => (

@@ -1,0 +1,20 @@
+meta {
+  name: Get Banners
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url_local}}/storefront/banners
+  body: none
+  auth: none
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

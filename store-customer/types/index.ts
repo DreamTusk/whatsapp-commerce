@@ -1,3 +1,13 @@
+export interface Banner {
+  id: string
+  name: string
+  type: 'product' | 'collection' | 'url'
+  image_url: string | null
+  product_id: string | null
+  collection_id: string | null
+  url: string | null
+}
+
 export interface StoreCollection {
   id: string
   name: string

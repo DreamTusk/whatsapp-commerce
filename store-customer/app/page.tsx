@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import StoreHeader from '@/components/store-header'
 import ProductCard from '@/components/product-card'
-import type { Store, Category, Product, StoreCollection } from '@/types'
+import BannerCarousel from '@/components/banner-carousel'
+import type { Store, Category, Product, StoreCollection, Banner } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -16,11 +17,13 @@ export default async function HomePage() {
   let store: Store | null = null
   let categories: Category[] = []
   let collections: StoreCollection[] = []
+  let banners: Banner[] = []
   let products: Product[] = []
 
   try {
-    const data = await apiFetch<{ store: Store; collections?: StoreCollection[] }>('/api/store/info', domain)
+    const data = await apiFetch<{ store: Store; banners?: Banner[]; collections?: StoreCollection[] }>('/api/store/info', domain)
     store = data.store
+    banners = data.banners ?? []
     collections = data.collections ?? []
   } catch {
     return (
@@ -70,12 +73,8 @@ export default async function HomePage() {
     <main className="min-h-screen pb-24">
       <StoreHeader domain={domain} />
 
-      {/* ── Banner placeholder ── */}
-      <div className="page-x pt-4">
-        <div className="w-full h-32 sm:h-40 lg:h-52 rounded-2xl bg-gray-200 flex items-center justify-center">
-          <p className="text-sm text-gray-400 font-medium">Add banner here</p>
-        </div>
-      </div>
+      {/* ── Banners ── */}
+      {banners.length > 0 && <BannerCarousel banners={banners} />}
 
       {/* ── Round categories ── */}
       {categories.length > 0 && (

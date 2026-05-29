@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
 import api from '@/lib/api'
 import type { Category } from '@/types'
 
@@ -166,7 +167,7 @@ export default function CategoriesPage() {
               <select
                 value={formParentId}
                 onChange={e => setFormParentId(e.target.value)}
-                className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer"
+                className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
               >
                 <option value="">None (top-level)</option>
                 {categories.map(c => (

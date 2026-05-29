@@ -1,0 +1,22 @@
+meta {
+  name: Update Banner
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url_local}}/banners/banner_id_here
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  name: Summer Sale Updated
+  is_active: true
+  image:
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

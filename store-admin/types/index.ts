@@ -130,6 +130,22 @@ export interface Collection {
   updated_at: string
 }
 
+export interface Banner {
+  id: string
+  name: string
+  type: 'product' | 'collection' | 'url'
+  image_url: string | null
+  status: 'active' | 'inactive' | 'expired'
+  display_order: number
+  product_id: string | null
+  collection_id: string | null
+  url: string | null
+  starts_at: string | null
+  expires_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface ApiError {
   error: string
 }

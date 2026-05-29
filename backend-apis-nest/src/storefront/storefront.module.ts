@@ -7,8 +7,9 @@ import { CartModule } from './cart/cart.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { StorefrontOrdersModule } from './orders/orders.module';
+import { StorefrontBannersModule } from './banners/banners.module';
 
 @Module({
-  imports: [StorefrontAuthModule, StorefrontCategoriesModule, StorefrontProductsModule, StorefrontCollectionsModule, CartModule, WishlistModule, AddressesModule, StorefrontOrdersModule],
+  imports: [StorefrontAuthModule, StorefrontCategoriesModule, StorefrontProductsModule, StorefrontCollectionsModule, CartModule, WishlistModule, AddressesModule, StorefrontOrdersModule, StorefrontBannersModule],
 })
 export class StorefrontModule {}

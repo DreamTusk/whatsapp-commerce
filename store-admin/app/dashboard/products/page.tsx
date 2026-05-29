@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
 import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
 
@@ -231,9 +232,9 @@ export default function ProductsPage() {
                   <option value="">Select category</option>
                   {categories.map(c =>
                     c.children && c.children.length > 0 ? (
-                      <optgroup key={c.id} label={c.name}>
-                        {c.children.map(ch => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
-                      </optgroup>
+                      c.children.map(ch => (
+                        <option key={ch.id} value={ch.id}>{c.name} — {ch.name}</option>
+                      ))
                     ) : (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     )
@@ -249,7 +250,9 @@ export default function ProductsPage() {
                   className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
                 >
                   <option value="">No brand</option>
-                  {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  {brands.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                 </select>
               </div>
 

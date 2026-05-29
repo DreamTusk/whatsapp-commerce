@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
 import api from '@/lib/api'
 import type { Collection, Product, Category, Brand } from '@/types'
 
@@ -584,7 +585,7 @@ export default function CollectionsPage() {
                         <select
                           value={criteriaMatch}
                           onChange={e => setCriteriaMatch(e.target.value as 'all' | 'any')}
-                          className="h-8 px-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer"
+                          className="h-10 px-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#6366f1] w-20"
                         >
                           <option value="all">all</option>
                           <option value="any">any</option>
@@ -598,15 +599,17 @@ export default function CollectionsPage() {
                             <select
                               value={row.field}
                               onChange={e => onFieldChange(row.id, e.target.value)}
-                              className="h-10 px-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer flex-shrink-0"
+                              className="h-10 px-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#6366f1] w-36 flex-shrink-0"
                             >
-                              {FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                              {FIELDS.map(f => (
+                                <option key={f.value} value={f.value}>{f.label}</option>
+                              ))}
                             </select>
 
                             <select
                               value={row.operator}
                               onChange={e => updateRow(row.id, { operator: e.target.value })}
-                              className="h-10 px-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer flex-shrink-0"
+                              className="h-10 px-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#6366f1] w-44 flex-shrink-0"
                             >
                               {(OPERATORS_FOR[row.field] ?? []).map(op => (
                                 <option key={op.value} value={op.value}>{op.label}</option>

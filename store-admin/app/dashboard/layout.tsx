@@ -5,10 +5,14 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   LayoutDashboard, ShoppingBag, Package, Tag, Users, Settings,
-  LogOut, Pencil, Menu, X, Store, BookMarked, Warehouse, Layers,
+  LogOut, Pencil, Menu, X, Store, BookMarked, Warehouse, Layers, Image,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import type { Store as StoreType } from '@/types'
 
 const NAV_ITEMS = [
@@ -19,6 +23,7 @@ const NAV_ITEMS = [
   { label: 'Brands',     href: '/dashboard/brands',     icon: BookMarked },
   { label: 'Categories',   href: '/dashboard/categories',   icon: Tag },
   { label: 'Collections',  href: '/dashboard/collections',  icon: Layers },
+  { label: 'Banners',      href: '/dashboard/banners',      icon: Image },
   { label: 'Customers',    href: '/dashboard/customers',    icon: Users },
   { label: 'Settings',   href: '/dashboard/settings',   icon: Settings },
 ]
@@ -30,6 +35,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [store, setStore]               = useState<StoreType | null>(null)
   const [storeLoading, setStoreLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen]   = useState(false)
+  const [logoutOpen, setLogoutOpen]     = useState(false)
 
   const [user, setUser] = useState<import('@/types').User | null>(null)
   useEffect(() => { setUser(auth.getUser()) }, [])
@@ -47,7 +53,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       .finally(() => setStoreLoading(false))
   }, [router])
 
-  function handleLogout() {
+  function handleLogoutConfirmed() {
     const refreshToken = auth.getRefreshToken()
     if (refreshToken) {
       api.post('/api/auth/logout', { refresh_token: refreshToken }).catch(() => {})
@@ -130,7 +136,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         )}
         <button
-          onClick={handleLogout}
+          onClick={() => setLogoutOpen(true)}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-base text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
@@ -188,6 +194,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
+
+      <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will be signed out of your account and redirected to the login page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+              onClick={handleLogoutConfirmed}
+            >
+              Sign out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
