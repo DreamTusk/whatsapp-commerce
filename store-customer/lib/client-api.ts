@@ -21,6 +21,7 @@ export async function clientFetch<T>(path: string, options: RequestInit = {}): P
     headers: {
       'Content-Type': 'application/json',
       'x-store-domain': getDomain(),
+      'ngrok-skip-browser-warning': 'true',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },

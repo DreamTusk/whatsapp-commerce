@@ -11,7 +11,7 @@ const allowedOrigins = [
 ];
 
 const localhostSubdomainPattern = /^http:\/\/[a-z0-9-]+\.localhost:\d+$/;
-const ngrokPattern = /^https:\/\/[a-z0-9-]+\.ngrok-free\.app$/;
+const ngrokPattern = /^https:\/\/[a-z0-9-]+\.ngrok-free\.(app|dev)$/;
 const devtunnelsPattern = /^https:\/\/[a-z0-9]+-\d+\.[a-z0-9]+\.devtunnels\.ms$/;
 
 async function bootstrap() {

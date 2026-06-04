@@ -10,6 +10,7 @@ export async function apiFetch<T>(
     headers: {
       'Content-Type': 'application/json',
       'x-store-domain': domain,
+      'ngrok-skip-browser-warning': 'true',
       ...(options?.headers ?? {}),
     },
     cache: 'no-store',

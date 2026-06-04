@@ -1,0 +1,19 @@
+meta {
+  name: Search
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/api/storefront/search?q=tomato
+  body: none
+  auth: none
+}
+
+params:query {
+  q: tomato
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}

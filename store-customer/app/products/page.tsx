@@ -20,17 +20,20 @@ export default async function ProductsPage({ searchParams }: Props) {
   let categories: Category[] = []
 
   try {
-    const params = new URLSearchParams()
-    if (categoryId) params.set('category_id', categoryId)
-    if (search) params.set('search', search)
-    const qs = params.toString()
-
-    const [prodData, catData] = await Promise.all([
-      apiFetch<{ products: Product[] }>(`/api/storefront/products${qs ? `?${qs}` : ''}`, domain),
-      apiFetch<{ categories: Category[] }>('/api/storefront/categories', domain),
-    ])
-    products = prodData.products
+    const catData = await apiFetch<{ categories: Category[] }>('/api/storefront/categories', domain)
     categories = catData.categories
+
+    if (search) {
+      const searchData = await apiFetch<{ products: Product[] }>(
+        `/api/storefront/search?q=${encodeURIComponent(search)}`,
+        domain
+      )
+      products = searchData.products
+    } else {
+      const qs = categoryId ? `?category_id=${categoryId}` : ''
+      const prodData = await apiFetch<{ products: Product[] }>(`/api/storefront/products${qs}`, domain)
+      products = prodData.products
+    }
   } catch { /* backend unavailable */ }
 
   const activeCategory = categories.find(c => c.id === categoryId)
