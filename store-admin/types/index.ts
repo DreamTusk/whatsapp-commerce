@@ -87,6 +87,8 @@ export interface Order {
   store_id: string
   total_amount: number
   status: 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
+  source: 'CUSTOMER' | 'MANUAL'
+  created_by: string | null
   address: string | null
   door_no: string | null
   street: string | null
@@ -144,6 +146,24 @@ export interface Banner {
   expires_at: string | null
   created_at: string
   updated_at: string
+}
+
+export interface StoreUser {
+  id: string
+  user_id: string
+  name: string
+  email: string
+  role: string
+  is_active: boolean
+  joined_at: string
+}
+
+export interface StoreInvite {
+  id: string
+  email: string
+  role: string
+  expires_at: string
+  created_at: string
 }
 
 export interface ApiError {

@@ -1,0 +1,4 @@
+CREATE TYPE "OrderSource" AS ENUM ('CUSTOMER', 'MANUAL');
+
+ALTER TABLE "Order" ADD COLUMN "createdBy" TEXT;
+ALTER TABLE "Order" ADD COLUMN "source" "OrderSource" NOT NULL DEFAULT 'CUSTOMER';

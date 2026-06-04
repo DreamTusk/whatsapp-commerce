@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 
 import api from '@/lib/api'
 import type { Category } from '@/types'
+import AppSwitch from '@/components/ui/app-switch'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -156,13 +157,7 @@ export default function EditCategoryPage() {
 
           <div className="space-y-1.5">
             <Label className="text-base">Status</Label>
-            <button
-              type="button"
-              onClick={() => setIsActive(v => !v)}
-              className={`w-full h-11 rounded-lg text-base font-medium border transition-colors cursor-pointer ${isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}
-            >
-              {isActive ? 'Active' : 'Inactive'}
-            </button>
+            <AppSwitch checked={isActive} onChange={setIsActive} />
           </div>
 
           <Button

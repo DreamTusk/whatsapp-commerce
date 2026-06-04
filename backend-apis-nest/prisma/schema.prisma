@@ -19,7 +19,7 @@ enum Role {
   OWNER
   MANAGER
   SALES_EXECUTIVE
-  EMPLOYEE
+  STAFF
 }
 
 enum OrderStatus {
@@ -28,6 +28,11 @@ enum OrderStatus {
   OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
+}
+
+enum OrderSource {
+  CUSTOMER
+  MANUAL
 }
 
 enum PaymentStatus {
@@ -107,6 +112,7 @@ model UserStore {
   userId    String
   storeId   String
   role      Role     @default(OWNER)
+  isActive  Boolean  @default(true)
   user      User     @relation(fields: [userId], references: [id])
   store     Store    @relation(fields: [storeId], references: [id])
   createdAt DateTime @default(now())
@@ -119,7 +125,7 @@ model StoreInvite {
   storeId   String
   store     Store    @relation(fields: [storeId], references: [id])
   email     String
-  role      Role     @default(EMPLOYEE)
+  role      Role     @default(STAFF)
   token     String   @unique
   isUsed    Boolean  @default(false)
   expiresAt DateTime
@@ -274,6 +280,8 @@ model Order {
   altPhone           String?
   cancellationReason String?
   cancelledBy        String?
+  createdBy          String?
+  source             OrderSource @default(CUSTOMER)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 

@@ -96,16 +96,16 @@ export default function InventoryPage() {
           <p className="text-xl font-medium">{search ? 'No matches' : 'No products'}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full text-base min-w-[700px]">
-            <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+            <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
               <tr>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Product</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Category</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Price</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="px-4 py-3 w-28"></th>
+                <th className="px-4 py-3 w-36"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -114,9 +114,9 @@ export default function InventoryPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {product.image_url ? (
-                        <img src={product.image_url.startsWith('http') ? product.image_url : `${API_URL}${product.image_url}`} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                        <img src={product.image_url.startsWith('http') ? product.image_url : `${API_URL}${product.image_url}`} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-9 h-9 rounded-lg bg-gray-100 flex-shrink-0" />
+                        <div className="w-9 h-9 rounded-xl bg-gray-100 flex-shrink-0" />
                       )}
                       <p className="font-medium text-gray-900">{product.name}</p>
                     </div>
@@ -132,7 +132,7 @@ export default function InventoryPage() {
                     <button
                       onClick={() => toggleStock(product)}
                       disabled={toggling === product.id}
-                      className="h-9 text-[14px] px-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer"
+                      className="h-9 w-full text-[14px] px-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       {toggling === product.id
                         ? <Loader2 className="w-4 h-4 animate-spin" />

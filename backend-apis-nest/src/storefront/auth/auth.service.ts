@@ -98,10 +98,13 @@ export class StorefrontAuthService {
     return { customer: this.formatCustomer(customer) };
   }
 
-  async updateProfile(customerId: string, name: string) {
+  async updateProfile(customerId: string, name: string, email?: string) {
     const customer = await this.prisma.customer.update({
       where: { id: customerId },
-      data: { name: name?.trim() || null },
+      data: {
+        name: name?.trim() || null,
+        email: email?.trim() || null,
+      },
     });
     return { customer: this.formatCustomer(customer) };
   }

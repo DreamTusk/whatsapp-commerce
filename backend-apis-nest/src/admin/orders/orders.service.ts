@@ -4,7 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, OrderSource, PaymentMethod, PaymentStatus } from '@prisma/client';
+import { generateOrderNumber } from '../../utils/order-number';
 
 const orderInclude = {
   customer: { select: { name: true, phone: true } },
@@ -52,6 +53,8 @@ export class OrdersService {
       store_id: o.storeId,
       total_amount: o.totalAmount,
       status: o.status,
+      source: o.source,
+      created_by: o.createdBy ?? null,
       address: o.address,
       door_no: o.doorNo,
       street: o.street,
@@ -100,6 +103,134 @@ export class OrdersService {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
     return userStore.storeId;
+  }
+
+  async createManualOrder(userId: string, body: {
+    customer_id?: string;
+    new_customer?: { name: string; phone: string };
+    items: { product_id: string; quantity: number }[];
+    address: {
+      door_no: string; street: string; area: string;
+      city: string; pincode: string; state: string; country: string;
+    };
+    payment_method?: string;
+    notes?: string;
+  }) {
+    const storeId = await this.getStoreId(userId);
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+    const createdBy = user?.name ?? 'Staff';
+
+    if (!body.items || body.items.length === 0) throw new BadRequestException('items are required');
+
+    const addr = body.address;
+    if (!addr?.door_no?.trim() || !addr?.street?.trim() || !addr?.area?.trim() ||
+        !addr?.city?.trim() || !addr?.pincode?.trim() || !addr?.state?.trim() || !addr?.country?.trim()) {
+      throw new BadRequestException('All address fields are required');
+    }
+
+    // Resolve or create customer
+    let customerId: string;
+    if (body.customer_id) {
+      const existing = await this.prisma.customer.findFirst({ where: { id: body.customer_id, storeId } });
+      if (!existing) throw new NotFoundException('Customer not found');
+      customerId = existing.id;
+    } else if (body.new_customer) {
+      const { name, phone } = body.new_customer;
+      if (!phone?.trim()) throw new BadRequestException('Customer phone is required');
+
+      const existing = await this.prisma.customer.findFirst({
+        where: { phone: phone.trim(), storeId },
+      });
+
+      if (existing) {
+        if (name?.trim()) {
+          await this.prisma.customer.update({
+            where: { id: existing.id },
+            data: { name: name.trim() },
+          });
+        }
+        customerId = existing.id;
+      } else {
+        const created = await this.prisma.customer.create({
+          data: { phone: phone.trim(), name: name?.trim() || null, storeId },
+        });
+        customerId = created.id;
+      }
+    } else {
+      throw new BadRequestException('customer_id or new_customer is required');
+    }
+
+    // Save address to customer address book
+    await this.prisma.customerAddress.create({
+      data: {
+        customerId,
+        storeId,
+        label: 'Other',
+        doorNo: addr.door_no.trim(),
+        street: addr.street.trim(),
+        address: addr.area.trim(),
+        city: addr.city.trim(),
+        pincode: addr.pincode.trim(),
+        state: addr.state.trim(),
+        country: addr.country.trim(),
+        isDefault: false,
+      },
+    });
+
+    const productIds = body.items.map((i) => i.product_id);
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, storeId, isActive: true },
+    });
+    if (products.length !== productIds.length) throw new BadRequestException('One or more products are unavailable');
+
+    const orderItemsData = body.items.map((item) => {
+      const product = products.find((p) => p.id === item.product_id)!;
+      return {
+        productId: product.id,
+        productName: product.name,
+        price: product.sellingPrice,
+        quantity: item.quantity,
+        subtotal: product.sellingPrice * item.quantity,
+      };
+    });
+
+    const totalAmount = orderItemsData.reduce((sum, i) => sum + i.subtotal, 0);
+    const method = body.payment_method?.toUpperCase() === 'ONLINE' ? PaymentMethod.ONLINE : PaymentMethod.COD;
+
+    let order: any;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 50 + Math.random() * 150));
+      const orderNumber = await generateOrderNumber(this.prisma, storeId);
+      try {
+        order = await this.prisma.order.create({
+          data: {
+            orderNumber, customerId, storeId, totalAmount,
+            status: OrderStatus.NEW,
+            source: OrderSource.MANUAL,
+            createdBy,
+            notes: body.notes?.trim() || null,
+            doorNo: addr.door_no.trim(),
+            street: addr.street.trim(),
+            address: addr.area.trim(),
+            city: addr.city.trim(),
+            pincode: addr.pincode.trim(),
+            state: addr.state.trim(),
+            country: addr.country.trim(),
+            items: { create: orderItemsData },
+            payment: { create: { method, status: PaymentStatus.PENDING } },
+          },
+          include: orderInclude,
+        });
+        break;
+      } catch (err: any) {
+        if (err?.code === 'P2002' && attempt < 4) continue;
+        throw err;
+      }
+    }
+
+    if (!order) throw new BadRequestException('Failed to generate order number');
+    return { order: this.formatOrder(order) };
   }
 
   async listOrders(

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 
 import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
+import AppSwitch from '@/components/ui/app-switch'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -156,144 +157,102 @@ export default function ProductsPage() {
             </div>
           ) : (
             <div className="flex justify-center px-6 py-8">
-            <div className="w-full max-w-lg space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-base">Image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
-                    {formImagePreview ? (
-                      <img src={formImagePreview} alt="preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+            <div className="w-full max-w-4xl">
+            <div className="grid grid-cols-2 gap-5 mb-5">
+
+              {/* ── Product Information ── */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">Product Information</h2>
+                  <div className="mt-2 border-t border-gray-100" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-base">Name <span className="text-destructive">*</span></Label>
+                  <Input className="text-base h-11" placeholder="Fresh Apples" value={formName} onChange={e => setFormName(e.target.value)} autoFocus />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+                  <Input className="text-base h-11" placeholder="Fresh imported apples…" value={formDescription} onChange={e => setFormDescription(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-base">Category <span className="text-destructive">*</span></Label>
+                  <select value={formCategoryId} onChange={e => setFormCategoryId(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer">
+                    <option value="">Select category</option>
+                    {categories.map(c =>
+                      c.children && c.children.length > 0
+                        ? c.children.map(ch => <option key={ch.id} value={ch.id}>{c.name} — {ch.name}</option>)
+                        : <option key={c.id} value={c.id}>{c.name}</option>
                     )}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+                  <select value={formBrandId} onChange={e => setFormBrandId(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer">
+                    <option value="">No brand</option>
+                    {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* ── Images & Videos ── */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">Images &amp; Videos</h2>
+                  <div className="mt-2 border-t border-gray-100" />
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                  <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+                    {formImagePreview
+                      ? <img src={formImagePreview} alt="preview" className="w-full h-full object-cover" />
+                      : <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />}
                   </div>
-                  <span className="text-base text-gray-500 group-hover:text-gray-700">
-                    {formImagePreview ? 'Change image' : 'Upload image'}
-                  </span>
+                  <span className="text-base text-gray-500 group-hover:text-gray-700">{formImagePreview ? 'Change image' : 'Upload image'}</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleFormImageChange} />
                 </label>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-base">Name <span className="text-destructive">*</span></Label>
-                <Input
-                  className="text-base h-11"
-                  placeholder="Fresh Apples"
-                  value={formName}
-                  onChange={e => setFormName(e.target.value)}
-                  autoFocus
-                />
-              </div>
+            </div>{/* end grid */}
 
-              <div className="space-y-1.5">
-                <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-                <Input
-                  className="text-base h-11"
-                  placeholder="Fresh imported apples…"
-                  value={formDescription}
-                  onChange={e => setFormDescription(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-base">Selling price (₹) <span className="text-destructive">*</span></Label>
-                  <Input
-                    className="text-base h-11"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    placeholder="99"
-                    value={formSellingPrice}
-                    onChange={e => setFormSellingPrice(e.target.value)}
-                  />
+              {/* ── Inventory ── */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">Inventory</h2>
+                  <div className="mt-2 border-t border-gray-100" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-base">Selling price (₹) <span className="text-destructive">*</span></Label>
+                    <Input className="text-base h-11" type="number" min={0} step={0.01} placeholder="99" value={formSellingPrice} onChange={e => setFormSellingPrice(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-base">Original price (₹) <span className="text-gray-400 font-normal text-xs">(for discount)</span></Label>
+                    <Input className="text-base h-11" type="number" min={0} step={0.01} placeholder="120" value={formOriginalPrice} onChange={e => setFormOriginalPrice(e.target.value)} />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-base">Original price (₹) <span className="text-gray-400 font-normal text-xs">(for discount)</span></Label>
-                  <Input
-                    className="text-base h-11"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    placeholder="120"
-                    value={formOriginalPrice}
-                    onChange={e => setFormOriginalPrice(e.target.value)}
-                  />
+                  <Label className="text-base">Unit <span className="text-gray-400 font-normal text-xs">(optional, e.g. kg, pcs)</span></Label>
+                  <Input className="text-base h-11" placeholder="kg" value={formUnit} onChange={e => setFormUnit(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-base">Stock</Label>
+                    <select
+                      value={formInStock ? 'true' : 'false'}
+                      onChange={e => setFormInStock(e.target.value === 'true')}
+                      className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer"
+                    >
+                      <option value="true">In stock</option>
+                      <option value="false">Out of stock</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-base">Visibility</Label>
+                    <AppSwitch checked={formIsActive} onChange={setFormIsActive} />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-base">Category <span className="text-destructive">*</span></Label>
-                <select
-                  value={formCategoryId}
-                  onChange={e => setFormCategoryId(e.target.value)}
-                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-                >
-                  <option value="">Select category</option>
-                  {categories.map(c =>
-                    c.children && c.children.length > 0 ? (
-                      c.children.map(ch => (
-                        <option key={ch.id} value={ch.id}>{c.name} — {ch.name}</option>
-                      ))
-                    ) : (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    )
-                  )}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-                <select
-                  value={formBrandId}
-                  onChange={e => setFormBrandId(e.target.value)}
-                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-                >
-                  <option value="">No brand</option>
-                  {brands.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-base">Stock</Label>
-                  <button
-                    type="button"
-                    onClick={() => setFormInStock(v => !v)}
-                    className={`w-full h-11 rounded-lg text-base font-medium border transition-colors cursor-pointer ${formInStock ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}
-                  >
-                    {formInStock ? 'In stock' : 'Out of stock'}
-                  </button>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-base">Visibility</Label>
-                  <button
-                    type="button"
-                    onClick={() => setFormIsActive(v => !v)}
-                    className={`w-full h-11 rounded-lg text-base font-medium border transition-colors cursor-pointer ${formIsActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}
-                  >
-                    {formIsActive ? 'Active' : 'Inactive'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-base">Unit <span className="text-gray-400 font-normal text-xs">(optional, e.g. kg, pcs)</span></Label>
-                <Input
-                  className="text-base h-11"
-                  placeholder="kg"
-                  value={formUnit}
-                  onChange={e => setFormUnit(e.target.value)}
-                />
-              </div>
-
-              <Button
-                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
-                onClick={handleAddProduct}
-                disabled={formIsSaving}
-              >
+              <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base mt-5" onClick={handleAddProduct} disabled={formIsSaving}>
                 {formIsSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {formIsSaving ? 'Saving…' : 'Add product'}
               </Button>
@@ -372,10 +331,10 @@ export default function ProductsPage() {
             <p className="text-base mt-1">Add your first product to get started</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-auto min-h-0">
             <table className="w-full text-base min-w-[1060px]">
-              <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+              <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
                 <tr>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Product</th>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Category</th>
@@ -398,9 +357,9 @@ export default function ProductsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {p.image_url ? (
-                          <img src={p.image_url.startsWith('http') ? p.image_url : `${API_URL}${p.image_url}`} alt={p.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          <img src={p.image_url.startsWith('http') ? p.image_url : `${API_URL}${p.image_url}`} alt={p.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
                             <ImagePlus className="w-4 h-4 text-gray-300" />
                           </div>
                         )}

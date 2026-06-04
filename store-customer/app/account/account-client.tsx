@@ -108,6 +108,7 @@ export default function AccountClient() {
   const [addrSaving, setAddrSaving] = useState(false)
   const [locating, setLocating] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteAddrConfirmId, setDeleteAddrConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
     if (customer) { setProfileName(customer.name ?? ''); setProfileEmail(customer.email ?? '') }
@@ -225,13 +226,9 @@ export default function AccountClient() {
   }
 
   async function saveAddress() {
-    if (!addrForm.door_no.trim()) { setAddrFormError('Door No is required'); return }
-    if (!addrForm.street.trim()) { setAddrFormError('Street is required'); return }
-    if (!addrForm.address.trim()) { setAddrFormError('Area / Landmark is required'); return }
-    if (!addrForm.city.trim()) { setAddrFormError('City is required'); return }
-    if (!addrForm.pincode.trim()) { setAddrFormError('Pincode is required'); return }
-    if (!addrForm.state.trim()) { setAddrFormError('State is required'); return }
-    if (!addrForm.country.trim()) { setAddrFormError('Country is required'); return }
+    const missing = !addrForm.door_no.trim() || !addrForm.street.trim() || !addrForm.address.trim() ||
+      !addrForm.city.trim() || !addrForm.pincode.trim() || !addrForm.state.trim() || !addrForm.country.trim()
+    if (missing) { setAddrFormError('Please fill in all required fields'); return }
     setAddrSaving(true); setAddrFormError('')
     try {
       const payload = { label: addrForm.label, door_no: addrForm.door_no.trim() || null, street: addrForm.street.trim() || null, address: addrForm.address.trim() || null, city: addrForm.city.trim() || null, state: addrForm.state.trim() || null, country: addrForm.country.trim() || null, pincode: addrForm.pincode.trim() || null, is_default: addrForm.is_default }
@@ -247,10 +244,9 @@ export default function AccountClient() {
   }
 
   async function deleteAddress(id: string) {
-    if (!window.confirm('Delete this address?')) return
     setDeletingId(id)
     try { await clientFetch(`/api/storefront/addresses/${id}`, { method: 'DELETE' }); setAddresses(prev => prev.filter(a => a.id !== id)) }
-    catch { /* ignore */ } finally { setDeletingId(null) }
+    catch { /* ignore */ } finally { setDeletingId(null); setDeleteAddrConfirmId(null) }
   }
 
   function confirmLogout() {
@@ -306,17 +302,17 @@ export default function AccountClient() {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Door No</label><input type="text" value={addrForm.door_no} onChange={e => setAddrForm(f => ({ ...f, door_no: e.target.value }))} placeholder="12A" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Street</label><input type="text" value={addrForm.street} onChange={e => setAddrForm(f => ({ ...f, street: e.target.value }))} placeholder="MG Road" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Door No <span className="text-red-500">*</span></label><input type="text" value={addrForm.door_no} onChange={e => setAddrForm(f => ({ ...f, door_no: e.target.value }))} placeholder="12A" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Street <span className="text-red-500">*</span></label><input type="text" value={addrForm.street} onChange={e => setAddrForm(f => ({ ...f, street: e.target.value }))} placeholder="MG Road" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
       </div>
-      <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Area / Landmark</label><input type="text" value={addrForm.address} onChange={e => setAddrForm(f => ({ ...f, address: e.target.value }))} placeholder="Near City Mall…" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+      <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Area / Landmark <span className="text-red-500">*</span></label><input type="text" value={addrForm.address} onChange={e => setAddrForm(f => ({ ...f, address: e.target.value }))} placeholder="Near City Mall…" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">City</label><input type="text" value={addrForm.city} onChange={e => setAddrForm(f => ({ ...f, city: e.target.value }))} placeholder="Bengaluru" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Pincode</label><input type="text" inputMode="numeric" maxLength={6} value={addrForm.pincode} onChange={e => setAddrForm(f => ({ ...f, pincode: e.target.value.replace(/\D/g, '') }))} placeholder="560001" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">City <span className="text-red-500">*</span></label><input type="text" value={addrForm.city} onChange={e => setAddrForm(f => ({ ...f, city: e.target.value }))} placeholder="Bengaluru" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Pincode <span className="text-red-500">*</span></label><input type="text" inputMode="numeric" maxLength={6} value={addrForm.pincode} onChange={e => setAddrForm(f => ({ ...f, pincode: e.target.value.replace(/\D/g, '') }))} placeholder="560001" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">State</label><input type="text" value={addrForm.state} onChange={e => setAddrForm(f => ({ ...f, state: e.target.value }))} placeholder="Karnataka" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Country</label><input type="text" value={addrForm.country} onChange={e => setAddrForm(f => ({ ...f, country: e.target.value }))} placeholder="India" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">State <span className="text-red-500">*</span></label><input type="text" value={addrForm.state} onChange={e => setAddrForm(f => ({ ...f, state: e.target.value }))} placeholder="Karnataka" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Country <span className="text-red-500">*</span></label><input type="text" value={addrForm.country} onChange={e => setAddrForm(f => ({ ...f, country: e.target.value }))} placeholder="India" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
       </div>
       <label className="flex items-center gap-3 select-none">
         <div onClick={() => setAddrForm(f => ({ ...f, is_default: !f.is_default }))} className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${addrForm.is_default ? 'bg-indigo-500' : 'bg-gray-200'}`}>
@@ -420,7 +416,7 @@ export default function AccountClient() {
         {profileError && <p className="text-xs text-red-500">{profileError}</p>}
         <button onClick={saveProfile} disabled={profileSaving || profileSaved}
           className={`w-full h-12 rounded-xl text-sm font-semibold transition-colors mt-2 ${profileSaved ? 'bg-green-500 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white disabled:opacity-60'}`}
-        >{profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Update'}</button>
+        >{profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save'}</button>
       </div>
     </>
   )
@@ -526,7 +522,7 @@ export default function AccountClient() {
                           <button onClick={() => openEditAddress(addr)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                           </button>
-                          <button onClick={() => deleteAddress(addr.id)} disabled={deletingId === addr.id} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
+                          <button onClick={() => setDeleteAddrConfirmId(addr.id)} disabled={deletingId === addr.id} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
                             {deletingId === addr.id ? <div className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
                           </button>
                         </div>
@@ -653,7 +649,7 @@ export default function AccountClient() {
         <div className="flex justify-end pt-2">
           <button onClick={saveProfile} disabled={profileSaving || profileSaved}
             className={`px-6 h-10 rounded-xl text-sm font-semibold transition-colors ${profileSaved ? 'bg-green-500 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white disabled:opacity-60'}`}
-          >{profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Submit'}</button>
+          >{profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save'}</button>
         </div>
       </div>
     </div>
@@ -914,7 +910,7 @@ export default function AccountClient() {
                 <button onClick={() => openEditAddress(addr)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 </button>
-                <button onClick={() => deleteAddress(addr.id)} disabled={deletingId === addr.id} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
+                <button onClick={() => setDeleteAddrConfirmId(addr.id)} disabled={deletingId === addr.id} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
                   {deletingId === addr.id ? <div className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
                 </button>
               </div>
@@ -1014,6 +1010,32 @@ export default function AccountClient() {
           {tab === 'wishlist' && desktopWishlistPanel}
         </div>
       </div>
+
+      {/* Delete address confirmation */}
+      {deleteAddrConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteAddrConfirmId(null)} />
+          <div className="relative bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Delete address?</h3>
+            <p className="text-sm text-gray-500 mb-5">This address will be permanently removed.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteAddrConfirmId(null)}
+                className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteAddress(deleteAddrConfirmId)}
+                disabled={deletingId === deleteAddrConfirmId}
+                className="flex-1 h-11 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-60"
+              >
+                {deletingId === deleteAddrConfirmId ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Logout confirmation */}
       {logoutConfirmOpen && (

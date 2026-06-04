@@ -11,6 +11,25 @@ export class CustomersService {
     return userStore.storeId;
   }
 
+  async searchCustomers(userId: string, q: string) {
+    const storeId = await this.getStoreId(userId);
+    if (!q || q.trim().length < 1) return { customers: [] };
+
+    const customers = await this.prisma.customer.findMany({
+      where: {
+        storeId,
+        OR: [
+          { phone: { contains: q.trim(), mode: 'insensitive' } },
+          { name: { contains: q.trim(), mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, name: true, phone: true, email: true },
+      take: 10,
+    });
+
+    return { customers };
+  }
+
   async listCustomers(userId: string) {
     const storeId = await this.getStoreId(userId);
 

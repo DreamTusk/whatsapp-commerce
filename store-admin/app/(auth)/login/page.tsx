@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Loader2, MailWarning } from 'lucide-react'
+import { Eye, EyeOff, Loader2, MailWarning, ShieldOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,6 +30,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [unverified, setUnverified] = useState<UnverifiedState | null>(null)
+  const [deactivated, setDeactivated] = useState(false)
   const [isSending, setIsSending] = useState(false)
 
   const {
@@ -48,6 +49,7 @@ export default function LoginPage() {
       auth.setTokens(res.data.access_token, res.data.refresh_token)
       auth.setUser(res.data.user)
       auth.setVerified(true)
+      if (res.data.role) auth.setRole(res.data.role)
 
       if (res.data.store) {
         router.push('/dashboard')
@@ -55,14 +57,21 @@ export default function LoginPage() {
         router.push('/create-store')
       }
     } catch (err: unknown) {
-      const errData = (err as { response?: { data?: { error?: string; is_verified?: boolean; user_id?: string; email?: string } } })?.response?.data
+      const axiosErr = err as { response?: { status?: number; data?: { message?: string; error?: string; is_verified?: boolean; user_id?: string; email?: string } } }
+      const status  = axiosErr?.response?.status
+      const errData = axiosErr?.response?.data
 
       if (errData?.is_verified === false && errData?.user_id && errData?.email) {
         setUnverified({ userId: errData.user_id, email: errData.email })
         return
       }
 
-      toast.error(errData?.error ?? 'Login failed. Please try again.')
+      if (status === 403 && errData?.message?.includes('deactivated')) {
+        setDeactivated(true)
+        return
+      }
+
+      toast.error(errData?.message ?? errData?.error ?? 'Login failed. Please try again.')
     }
   }
 
@@ -80,6 +89,35 @@ export default function LoginPage() {
     } finally {
       setIsSending(false)
     }
+  }
+
+  if (deactivated) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-6 lg:hidden">
+            <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">DT</span>
+            </div>
+            <span className="font-bold text-gray-900">DT Commerce</span>
+          </div>
+          <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-4">
+            <ShieldOff className="w-6 h-6 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Account deactivated</h2>
+          <p className="text-sm text-gray-500 mt-2">
+            Your account has been deactivated. Please contact your store admin to regain access.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setDeactivated(false)}
+        >
+          Back to sign in
+        </Button>
+      </div>
+    )
   }
 
   if (unverified) {

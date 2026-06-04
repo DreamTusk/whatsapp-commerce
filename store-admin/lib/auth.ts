@@ -6,6 +6,7 @@ import type { User } from '@/types'
 const ACCESS_TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
 const USER_KEY = 'auth_user'
+const ROLE_KEY = 'auth_role'
 const PENDING_USER_ID_KEY = 'pending_user_id'
 const IS_VERIFIED_KEY = 'is_verified'
 
@@ -30,6 +31,14 @@ export const auth = {
   getUser(): User | null {
     const raw = Cookies.get(USER_KEY)
     return raw ? (JSON.parse(raw) as User) : null
+  },
+
+  setRole(role: string) {
+    Cookies.set(ROLE_KEY, role, { expires: 21, sameSite: 'lax' })
+  },
+
+  getRole(): string | null {
+    return Cookies.get(ROLE_KEY) ?? null
   },
 
   setVerified(isVerified: boolean) {
@@ -57,6 +66,7 @@ export const auth = {
     Cookies.remove(ACCESS_TOKEN_KEY)
     Cookies.remove(REFRESH_TOKEN_KEY)
     Cookies.remove(USER_KEY)
+    Cookies.remove(ROLE_KEY)
     Cookies.remove(PENDING_USER_ID_KEY)
     Cookies.remove(IS_VERIFIED_KEY)
   },

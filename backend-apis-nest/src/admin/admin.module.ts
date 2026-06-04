@@ -10,8 +10,9 @@ import { OrdersModule } from './orders/orders.module';
 import { CustomersModule } from './customers/customers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { BannersModule } from './banners/banners.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [StoreModule, InviteModule, CategoriesModule, BrandsModule, ProductsModule, InventoryModule, CollectionsModule, OrdersModule, CustomersModule, DashboardModule, BannersModule],
+  imports: [StoreModule, InviteModule, CategoriesModule, BrandsModule, ProductsModule, InventoryModule, CollectionsModule, OrdersModule, CustomersModule, DashboardModule, BannersModule, UsersModule],
 })
 export class AdminModule {}

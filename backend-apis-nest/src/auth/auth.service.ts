@@ -227,6 +227,10 @@ export class AuthService {
       include: { store: true },
     });
 
+    if (userStore && !userStore.isActive) {
+      throw new ForbiddenException('Your account has been deactivated. Please contact your store admin.');
+    }
+
     const access_token = this.generateAccessToken(user.id);
     const refresh_token = this.generateRefreshToken();
 
@@ -238,6 +242,7 @@ export class AuthService {
       access_token,
       refresh_token,
       user: { id: user.id, name: user.name, email: user.email },
+      role: userStore?.role ?? null,
       store: userStore?.store ? this.formatStore(userStore.store) : null,
     };
   }
@@ -278,6 +283,7 @@ export class AuthService {
 
     return {
       user: { id: user.id, name: user.name, email: user.email },
+      role: userStore?.role ?? null,
       store: userStore?.store ? this.formatStore(userStore.store) : null,
     };
   }
@@ -370,8 +376,8 @@ export class AuthService {
     return {
       access_token,
       refresh_token,
-      store_name: invite.store.name,
       role: invite.role,
+      store_name: invite.store.name,
     };
   }
 }

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 
 import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
+import AppSwitch from '@/components/ui/app-switch'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -127,11 +128,50 @@ export default function EditProductPage() {
       </div>
       <div className="flex-1 overflow-auto min-h-0">
         <div className="flex justify-center px-6 py-8">
-        <div className="w-full max-w-lg space-y-4">
-          {/* Image */}
-          <div className="space-y-1.5">
-            <Label className="text-base">Image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-            <label className="flex items-center gap-3 cursor-pointer group">
+        <div className="w-full max-w-4xl">
+        <div className="grid grid-cols-2 gap-5 mb-5">
+
+          {/* ── Product Information ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Product Information</h2>
+              <div className="mt-2 border-t border-gray-100" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-base">Name <span className="text-destructive">*</span></Label>
+              <Input className="text-base h-11" value={name} onChange={e => setName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+              <Input className="text-base h-11" value={description} onChange={e => setDescription(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-base">Category <span className="text-destructive">*</span></Label>
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer">
+                <option value="">Select category</option>
+                {categories.flatMap(c =>
+                  c.children && c.children.length > 0
+                    ? c.children.map(ch => <option key={ch.id} value={ch.id}>{c.name} — {ch.name}</option>)
+                    : [<option key={c.id} value={c.id}>{c.name}</option>]
+                )}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+              <select value={brandId} onChange={e => setBrandId(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer">
+                <option value="">No brand</option>
+                {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* ── Images & Videos ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Images &amp; Videos</h2>
+              <div className="mt-2 border-t border-gray-100" />
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer group w-fit">
               <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
                 {imagePreview ? (
                   <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
@@ -148,116 +188,48 @@ export default function EditProductPage() {
             </label>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-base">Name <span className="text-destructive">*</span></Label>
-            <Input
-              className="text-base h-11"
-              value={name}
-              onChange={e => setName(e.target.value)}
-            />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-            <Input
-              className="text-base h-11"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-base">Selling price (₹) <span className="text-destructive">*</span></Label>
-              <Input
-                className="text-base h-11"
-                type="number"
-                min={0}
-                step={0.01}
-                value={sellingPrice}
-                onChange={e => setSellingPrice(e.target.value)}
-              />
+          {/* ── Inventory ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Inventory</h2>
+              <div className="mt-2 border-t border-gray-100" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-base">Selling price (₹) <span className="text-destructive">*</span></Label>
+                <Input className="text-base h-11" type="number" min={0} step={0.01} value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-base">Original price (₹) <span className="text-gray-400 font-normal text-xs">(for discount)</span></Label>
+                <Input className="text-base h-11" type="number" min={0} step={0.01} placeholder="Leave blank if no discount" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} />
+              </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-base">Original price (₹) <span className="text-gray-400 font-normal text-xs">(for discount)</span></Label>
-              <Input
-                className="text-base h-11"
-                type="number"
-                min={0}
-                step={0.01}
-                placeholder="Leave blank if no discount"
-                value={originalPrice}
-                onChange={e => setOriginalPrice(e.target.value)}
-              />
+              <Label className="text-base">Unit <span className="text-gray-400 font-normal text-xs">(optional, e.g. kg, pcs)</span></Label>
+              <Input className="text-base h-11" placeholder="kg" value={unit} onChange={e => setUnit(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-base">Stock</Label>
+                <select
+                  value={inStock ? 'true' : 'false'}
+                  onChange={e => setInStock(e.target.value === 'true')}
+                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer"
+                >
+                  <option value="true">In stock</option>
+                  <option value="false">Out of stock</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-base">Visibility</Label>
+                <AppSwitch checked={isActive} onChange={setIsActive} />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-base">Category <span className="text-destructive">*</span></Label>
-            <select
-              value={categoryId}
-              onChange={e => setCategoryId(e.target.value)}
-              className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-            >
-              <option value="">Select category</option>
-              {categories.flatMap(c =>
-                c.children && c.children.length > 0
-                  ? c.children.map(ch => <option key={ch.id} value={ch.id}>{c.name} — {ch.name}</option>)
-                  : [<option key={c.id} value={c.id}>{c.name}</option>]
-              )}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-            <select
-              value={brandId}
-              onChange={e => setBrandId(e.target.value)}
-              className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-            >
-              <option value="">No brand</option>
-              {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-base">Stock</Label>
-              <button
-                type="button"
-                onClick={() => setInStock(v => !v)}
-                className={`w-full h-11 rounded-lg text-base font-medium border transition-colors cursor-pointer ${inStock ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}
-              >
-                {inStock ? 'In stock' : 'Out of stock'}
-              </button>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-base">Visibility</Label>
-              <button
-                type="button"
-                onClick={() => setIsActive(v => !v)}
-                className={`w-full h-11 rounded-lg text-base font-medium border transition-colors cursor-pointer ${isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}
-              >
-                {isActive ? 'Active' : 'Inactive'}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-base">Unit <span className="text-gray-400 font-normal text-xs">(optional, e.g. kg, pcs)</span></Label>
-            <Input
-              className="text-base h-11"
-              placeholder="kg"
-              value={unit}
-              onChange={e => setUnit(e.target.value)}
-            />
-          </div>
-
-          <Button
-            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
+          <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base mt-5" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             {isSaving ? 'Saving…' : 'Save changes'}
           </Button>

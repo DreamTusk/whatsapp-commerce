@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, ChevronRight } from 'lucide-react'
+import { Loader2, ChevronRight, Plus } from 'lucide-react'
 import api from '@/lib/api'
+import { Button } from '@/components/ui/button'
+import CreateOrderDrawer from '@/components/create-order-drawer'
 import type { Order } from '@/types'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
@@ -43,6 +45,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL')
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => { fetchOrders(activeTab) }, [activeTab])
 
@@ -62,8 +65,15 @@ export default function OrdersPage() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 px-6 pt-6 pb-4 bg-gray-50">
-        <h1 className="text-[26px] font-bold text-gray-900">Orders</h1>
-        <p className="text-base text-gray-500 mt-0.5">{orders.length} orders</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[26px] font-bold text-gray-900">Orders</h1>
+            <p className="text-base text-gray-500 mt-0.5">{orders.length} orders</p>
+          </div>
+          <Button onClick={() => setDrawerOpen(true)} className="gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white">
+            <Plus className="w-4 h-4" /> Create Order
+          </Button>
+        </div>
       </div>
 
       <div className="flex-shrink-0 px-6 pb-4 bg-gray-50">
@@ -95,10 +105,10 @@ export default function OrdersPage() {
           <p className="text-base mt-1">Orders will appear here once customers start placing them</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full text-base min-w-[800px]">
-            <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+            <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
               <tr>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Order</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Customer</th>
@@ -106,6 +116,7 @@ export default function OrdersPage() {
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Total</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden lg:table-cell">Payment</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden xl:table-cell">Created by</th>
                 <th className="px-4 py-3 w-8"></th>
               </tr>
             </thead>
@@ -149,6 +160,12 @@ export default function OrdersPage() {
                       {STATUS_DISPLAY[order.status as OrderStatus]}
                     </span>
                   </td>
+                  <td className="px-4 py-3 hidden xl:table-cell">
+                    <p className="text-sm text-gray-700">{order.created_by ?? '—'}</p>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${order.source === 'MANUAL' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
+                      {order.source === 'MANUAL' ? 'Manual' : 'Customer'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <ChevronRight className="w-4 h-4 text-gray-300" />
                   </td>
@@ -163,6 +180,11 @@ export default function OrdersPage() {
         </div>
       )}
       </div>
+      <CreateOrderDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onCreated={() => { setDrawerOpen(false); fetchOrders(activeTab) }}
+      />
     </div>
   )
 }

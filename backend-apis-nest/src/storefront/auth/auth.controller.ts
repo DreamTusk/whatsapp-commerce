@@ -55,9 +55,9 @@ export class StorefrontAuthController {
   @UseGuards(CustomerAuthGuard)
   updateProfile(
     @CurrentCustomer() customer: { customerId: string },
-    @Body() body: { name: string },
+    @Body() body: { name: string; email?: string },
   ) {
-    return this.authService.updateProfile(customer.customerId, body.name);
+    return this.authService.updateProfile(customer.customerId, body.name, body.email);
   }
 
   // POST /api/storefront/auth/logout

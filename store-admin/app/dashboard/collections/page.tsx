@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label'
 
 import api from '@/lib/api'
 import type { Collection, Product, Category, Brand } from '@/types'
+import AppSwitch from '@/components/ui/app-switch'
 
 // ── Criteria builder helpers ─────────────────────────────────────────────────
 
@@ -508,15 +509,7 @@ export default function CollectionsPage() {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-base">Status</Label>
-                      <button
-                        type="button"
-                        onClick={() => setFormIsActive(v => !v)}
-                        className={`w-full h-11 rounded-lg text-base font-medium border transition-colors cursor-pointer ${
-                          formIsActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'
-                        }`}
-                      >
-                        {formIsActive ? 'Active' : 'Inactive'}
-                      </button>
+                      <AppSwitch checked={formIsActive} onChange={setFormIsActive} />
                     </div>
                   </div>
 
@@ -706,12 +699,12 @@ export default function CollectionsPage() {
             <p className="text-base mt-1">Create your first collection to group products on your home page</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-auto min-h-0">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={collections.map(c => c.id)} strategy={verticalListSortingStrategy}>
                   <table className="w-full text-base min-w-[500px]">
-                    <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+                    <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
                       <tr>
                         <th className="px-2 py-3 w-8"></th>
                         <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Collection</th>

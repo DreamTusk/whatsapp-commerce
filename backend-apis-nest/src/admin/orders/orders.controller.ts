@@ -1,11 +1,14 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
   Body,
   Param,
   Query,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -15,6 +18,16 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
   constructor(private ordersService: OrdersService) {}
+
+  // POST /api/orders — manual order creation
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  createManualOrder(
+    @CurrentUser() user: { userId: string },
+    @Body() body: any,
+  ) {
+    return this.ordersService.createManualOrder(user.userId, body);
+  }
 
   // GET /api/orders
   @Get()

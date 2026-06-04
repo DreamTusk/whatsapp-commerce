@@ -10,7 +10,6 @@ import { Role } from '@prisma/client';
 import * as crypto from 'crypto';
 
 const INVITE_EXPIRY_DAYS = 3;
-const VALID_ROLES: Role[] = [Role.OWNER, Role.MANAGER, Role.SALES_EXECUTIVE, Role.EMPLOYEE];
 
 @Injectable()
 export class InviteService {
@@ -21,8 +20,9 @@ export class InviteService {
 
   async createInvite(userId: string, email: string, role: string) {
     if (!email || !role) throw new BadRequestException('email and role are required');
-    if (!VALID_ROLES.includes(role as Role)) {
-      throw new BadRequestException(`role must be one of: ${VALID_ROLES.join(', ')}`);
+    const validRoles = Object.values(Role);
+    if (!validRoles.includes(role as Role)) {
+      throw new BadRequestException(`role must be one of: ${validRoles.join(', ')}`);
     }
 
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
@@ -51,11 +51,13 @@ export class InviteService {
 
     const inviteLink = `${process.env.ADMIN_APP_URL || 'http://localhost:3001'}/accept-invite?token=${token}`;
 
-    await this.emailService.sendSimpleEmail(
-      email,
-      `You've been invited to join ${invite.store.name}`,
-      `Hi,\n\nYou've been invited to join "${invite.store.name}" as ${role}.\n\nAccept your invite here:\n${inviteLink}\n\nThis link expires in ${INVITE_EXPIRY_DAYS} days.\n\nIf you did not expect this, you can ignore this email.`,
-    );
+    console.log(`\n--- STAFF INVITE ---`);
+    console.log(`Store  : ${invite.store.name}`);
+    console.log(`Email  : ${email}`);
+    console.log(`Role   : ${role}`);
+    console.log(`Link   : ${inviteLink}`);
+    console.log(`Expires: ${invite.expiresAt.toISOString()}`);
+    console.log(`--------------------\n`);
 
     return {
       invite: {

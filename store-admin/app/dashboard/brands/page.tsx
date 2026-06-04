@@ -89,10 +89,10 @@ export default function BrandsPage() {
           <p className="text-base mt-1">Add brands to categorise your products by manufacturer</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full text-base min-w-[500px]">
-            <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+            <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
               <tr>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Brand</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Products</th>

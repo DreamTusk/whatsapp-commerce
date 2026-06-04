@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
+import { generateOrderNumber } from '../../utils/order-number';
 
 const orderInclude = {
   items: { include: { product: { select: { imageUrl: true } } } },
@@ -40,16 +41,6 @@ export class StorefrontOrdersService {
         ? { method: o.payment.method, status: o.payment.status, paid_at: o.payment.paidAt }
         : null,
     };
-  }
-
-  private async generateOrderNumber(storeId: string): Promise<string> {
-    const last = await this.prisma.order.findFirst({
-      where: { storeId },
-      orderBy: { createdAt: 'desc' },
-      select: { orderNumber: true },
-    });
-    const next = last ? (parseInt(last.orderNumber.replace('ORD-', ''), 10) || 0) + 1 : 1;
-    return `ORD-${next.toString().padStart(4, '0')}`;
   }
 
   async listOrders(customerId: string) {
@@ -133,12 +124,17 @@ export class StorefrontOrdersService {
     let order: any;
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) await new Promise((r) => setTimeout(r, 50 + Math.random() * 150));
-      const orderNumber = await this.generateOrderNumber(storeId);
+      const orderNumber = await generateOrderNumber(this.prisma, storeId);
       try {
+        const customerRecord = await this.prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, phone: true } });
+        const createdBy = customerRecord?.name ?? customerRecord?.phone ?? null;
+
         order = await this.prisma.order.create({
           data: {
             orderNumber, customerId, storeId, totalAmount,
             status: OrderStatus.NEW,
+            source: 'CUSTOMER',
+            createdBy,
             address: deliveryAddress.address ?? null,
             notes: notes ?? null,
             altPhone: typeof alt_phone === 'string' && alt_phone.trim() ? alt_phone.trim() : null,

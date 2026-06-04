@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 
 import api from '@/lib/api'
 import type { Category } from '@/types'
+import AppSwitch from '@/components/ui/app-switch'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -178,13 +179,7 @@ export default function CategoriesPage() {
 
             <div className="space-y-1.5">
               <Label className="text-base">Status</Label>
-              <button
-                type="button"
-                onClick={() => setFormIsActive(v => !v)}
-                className={`w-full h-11 rounded-lg text-base font-medium border transition-colors cursor-pointer ${formIsActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}
-              >
-                {formIsActive ? 'Active' : 'Inactive'}
-              </button>
+              <AppSwitch checked={formIsActive} onChange={setFormIsActive} />
             </div>
 
             <Button
@@ -228,10 +223,10 @@ export default function CategoriesPage() {
             <p className="text-base mt-1">Add your first category to get started</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-auto min-h-0">
             <table className="w-full text-base min-w-[500px]">
-              <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+              <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
                 <tr>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Category</th>
                   <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Status</th>
@@ -259,9 +254,9 @@ export default function CategoriesPage() {
                             <span className="w-5 flex-shrink-0" />
                           )}
                           {cat.image_url ? (
-                            <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                            <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
                               <ImagePlus className="w-4 h-4 text-gray-300" />
                             </div>
                           )}
@@ -307,9 +302,9 @@ export default function CategoriesPage() {
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2 pl-9">
                             {child.image_url ? (
-                              <img src={child.image_url.startsWith('http') ? child.image_url : `${API_URL}${child.image_url}`} alt={child.name} className="w-8 h-8 rounded-md object-cover flex-shrink-0" />
+                              <img src={child.image_url.startsWith('http') ? child.image_url : `${API_URL}${child.image_url}`} alt={child.name} className="w-8 h-8 rounded-xl object-cover flex-shrink-0" />
                             ) : (
-                              <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                              <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
                                 <ImagePlus className="w-3 h-3 text-gray-300" />
                               </div>
                             )}

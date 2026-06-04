@@ -3,30 +3,15 @@
 import { useState, useEffect, type ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import {
-  LayoutDashboard, ShoppingBag, Package, Tag, Users, Settings,
-  LogOut, Pencil, Menu, X, Store, BookMarked, Warehouse, Layers, Image,
-} from 'lucide-react'
+import { LogOut, Pencil, Menu, X, Store } from 'lucide-react'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { NAV_ITEMS } from '@/config/nav'
 import type { Store as StoreType } from '@/types'
-
-const NAV_ITEMS = [
-  { label: 'Dashboard',  href: '/dashboard',            icon: LayoutDashboard },
-  { label: 'Orders',     href: '/dashboard/orders',     icon: ShoppingBag },
-  { label: 'Products',   href: '/dashboard/products',   icon: Package },
-  { label: 'Inventory',  href: '/dashboard/inventory',  icon: Warehouse },
-  { label: 'Brands',     href: '/dashboard/brands',     icon: BookMarked },
-  { label: 'Categories',   href: '/dashboard/categories',   icon: Tag },
-  { label: 'Collections',  href: '/dashboard/collections',  icon: Layers },
-  { label: 'Banners',      href: '/dashboard/banners',      icon: Image },
-  { label: 'Customers',    href: '/dashboard/customers',    icon: Users },
-  { label: 'Settings',   href: '/dashboard/settings',   icon: Settings },
-]
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router   = useRouter()
@@ -36,9 +21,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [storeLoading, setStoreLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen]   = useState(false)
   const [logoutOpen, setLogoutOpen]     = useState(false)
-
   const [user, setUser] = useState<import('@/types').User | null>(null)
-  useEffect(() => { setUser(auth.getUser()) }, [])
+  const [role, setRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    setUser(auth.getUser())
+    const cachedRole = auth.getRole()
+    if (cachedRole) {
+      setRole(cachedRole)
+    } else {
+      // Fallback for sessions created before role cookie was introduced
+      api.get('/api/auth/me')
+        .then(res => {
+          if (res.data.role) {
+            auth.setRole(res.data.role)
+            setRole(res.data.role)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [])
 
   useEffect(() => {
     if (!auth.isVerified()) {
@@ -52,6 +54,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       })
       .finally(() => setStoreLoading(false))
   }, [router])
+
+  const visibleNav = NAV_ITEMS.filter(item =>
+    item.roles.length === 0 || (role && item.roles.includes(role))
+  )
 
   function handleLogoutConfirmed() {
     const refreshToken = auth.getRefreshToken()
@@ -100,7 +106,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+        {visibleNav.map(({ label, href, icon: Icon }) => {
           const active = href === '/dashboard' ? pathname === href : pathname.startsWith(href)
           return (
             <Link

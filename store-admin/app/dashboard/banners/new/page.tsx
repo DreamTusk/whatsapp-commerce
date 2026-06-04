@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { DateTimePicker } from '@/components/ui/date-time-picker'
 import api from '@/lib/api'
 import type { Product, Collection } from '@/types'
+import AppSwitch from '@/components/ui/app-switch'
 
 type BannerType = 'product' | 'collection' | 'url'
 
@@ -210,17 +211,7 @@ export default function NewBannerPage() {
             {/* Status */}
             <div className="space-y-1.5">
               <Label className="text-base">Status</Label>
-              <button
-                type="button"
-                onClick={() => setIsActive(v => !v)}
-                className={`w-full h-11 rounded-lg text-base font-medium border transition-colors ${
-                  isActive
-                    ? 'bg-green-50 text-green-600 border-green-200'
-                    : 'bg-gray-50 text-gray-400 border-gray-200'
-                }`}
-              >
-                {isActive ? 'Active' : 'Inactive'}
-              </button>
+              <AppSwitch checked={isActive} onChange={setIsActive} />
             </div>
 
             {/* Dates */}
