@@ -251,28 +251,8 @@ export default function CreateOrderDrawer({ open, onClose, onCreated }: Props) {
               <div className="flex-1 overflow-y-auto">
                 {!isNewCustomer ? (
                   <div className="px-6 py-4 space-y-3">
-                    {customerSearching && <p className="text-xs text-gray-400 text-center py-4">Loading…</p>}
-                    {customerResults.length > 0 && (
-                      <div className="border border-gray-100 rounded-xl overflow-hidden">
-                        {customerResults.map(c => (
-                          <button
-                            key={c.id}
-                            onClick={() => { setSelectedCustomer(c); setCustomerSearch(c.name ?? c.phone ?? '') }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-50 last:border-0 ${selectedCustomer?.id === c.id ? 'bg-[#6366f1]/5' : 'hover:bg-gray-50'}`}
-                          >
-                            <div className="w-8 h-8 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
-                              <span className="text-xs font-bold text-[#6366f1]">{(c.name ?? c.phone ?? '?').charAt(0).toUpperCase()}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{c.name ?? '—'}</p>
-                              <p className="text-xs text-gray-400">{c.phone}</p>
-                            </div>
-                            {selectedCustomer?.id === c.id && <span className="text-[#6366f1] text-xs font-bold">✓</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {selectedCustomer && (
+                    {/* Selected customer card — shown instead of list */}
+                    {selectedCustomer ? (
                       <div className="flex items-center gap-3 p-3 bg-[#6366f1]/5 rounded-xl border border-[#6366f1]/20">
                         <div className="w-8 h-8 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-bold text-[#6366f1]">{(selectedCustomer.name ?? selectedCustomer.phone ?? '?').charAt(0).toUpperCase()}</span>
@@ -281,7 +261,39 @@ export default function CreateOrderDrawer({ open, onClose, onCreated }: Props) {
                           <p className="text-sm font-semibold text-gray-900">{selectedCustomer.name ?? '—'}</p>
                           <p className="text-xs text-gray-500">{selectedCustomer.phone}</p>
                         </div>
+                        <button
+                          onClick={() => { setSelectedCustomer(null); setCustomerSearch('') }}
+                          className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
+                    ) : (
+                      <>
+                        {customerSearching && <p className="text-xs text-gray-400 text-center py-4">Loading…</p>}
+                        {customerResults.length > 0 && (
+                          <div className="border border-gray-100 rounded-xl overflow-hidden">
+                            {customerResults.map(c => (
+                              <button
+                                key={c.id}
+                                onClick={() => { setSelectedCustomer(c); setCustomerSearch('') }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-50 last:border-0 hover:bg-gray-50"
+                              >
+                                <div className="w-8 h-8 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs font-bold text-[#6366f1]">{(c.name ?? c.phone ?? '?').charAt(0).toUpperCase()}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{c.name ?? '—'}</p>
+                                  <p className="text-xs text-gray-400">{c.phone}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {!customerSearching && customerResults.length === 0 && (
+                          <p className="text-xs text-gray-400 text-center py-6">No customers found</p>
+                        )}
+                      </>
                     )}
                   </div>
                 ) : (

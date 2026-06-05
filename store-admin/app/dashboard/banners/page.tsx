@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import api from '@/lib/api'
 import type { Banner } from '@/types'
+import { useIsOwner } from '@/contexts/role'
 
 const STATUS_STYLES: Record<string, string> = {
   active:   'bg-green-50 text-green-600',
@@ -26,6 +27,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function BannersPage() {
   const router = useRouter()
+  const isOwner = useIsOwner()
   const [banners, setBanners]           = useState<Banner[]>([])
   const [loading, setLoading]           = useState(true)
   const [deletingId, setDeletingId]     = useState<string | null>(null)
@@ -129,16 +131,18 @@ export default function BannersPage() {
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => setConfirmBanner(banner)}
-                    disabled={deletingId === banner.id}
-                    className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    {deletingId === banner.id
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <Trash2 className="w-4 h-4" />
-                    }
-                  </button>
+                  {isOwner && (
+                    <button
+                      onClick={() => setConfirmBanner(banner)}
+                      disabled={deletingId === banner.id}
+                      className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      {deletingId === banner.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Trash2 className="w-4 h-4" />
+                      }
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,0 +1,30 @@
+meta {
+  name: Update Store
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{base_url_local}}/store
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcklkIjoiY21xMHVjcTlmMDAwMTd0cnQxNjZ5YmU0ayIsInN0b3JlSWQiOiJjbXBxc3ZhamYwMDA1ZXR1b2hkaXh0Z2xpIiwicGhvbmUiOiI5ODc2NTQzMjEwIiwiaWF0IjoxNzgwNjU4OTMzLCJleHAiOjE3ODMyNTA5MzN9.QGj2cJsMopCX4HMcqgcNLPz_XNN3vki5jCbOa-MpkDc
+}
+
+body:multipart-form {
+  name: DT store
+  phone: 928778933
+  doamin: st_store
+  address: 34,abc street, chennai
+  min_order_amount: 2344.0
+  delivery_radius: 2
+  ~logo: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -7,13 +7,16 @@ import { Plus, Pencil, Trash2, ImagePlus, Loader2, ChevronRight, Package, X, Sli
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AppSelect } from '@/components/ui/app-select'
+import { AppCombobox } from '@/components/ui/app-combobox'
 import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
+import { useIsOwner } from '@/contexts/role'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
 export default function ProductsPage() {
   const router = useRouter()
+  const isOwner = useIsOwner()
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
@@ -101,25 +104,27 @@ export default function ProductsPage() {
 
       {/* Filter bar */}
       <div className="flex-shrink-0 px-6 pb-4 bg-gray-50">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 text-sm text-gray-400">
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>Filter</span>
           </div>
 
-          <AppSelect
+          <AppCombobox
             value={filterCategory}
             onValueChange={setFilterCategory}
             placeholder="All categories"
-            className="w-40 h-9 text-sm"
+            searchPlaceholder="Search categories..."
+            className="w-52 h-9 text-sm"
             options={flatCategories.map(c => ({ value: c.id, label: c.name }))}
           />
 
-          <AppSelect
+          <AppCombobox
             value={filterBrand}
             onValueChange={setFilterBrand}
             placeholder="All brands"
-            className="w-36 h-9 text-sm"
+            searchPlaceholder="Search brands..."
+            className="w-44 h-9 text-sm"
             options={[
               ...brands.map(b => ({ value: b.id, label: b.name })),
               { value: '__none__', label: 'No brand' },
@@ -239,10 +244,12 @@ export default function ProductsPage() {
                             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(p) }}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {isOwner && (
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(p) }}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <ChevronRight className="w-4 h-4 text-gray-300 ml-1" />
                         </div>
                       </td>

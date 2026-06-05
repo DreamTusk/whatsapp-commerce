@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Collection } from '@/types'
+import { useIsOwner } from '@/contexts/role'
 
 // ── Sortable row ─────────────────────────────────────────────────────────────
 
@@ -27,11 +28,13 @@ function SortableRow({
   onEdit,
   onDelete,
   onToggleActive,
+  isOwner,
 }: {
   col: Collection
   onEdit: (col: Collection) => void
   onDelete: (col: Collection) => void
   onToggleActive: (col: Collection) => void
+  isOwner: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
@@ -76,12 +79,14 @@ function SortableRow({
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button
-            onClick={() => onDelete(col)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => onDelete(col)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -92,6 +97,7 @@ function SortableRow({
 
 export default function CollectionsPage() {
   const router = useRouter()
+  const isOwner = useIsOwner()
   const [collections, setCollections] = useState<Collection[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<Collection | null>(null)
@@ -210,6 +216,7 @@ export default function CollectionsPage() {
                           onEdit={col => router.push(`/dashboard/collections/${col.id}/edit`)}
                           onDelete={setDeleteTarget}
                           onToggleActive={toggleActive}
+                          isOwner={isOwner}
                         />
                       ))}
                     </tbody>

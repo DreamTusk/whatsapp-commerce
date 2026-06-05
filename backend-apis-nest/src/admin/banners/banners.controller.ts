@@ -7,10 +7,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { BannersService } from './banners.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('banners')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class BannersController {
   constructor(private bannersService: BannersService) {}
 
@@ -55,6 +57,8 @@ export class BannersController {
 
   // DELETE /api/banners/:id
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   deleteBanner(
     @CurrentUser() user: { userId: string },

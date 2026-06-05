@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import AppSwitch from '@/components/ui/app-switch'
-import { AppSelect } from '@/components/ui/app-select'
+import { AppCombobox } from '@/components/ui/app-combobox'
 import type { Category } from '@/types'
 
 export default function NewCategoryPage() {
@@ -118,10 +118,11 @@ export default function NewCategoryPage() {
                 <Label className="text-sm font-medium text-gray-700">
                   Parent category <span className="text-gray-400 font-normal text-xs">(optional)</span>
                 </Label>
-                <AppSelect
+                <AppCombobox
                   value={parentId}
                   onValueChange={setParentId}
                   placeholder="None (top-level)"
+                  searchPlaceholder="Search categories..."
                   options={allCategories.map(c => ({ value: c.id, label: c.name }))}
                 />
               </div>

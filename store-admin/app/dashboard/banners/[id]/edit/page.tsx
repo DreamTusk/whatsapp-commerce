@@ -13,6 +13,7 @@ import api from '@/lib/api'
 import type { Product, Collection, Banner } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
+import { AppCombobox } from '@/components/ui/app-combobox'
 
 type BannerType = 'product' | 'collection' | 'url'
 
@@ -159,10 +160,11 @@ export default function EditBannerPage() {
             {type === 'collection' && (
               <div className="space-y-1.5">
                 <Label className="text-base">Collection <span className="text-destructive">*</span></Label>
-                <AppSelect
+                <AppCombobox
                   value={collectionId}
                   onValueChange={setCollectionId}
                   placeholder="Select collection"
+                  searchPlaceholder="Search collections..."
                   options={collections.map(c => ({ value: c.id, label: c.name }))}
                 />
               </div>
@@ -171,10 +173,11 @@ export default function EditBannerPage() {
             {type === 'product' && (
               <div className="space-y-1.5">
                 <Label className="text-base">Product <span className="text-destructive">*</span></Label>
-                <AppSelect
+                <AppCombobox
                   value={productId}
                   onValueChange={setProductId}
                   placeholder="Select product"
+                  searchPlaceholder="Search products..."
                   options={products.map(p => ({ value: p.id, label: p.name }))}
                 />
               </div>

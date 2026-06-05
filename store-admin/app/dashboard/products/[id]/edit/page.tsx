@@ -12,6 +12,7 @@ import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
+import { AppCombobox } from '@/components/ui/app-combobox'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -147,10 +148,11 @@ export default function EditProductPage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-base">Category <span className="text-destructive">*</span></Label>
-              <AppSelect
+              <AppCombobox
                 value={categoryId}
                 onValueChange={setCategoryId}
                 placeholder="Select category"
+                searchPlaceholder="Search categories..."
                 options={categories.flatMap(c =>
                   c.children && c.children.length > 0
                     ? c.children.map(ch => ({ value: ch.id, label: `${c.name} — ${ch.name}` }))
@@ -160,10 +162,11 @@ export default function EditProductPage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <AppSelect
+              <AppCombobox
                 value={brandId}
                 onValueChange={setBrandId}
                 placeholder="No brand"
+                searchPlaceholder="Search brands..."
                 options={brands.map(b => ({ value: b.id, label: b.name }))}
               />
             </div>

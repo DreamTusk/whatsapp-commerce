@@ -11,6 +11,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { NAV_ITEMS } from '@/config/nav'
+import { RoleProvider } from '@/contexts/role'
 import type { Store as StoreType } from '@/types'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -41,6 +42,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         .catch(() => {})
     }
   }, [])
+
+  // Redirect STAFF away from OWNER-only pages
+  useEffect(() => {
+    if (!role) return
+    const staffRestricted = ['/dashboard', '/dashboard/settings']
+    if (role === 'STAFF' && staffRestricted.includes(pathname)) {
+      router.replace('/dashboard/orders')
+    }
+  }, [role, pathname, router])
 
   useEffect(() => {
     if (!auth.isVerified()) {
@@ -93,13 +103,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <p className="font-semibold text-gray-900 text-base truncate">{store.name}</p>
               <p className="text-sm text-gray-400 truncate">{store.phone}</p>
             </div>
-            <Link
-              href="/dashboard/settings"
-              onClick={() => setSidebarOpen(false)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </Link>
+            {role === 'OWNER' && (
+              <Link
+                href="/dashboard/settings"
+                onClick={() => setSidebarOpen(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
         ) : null}
       </div>
@@ -197,7 +209,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         <main className="flex-1 overflow-auto">
-          {children}
+          <RoleProvider role={role as 'OWNER' | 'STAFF' | null}>
+            {children}
+          </RoleProvider>
         </main>
       </div>
 

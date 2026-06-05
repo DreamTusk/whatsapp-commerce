@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Category } from '@/types'
+import { useIsOwner } from '@/contexts/role'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
 export default function CategoriesPage() {
   const router = useRouter()
+  const isOwner = useIsOwner()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
@@ -143,9 +145,11 @@ export default function CategoriesPage() {
                               <button onClick={() => router.push(`/dashboard/categories/${cat.id}/edit`)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => setDeleteTarget(cat)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {isOwner && (
+                                <button onClick={() => setDeleteTarget(cat)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -174,9 +178,11 @@ export default function CategoriesPage() {
                                 <button onClick={() => router.push(`/dashboard/categories/${child.id}/edit`)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button onClick={() => setDeleteTarget(child)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                {isOwner && (
+                                  <button onClick={() => setDeleteTarget(child)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>

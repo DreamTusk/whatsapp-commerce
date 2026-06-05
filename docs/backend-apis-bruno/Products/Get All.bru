@@ -7,11 +7,15 @@ meta {
 get {
   url: {{base_url_local}}/products
   body: none
-  auth: inherit
+  auth: bearer
 }
 
 params:query {
-  category_id:
+  category_id: 
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXB6NHExeG8wMDAyMTBua2tnZG40ZWY0IiwiaWF0IjoxNzgwNjU1MjUxLCJleHAiOjE3ODA2NTc2NTF9.ZFiPBjR-VYF5h14--QRw69-0_TZrRiJlzmhK5cf8jF8
 }
 
 settings {

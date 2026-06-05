@@ -12,10 +12,12 @@ import {
 } from '@nestjs/common';
 import { BrandsService } from './brands.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('brands')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class BrandsController {
   constructor(private brandsService: BrandsService) {}
 
@@ -46,6 +48,8 @@ export class BrandsController {
 
   // DELETE /api/brands/:id
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   deleteBrand(
     @CurrentUser() user: { userId: string },

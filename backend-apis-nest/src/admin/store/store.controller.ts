@@ -16,6 +16,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { StoreService } from './store.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('store')
@@ -30,7 +32,7 @@ export class StoreController {
 
   // POST /api/store
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(FileInterceptor('logo', { storage: memoryStorage() }))
   createStore(
     @CurrentUser() user: { userId: string },
@@ -40,16 +42,17 @@ export class StoreController {
     return this.storeService.createStore(user.userId, body, file);
   }
 
-  // GET /api/store
+  // GET /api/store — all authenticated roles can read store info
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   getStore(@CurrentUser() user: { userId: string }) {
     return this.storeService.getStore(user.userId);
   }
 
   // PUT /api/store
   @Put()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
   @UseInterceptors(FileInterceptor('logo', { storage: memoryStorage() }))
   updateStore(
     @CurrentUser() user: { userId: string },
@@ -61,7 +64,8 @@ export class StoreController {
 
   // DELETE /api/store
   @Delete()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   deleteStore(@CurrentUser() user: { userId: string }) {
     return this.storeService.deleteStore(user.userId);

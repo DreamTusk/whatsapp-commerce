@@ -16,10 +16,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CategoriesService } from './categories.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('categories')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
@@ -54,6 +56,8 @@ export class CategoriesController {
 
   // DELETE /api/categories/:id
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   deleteCategory(
     @CurrentUser() user: { userId: string },

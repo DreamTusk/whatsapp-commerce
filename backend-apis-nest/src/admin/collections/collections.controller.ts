@@ -13,10 +13,12 @@ import {
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('collections')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CollectionsController {
   constructor(private collectionsService: CollectionsService) {}
 
@@ -66,6 +68,8 @@ export class CollectionsController {
 
   // DELETE /api/collections/:id
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   deleteCollection(
     @CurrentUser() user: { userId: string },
@@ -86,6 +90,8 @@ export class CollectionsController {
 
   // DELETE /api/collections/:id/products/:productId
   @Delete(':id/products/:productId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   removeProduct(
     @CurrentUser() user: { userId: string },

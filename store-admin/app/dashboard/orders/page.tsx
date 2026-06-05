@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import { Loader2, ChevronRight, Plus } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import CreateOrderDrawer from '@/components/create-order-drawer'
 import type { Order } from '@/types'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
@@ -45,7 +44,6 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL')
-  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => { fetchOrders(activeTab) }, [activeTab])
 
@@ -70,7 +68,7 @@ export default function OrdersPage() {
             <h1 className="text-[26px] font-bold text-gray-900">Orders</h1>
             <p className="text-base text-gray-500 mt-0.5">{orders.length} orders</p>
           </div>
-          <Button onClick={() => setDrawerOpen(true)} className="gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white">
+          <Button onClick={() => router.push('/dashboard/orders/new')} className="gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white">
             <Plus className="w-4 h-4" /> Create Order
           </Button>
         </div>
@@ -180,11 +178,6 @@ export default function OrdersPage() {
         </div>
       )}
       </div>
-      <CreateOrderDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onCreated={() => { setDrawerOpen(false); fetchOrders(activeTab) }}
-      />
     </div>
   )
 }

@@ -17,8 +17,6 @@ enum BannerType {
 
 enum Role {
   OWNER
-  MANAGER
-  SALES_EXECUTIVE
   STAFF
 }
 

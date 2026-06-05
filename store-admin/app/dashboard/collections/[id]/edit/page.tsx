@@ -11,6 +11,7 @@ import api from '@/lib/api'
 import type { Product, Category, Brand, Collection } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
+import { AppCombobox } from '@/components/ui/app-combobox'
 
 interface CriteriaRow { id: string; field: string; operator: string; value: string }
 
@@ -267,18 +268,20 @@ export default function EditCollectionPage() {
                         options={(OPERATORS_FOR[row.field] ?? []).map(op => ({ value: op.value, label: op.label }))}
                       />
                       {row.field === 'category_id' ? (
-                        <AppSelect
+                        <AppCombobox
                           value={row.value}
                           onValueChange={v => updateRow(row.id, { value: v })}
                           placeholder="Select category"
+                          searchPlaceholder="Search categories..."
                           className="flex-1 min-w-0 h-10 text-sm"
                           options={flatCategories.map(c => ({ value: c.id, label: c.name }))}
                         />
                       ) : row.field === 'brand_id' ? (
-                        <AppSelect
+                        <AppCombobox
                           value={row.value}
                           onValueChange={v => updateRow(row.id, { value: v })}
                           placeholder="Select brand"
+                          searchPlaceholder="Search brands..."
                           className="flex-1 min-w-0 h-10 text-sm"
                           options={brands.map(b => ({ value: b.id, label: b.name }))}
                         />

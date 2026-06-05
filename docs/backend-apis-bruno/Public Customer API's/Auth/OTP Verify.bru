@@ -1,0 +1,27 @@
+meta {
+  name: OTP Verify
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url_local}}/storefront/auth/verify-otp
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+body:json {
+  {
+    "phone": "9876543210",
+      "otp": "123456"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

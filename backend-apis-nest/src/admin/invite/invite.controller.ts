@@ -11,10 +11,13 @@ import {
 } from '@nestjs/common';
 import { InviteService } from './invite.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('invite')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('OWNER')
 export class InviteController {
   constructor(private inviteService: InviteService) {}
 
