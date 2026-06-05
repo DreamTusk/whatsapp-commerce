@@ -7,6 +7,7 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AppSelect } from '@/components/ui/app-select'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -323,16 +324,12 @@ export default function UsersPanel() {
             </div>
             <div className="space-y-1.5">
               <Label>Role</Label>
-              <select
+              <AppSelect
                 value={inviteRole}
-                onChange={e => setInviteRole(e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-              >
-                <option value="" disabled>Select a role</option>
-                {INVITE_ROLES.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </select>
+                onValueChange={setInviteRole}
+                placeholder="Select a role"
+                options={INVITE_ROLES.map(r => ({ value: r.value, label: r.label }))}
+              />
             </div>
             <p className="text-xs text-gray-400">
               The invite link will appear in the server console.

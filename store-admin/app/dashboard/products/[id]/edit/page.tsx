@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
+import { AppSelect } from '@/components/ui/app-select'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -117,19 +118,18 @@ export default function EditProductPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 bg-gray-50">
+      <div className="flex-shrink-0 px-6 pt-5 pb-4 bg-white border-b border-gray-100">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-base text-gray-500 hover:text-gray-700 mb-3 cursor-pointer"
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-4"
         >
-          <ArrowLeft className="w-4 h-4" /> Products
+          <ArrowLeft className="w-3.5 h-3.5" /> Products
         </button>
-        <h1 className="text-[26px] font-bold text-gray-900">Edit product</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Edit product</h1>
       </div>
-      <div className="flex-1 overflow-auto min-h-0">
-        <div className="flex justify-center px-6 py-8">
-        <div className="w-full max-w-4xl">
-        <div className="grid grid-cols-2 gap-5 mb-5">
+      <div className="flex-1 overflow-auto min-h-0 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
 
           {/* ── Product Information ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
@@ -147,21 +147,25 @@ export default function EditProductPage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-base">Category <span className="text-destructive">*</span></Label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer">
-                <option value="">Select category</option>
-                {categories.flatMap(c =>
+              <AppSelect
+                value={categoryId}
+                onValueChange={setCategoryId}
+                placeholder="Select category"
+                options={categories.flatMap(c =>
                   c.children && c.children.length > 0
-                    ? c.children.map(ch => <option key={ch.id} value={ch.id}>{c.name} — {ch.name}</option>)
-                    : [<option key={c.id} value={c.id}>{c.name}</option>]
+                    ? c.children.map(ch => ({ value: ch.id, label: `${c.name} — ${ch.name}` }))
+                    : [{ value: c.id, label: c.name }]
                 )}
-              </select>
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <select value={brandId} onChange={e => setBrandId(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer">
-                <option value="">No brand</option>
-                {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
+              <AppSelect
+                value={brandId}
+                onValueChange={setBrandId}
+                placeholder="No brand"
+                options={brands.map(b => ({ value: b.id, label: b.name }))}
+              />
             </div>
           </div>
 
@@ -213,14 +217,14 @@ export default function EditProductPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-base">Stock</Label>
-                <select
+                <AppSelect
                   value={inStock ? 'true' : 'false'}
-                  onChange={e => setInStock(e.target.value === 'true')}
-                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] cursor-pointer"
-                >
-                  <option value="true">In stock</option>
-                  <option value="false">Out of stock</option>
-                </select>
+                  onValueChange={v => setInStock(v === 'true')}
+                  options={[
+                    { value: 'true', label: 'In stock' },
+                    { value: 'false', label: 'Out of stock' },
+                  ]}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-base">Visibility</Label>
@@ -229,11 +233,10 @@ export default function EditProductPage() {
             </div>
           </div>
 
-          <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base mt-5" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 mt-4" onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             {isSaving ? 'Saving…' : 'Save changes'}
           </Button>
-        </div>
         </div>
       </div>
     </div>

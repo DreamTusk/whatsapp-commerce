@@ -34,7 +34,7 @@ export function AppSelect({
   const displayLabel = value ? options.find(o => o.value === value)?.label : undefined
 
   return (
-    <Select value={value || undefined} onValueChange={onValueChange}>
+    <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className={cn('w-full h-11 text-base', className)}>
         <span className={cn('flex-1 text-left truncate', !displayLabel && 'text-muted-foreground')}>
           {displayLabel ?? placeholder}

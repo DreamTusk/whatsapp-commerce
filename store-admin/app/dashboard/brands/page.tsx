@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Loader2, BookMarked, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,13 +11,16 @@ import api from '@/lib/api'
 import type { Brand } from '@/types'
 
 export default function BrandsPage() {
-  const router = useRouter()
   const [brands, setBrands] = useState<Brand[]>([])
   const [loading, setLoading] = useState(true)
 
   const [addOpen, setAddOpen] = useState(false)
   const [addName, setAddName] = useState('')
   const [isSavingAdd, setIsSavingAdd] = useState(false)
+
+  const [editTarget, setEditTarget] = useState<Brand | null>(null)
+  const [editName, setEditName] = useState('')
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
 
   const [deleteTarget, setDeleteTarget] = useState<Brand | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -44,6 +46,24 @@ export default function BrandsPage() {
       toast.error(msg)
     } finally {
       setIsSavingAdd(false)
+    }
+  }
+
+  async function handleEditBrand() {
+    if (!editTarget) return
+    if (!editName.trim()) { toast.error('Brand name is required'); return }
+    setIsSavingEdit(true)
+    try {
+      const res = await api.put(`/api/brands/${editTarget.id}`, { name: editName.trim() })
+      setBrands(prev => prev.map(b => b.id === editTarget.id ? res.data.brand : b))
+      toast.success('Brand updated')
+      setEditTarget(null)
+      setEditName('')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update brand'
+      toast.error(msg)
+    } finally {
+      setIsSavingEdit(false)
     }
   }
 
@@ -113,7 +133,7 @@ export default function BrandsPage() {
                   <td className="px-4 py-3 text-gray-500">{b.product_count} product{b.product_count !== 1 ? 's' : ''}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
-                      <button onClick={() => router.push(`/dashboard/brands/${b.id}/edit`)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+                      <button onClick={() => { setEditTarget(b); setEditName(b.name) }} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button onClick={() => setDeleteTarget(b)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
@@ -159,6 +179,37 @@ export default function BrandsPage() {
               <Button className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white" onClick={handleAddBrand} disabled={isSavingAdd}>
                 {isSavingAdd ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {isSavingAdd ? 'Saving…' : 'Add brand'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Brand Dialog */}
+      <Dialog open={!!editTarget} dismissible={false} onOpenChange={() => {}}>
+        <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-gray-900 text-lg">Edit brand</h3>
+              <button onClick={() => { setEditTarget(null); setEditName('') }} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-base">Brand name <span className="text-destructive">*</span></Label>
+              <Input
+                className="text-base h-11"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleEditBrand()}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => { setEditTarget(null); setEditName('') }}>Cancel</Button>
+              <Button className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white" onClick={handleEditBrand} disabled={isSavingEdit}>
+                {isSavingEdit ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSavingEdit ? 'Saving…' : 'Save changes'}
               </Button>
             </div>
           </div>

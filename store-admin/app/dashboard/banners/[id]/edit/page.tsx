@@ -12,6 +12,7 @@ import { DateTimePicker } from '@/components/ui/date-time-picker'
 import api from '@/lib/api'
 import type { Product, Collection, Banner } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
+import { AppSelect } from '@/components/ui/app-select'
 
 type BannerType = 'product' | 'collection' | 'url'
 
@@ -158,32 +159,24 @@ export default function EditBannerPage() {
             {type === 'collection' && (
               <div className="space-y-1.5">
                 <Label className="text-base">Collection <span className="text-destructive">*</span></Label>
-                <select
+                <AppSelect
                   value={collectionId}
-                  onChange={e => setCollectionId(e.target.value)}
-                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-                >
-                  <option value="">Select collection</option>
-                  {collections.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                  onValueChange={setCollectionId}
+                  placeholder="Select collection"
+                  options={collections.map(c => ({ value: c.id, label: c.name }))}
+                />
               </div>
             )}
 
             {type === 'product' && (
               <div className="space-y-1.5">
                 <Label className="text-base">Product <span className="text-destructive">*</span></Label>
-                <select
+                <AppSelect
                   value={productId}
-                  onChange={e => setProductId(e.target.value)}
-                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-                >
-                  <option value="">Select product</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                  onValueChange={setProductId}
+                  placeholder="Select product"
+                  options={products.map(p => ({ value: p.id, label: p.name }))}
+                />
               </div>
             )}
 

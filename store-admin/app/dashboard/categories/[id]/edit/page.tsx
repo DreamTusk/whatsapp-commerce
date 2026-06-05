@@ -7,10 +7,10 @@ import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
 import api from '@/lib/api'
 import type { Category } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
+import { AppSelect } from '@/components/ui/app-select'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -34,7 +34,6 @@ export default function EditCategoryPage() {
       .then(res => {
         const cats: Category[] = res.data.categories
         setAllCategories(cats)
-        // Search top-level and children
         let found: Category | null = null
         for (const c of cats) {
           if (c.id === id) { found = c; break }
@@ -91,84 +90,106 @@ export default function EditCategoryPage() {
     return (
       <div className="text-center py-40 text-gray-400">
         <p className="text-lg font-medium">Category not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-base text-[#6366f1] hover:underline cursor-pointer">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-sm text-[#6366f1] hover:underline">Go back</button>
       </div>
     )
   }
 
-  // Only top-level categories can be parents (exclude self)
+  const currentImage = category.image_url
+    ? (category.image_url.startsWith('http') ? category.image_url : `${API_URL}${category.image_url}`)
+    : null
+
   const parentOptions = allCategories.filter(c => c.id !== id)
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 bg-gray-50">
+      {/* Header */}
+      <div className="flex-shrink-0 px-6 pt-5 pb-4 bg-white border-b border-gray-100">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-base text-gray-500 hover:text-gray-700 mb-3 cursor-pointer"
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-4"
         >
-          <ArrowLeft className="w-4 h-4" /> Categories
+          <ArrowLeft className="w-3.5 h-3.5" /> Categories
         </button>
-        <h1 className="text-[26px] font-bold text-gray-900">Edit category</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Edit category</h1>
       </div>
-      <div className="flex-1 overflow-auto min-h-0">
-        <div className="flex justify-center px-6 py-8">
-        <div className="w-full max-w-lg space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-base">Image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                ) : category.image_url ? (
-                  <img src={category.image_url.startsWith('http') ? category.image_url : `${API_URL}${category.image_url}`} alt="current" className="w-full h-full object-cover" />
-                ) : (
-                  <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                )}
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto min-h-0 bg-gray-50">
+        <div className="max-w-lg mx-auto px-6 py-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+
+            {/* Image */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">
+                Image <span className="text-gray-400 font-normal text-xs">(optional)</span>
+              </Label>
+              <label className="flex items-center gap-4 cursor-pointer group w-fit">
+                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                  ) : currentImage ? (
+                    <img src={currentImage} alt="current" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 group-hover:text-[#6366f1] transition-colors">
+                    {imagePreview || currentImage ? 'Change image' : 'Upload image'}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
+                </div>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+              </label>
+            </div>
+
+            <div className="border-t border-gray-50" />
+
+            {/* Name */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">
+                Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                className="h-11"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+            </div>
+
+            {/* Parent category */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">
+                Parent category <span className="text-gray-400 font-normal text-xs">(optional)</span>
+              </Label>
+              <AppSelect
+                value={parentId}
+                onValueChange={setParentId}
+                placeholder="None (top-level)"
+                options={parentOptions.map(c => ({ value: c.id, label: c.name }))}
+              />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">Status</Label>
+              <div className="h-11 flex items-center">
+                <AppSwitch checked={isActive} onChange={setIsActive} />
               </div>
-              <span className="text-base text-gray-500 group-hover:text-gray-700">
-                {imagePreview || category.image_url ? 'Change image' : 'Upload image'}
-              </span>
-              <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-            </label>
-          </div>
+            </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-base">Name <span className="text-destructive">*</span></Label>
-            <Input
-              className="text-base h-11"
-              value={name}
-              onChange={e => setName(e.target.value)}
-            />
+            <div className="border-t border-gray-50 pt-1">
+              <Button
+                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {isSaving ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
           </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-base">Parent category <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-            <select
-              value={parentId}
-              onChange={e => setParentId(e.target.value)}
-              className="w-full h-11 px-3 rounded-lg border border-gray-200 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-            >
-              <option value="">None (top-level)</option>
-              {parentOptions.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-base">Status</Label>
-            <AppSwitch checked={isActive} onChange={setIsActive} />
-          </div>
-
-          <Button
-            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            {isSaving ? 'Saving…' : 'Save changes'}
-          </Button>
-        </div>
         </div>
       </div>
     </div>
