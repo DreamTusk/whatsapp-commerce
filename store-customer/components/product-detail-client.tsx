@@ -3,11 +3,17 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
 import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
+
+const BlockNotePreview = dynamic(
+  () => import('@/components/blocknote-editor/BlockNotePreview'),
+  { ssr: false },
+)
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -175,6 +181,23 @@ export default function ProductDetailClient({
     )
   )
 
+  const DescriptionBlock = ({ content }: { content: string }) => {
+    const [expanded, setExpanded] = useState(false)
+    return (
+      <div>
+        <div className={`overflow-hidden transition-all duration-300 ${expanded ? '' : 'max-h-36'}`}>
+          <BlockNotePreview content={content} />
+        </div>
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="mt-1 text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors"
+        >
+          {expanded ? 'Show less ↑' : 'Read more ↓'}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <>
       {/* ══════════════════════════════════════
@@ -260,7 +283,7 @@ export default function ProductDetailClient({
               <div className="pt-2 border-t border-gray-100">
                 <p className="text-sm font-bold text-gray-900 mb-1">Information</p>
                 <p className="text-xs text-gray-400 mb-1">About the product</p>
-                <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+                <DescriptionBlock content={description} />
               </div>
             )}
           </div>
@@ -367,10 +390,7 @@ export default function ProductDetailClient({
               )}
 
               {description && (
-                <div className="border-t border-gray-100 pt-4">
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Description</p>
-                  <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
-                </div>
+                <DescriptionBlock content={description} />
               )}
 
               {/* Buttons */}

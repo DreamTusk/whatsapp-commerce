@@ -203,13 +203,24 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders        Order[]
-  cartItems     CartItem[]
-  wishlistItems WishlistItem[]
-  sessions      ConversationSession[]
-  addresses     CustomerAddress[]
+  orders         Order[]
+  cartItems      CartItem[]
+  wishlistItems  WishlistItem[]
+  sessions       ConversationSession[]
+  addresses      CustomerAddress[]
+  customerTokens CustomerToken[]
 
   @@unique([phone, storeId])
+}
+
+model CustomerToken {
+  id         String   @id @default(cuid())
+  jti        String   @unique
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  isRevoked  Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 }
 
 model CustomerAddress {

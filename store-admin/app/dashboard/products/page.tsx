@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, ImagePlus, Loader2, ChevronRight, Package, X, SlidersHorizontal } from 'lucide-react'
+import { Plus, Trash2, ImagePlus, Loader2, ChevronRight, Package, X, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AppSelect } from '@/components/ui/app-select'
@@ -203,7 +203,7 @@ export default function ProductsPage() {
                     <tr
                       key={p.id}
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/dashboard/products/${p.id}`)}
+                      onClick={() => router.push(`/dashboard/products/${p.id}/edit`)}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -240,10 +240,6 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-0.5 justify-end">
-                          <button onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/products/${p.id}/edit`) }}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
                           {isOwner && (
                             <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(p) }}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">

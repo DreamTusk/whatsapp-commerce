@@ -112,11 +112,11 @@ export default function CategoriesPage() {
                     const hasChildren = cat.children && cat.children.length > 0
                     return (
                       <React.Fragment key={cat.id}>
-                        <tr className="hover:bg-gray-50 transition-colors">
+                        <tr className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/categories/${cat.id}/edit`)}>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               {hasChildren ? (
-                                <button onClick={() => toggleExpand(cat.id)} className="p-0.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer flex-shrink-0">
+                                <button onClick={e => { e.stopPropagation(); toggleExpand(cat.id) }} className="p-0.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0">
                                   <ChevronRight className={`w-4 h-4 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`} />
                                 </button>
                               ) : (
@@ -135,16 +135,13 @@ export default function CategoriesPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                             <button onClick={() => toggleActive(cat)} className={`text-base font-medium px-2.5 py-1 rounded-full transition-colors cursor-pointer ${cat.is_active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                               {cat.is_active ? 'Active' : 'Inactive'}
                             </button>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center gap-1 justify-end">
-                              <button onClick={() => router.push(`/dashboard/categories/${cat.id}/edit`)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
                               {isOwner && (
                                 <button onClick={() => setDeleteTarget(cat)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -155,7 +152,7 @@ export default function CategoriesPage() {
                         </tr>
 
                         {isExpanded && cat.children?.map(child => (
-                          <tr key={`child-${child.id}`} className="hover:bg-gray-50 transition-colors bg-gray-50/50">
+                          <tr key={`child-${child.id}`} className="hover:bg-gray-50 transition-colors bg-gray-50/50 cursor-pointer" onClick={() => router.push(`/dashboard/categories/${child.id}/edit`)}>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-2 pl-9">
                                 {child.image_url ? (
@@ -168,16 +165,13 @@ export default function CategoriesPage() {
                                 <span className="text-gray-700">{child.name}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-2.5">
+                            <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                               <button onClick={() => toggleActive(child)} className={`text-sm font-medium px-2.5 py-1 rounded-full transition-colors cursor-pointer ${child.is_active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                                 {child.is_active ? 'Active' : 'Inactive'}
                               </button>
                             </td>
-                            <td className="px-4 py-2.5">
+                            <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                               <div className="flex items-center gap-1 justify-end">
-                                <button onClick={() => router.push(`/dashboard/categories/${child.id}/edit`)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
                                 {isOwner && (
                                   <button onClick={() => setDeleteTarget(child)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
                                     <Trash2 className="w-3.5 h-3.5" />

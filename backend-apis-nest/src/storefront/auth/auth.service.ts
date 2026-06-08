@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SmsService } from '../../shared/sms.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class StorefrontAuthService {
@@ -84,10 +85,17 @@ export class StorefrontAuthService {
       update: {},
     });
 
+    const jti = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
     const access_token = this.jwtService.sign(
-      { customerId: customer.id, storeId: store.id, phone },
+      { customerId: customer.id, storeId: store.id, phone, jti },
       { expiresIn: '30d' },
     );
+
+    await this.prisma.customerToken.create({
+      data: { jti, customerId: customer.id, expiresAt },
+    });
 
     return { customer: this.formatCustomer(customer), is_new, access_token };
   }
@@ -109,7 +117,11 @@ export class StorefrontAuthService {
     return { customer: this.formatCustomer(customer) };
   }
 
-  async logout() {
+  async logout(jti: string) {
+    await this.prisma.customerToken.update({
+      where: { jti },
+      data: { isRevoked: true },
+    });
     return { message: 'Logged out successfully' };
   }
 }

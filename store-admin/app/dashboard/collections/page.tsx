@@ -40,8 +40,8 @@ function SortableRow({
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
 
   return (
-    <tr ref={setNodeRef} style={style} className="hover:bg-gray-50 transition-colors">
-      <td className="px-2 py-3 w-8">
+    <tr ref={setNodeRef} style={style} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onEdit(col)}>
+      <td className="px-2 py-3 w-8" onClick={e => e.stopPropagation()}>
         <button {...attributes} {...listeners} className="p-1 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
           <GripVertical className="w-4 h-4" />
         </button>
@@ -61,7 +61,7 @@ function SortableRow({
         {col.type === 'manual' ? `${col.product_count ?? 0} products` : 'Auto'}
       </td>
       <td className="px-4 py-3 text-gray-500 tabular-nums">{col.display_order}</td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
         <button
           onClick={() => onToggleActive(col)}
           className={`text-sm font-medium px-2.5 py-1 rounded-full transition-colors cursor-pointer ${
@@ -71,14 +71,8 @@ function SortableRow({
           {col.is_active ? 'Active' : 'Inactive'}
         </button>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-1 justify-end">
-          <button
-            onClick={() => onEdit(col)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
           {isOwner && (
             <button
               onClick={() => onDelete(col)}

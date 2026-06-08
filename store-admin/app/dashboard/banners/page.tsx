@@ -94,7 +94,8 @@ export default function BannersPage() {
             {banners.map((banner) => (
               <div
                 key={banner.id}
-                className="flex items-center gap-4 bg-white rounded-xl border border-gray-100 p-3 hover:border-gray-200 transition-colors"
+                onClick={() => router.push(`/dashboard/banners/${banner.id}/edit`)}
+                className="flex items-center gap-4 bg-white rounded-xl border border-gray-100 p-3 hover:border-gray-200 transition-colors cursor-pointer"
               >
                 <div className="w-24 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                   {banner.image_url ? (
@@ -124,14 +125,8 @@ export default function BannersPage() {
                   {banner.status}
                 </span>
 
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => router.push(`/dashboard/banners/${banner.id}/edit`)}
-                    className="p-2 rounded-lg text-gray-400 hover:text-[#6366f1] hover:bg-[#6366f1]/5 transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  {isOwner && (
+                {isOwner && (
+                  <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => setConfirmBanner(banner)}
                       disabled={deletingId === banner.id}
@@ -142,8 +137,8 @@ export default function BannersPage() {
                         : <Trash2 className="w-4 h-4" />
                       }
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

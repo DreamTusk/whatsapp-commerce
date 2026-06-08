@@ -257,6 +257,11 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token has expired, please login again');
     }
 
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId: storedToken.userId } });
+    if (userStore && !userStore.isActive) {
+      throw new UnauthorizedException('Your account has been deactivated');
+    }
+
     const access_token = this.generateAccessToken(storedToken.userId);
     return { access_token };
   }

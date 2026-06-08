@@ -173,7 +173,7 @@ export default function EditCollectionPage() {
       </div>
 
       <div className="flex-1 overflow-auto min-h-0 bg-gray-50">
-        <div className="max-w-xl mx-auto px-6 py-6">
+        <div className="max-w-2xl mx-auto px-6 py-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
 
             <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function EditCollectionPage() {
                   <AppSelect
                     value={criteriaMatch}
                     onValueChange={v => setCriteriaMatch(v as 'all' | 'any')}
-                    className="w-20 h-10 text-sm"
+                    className="w-24 h-10 text-sm"
                     options={[{ value: 'all', label: 'all' }, { value: 'any', label: 'any' }]}
                   />
                   <span className="text-sm text-gray-500">of the following</span>
@@ -258,13 +258,13 @@ export default function EditCollectionPage() {
                       <AppSelect
                         value={row.field}
                         onValueChange={v => onFieldChange(row.id, v)}
-                        className="w-36 h-10 text-sm flex-shrink-0"
+                        className="w-40 h-10 text-sm flex-shrink-0"
                         options={FIELDS.map(f => ({ value: f.value, label: f.label }))}
                       />
                       <AppSelect
                         value={row.operator}
                         onValueChange={v => updateRow(row.id, { operator: v })}
-                        className="w-44 h-10 text-sm flex-shrink-0"
+                        className="w-40 h-10 text-sm flex-shrink-0"
                         options={(OPERATORS_FOR[row.field] ?? []).map(op => ({ value: op.value, label: op.label }))}
                       />
                       {row.field === 'category_id' ? (

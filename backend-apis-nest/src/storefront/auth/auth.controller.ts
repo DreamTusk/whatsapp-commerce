@@ -64,7 +64,7 @@ export class StorefrontAuthController {
   @Post('logout')
   @UseGuards(CustomerAuthGuard)
   @HttpCode(HttpStatus.OK)
-  logout() {
-    return this.authService.logout();
+  logout(@CurrentCustomer() customer: { jti: string }) {
+    return this.authService.logout(customer.jti);
   }
 }

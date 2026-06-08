@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2, Package } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, Package, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +13,12 @@ import type { Product, Category, Brand } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
 import { AppCombobox } from '@/components/ui/app-combobox'
+import dynamic from 'next/dynamic'
+
+const BlockNoteEditor = dynamic(
+  () => import('@/components/blocknote-editor/BlockNoteEditor'),
+  { ssr: false },
+)
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -37,6 +43,8 @@ export default function EditProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const fetchProduct = useCallback(async () => {
     const res = await api.get(`/api/products/${id}`)
@@ -90,12 +98,26 @@ export default function EditProductPage() {
 
       await api.put(`/api/products/${id}`, formData)
       toast.success('Product updated')
-      router.push(`/dashboard/products/${id}`)
+      router.push('/dashboard/products')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update product'
       toast.error(msg)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    setIsDeleting(true)
+    try {
+      await api.delete(`/api/products/${id}`)
+      toast.success('Product deleted')
+      router.push('/dashboard/products')
+    } catch {
+      toast.error('Failed to delete product')
+    } finally {
+      setIsDeleting(false)
+      setConfirmDelete(false)
     }
   }
 
@@ -120,20 +142,45 @@ export default function EditProductPage() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 px-6 pt-5 pb-4 bg-white border-b border-gray-100">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-4"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Products
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit product</h1>
+        <div className="flex items-center justify-between">
+          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600">
+            <ArrowLeft className="w-3.5 h-3.5" /> Products
+          </button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="h-9 px-4 text-sm text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" onClick={() => setConfirmDelete(true)} disabled={isDeleting}>
+              Delete
+            </Button>
+            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving}>
+              {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              {isSaving ? 'Saving…' : 'Update'}
+            </Button>
+          </div>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mt-3">Edit product</h1>
       </div>
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <h2 className="text-base font-semibold text-gray-900">Delete product?</h2>
+            <p className="text-sm text-gray-500">This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 h-10" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+              <Button className="flex-1 h-10 bg-red-500 hover:bg-red-600 text-white" onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                {isDeleting ? 'Deleting…' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex-1 overflow-auto min-h-0 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="px-4 py-6">
+        <div className="grid grid-cols-3 gap-4 mb-4">
 
           {/* ── Product Information ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Product Information</h2>
               <div className="mt-2 border-t border-gray-100" />
@@ -141,10 +188,6 @@ export default function EditProductPage() {
             <div className="space-y-1.5">
               <Label className="text-base">Name <span className="text-destructive">*</span></Label>
               <Input className="text-base h-11" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <Input className="text-base h-11" value={description} onChange={e => setDescription(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-base">Category <span className="text-destructive">*</span></Label>
@@ -170,29 +213,47 @@ export default function EditProductPage() {
                 options={brands.map(b => ({ value: b.id, label: b.name }))}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+              <BlockNoteEditor onChange={setDescription} initialContent={description} />
+            </div>
           </div>
 
-          {/* ── Images & Videos ── */}
+          {/* ── Image ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">Images &amp; Videos</h2>
+              <h2 className="text-sm font-semibold text-gray-900">Image</h2>
               <div className="mt-2 border-t border-gray-100" />
             </div>
-            <label className="flex items-center gap-3 cursor-pointer group w-fit">
-              <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
-                {imagePreview ? (
+            <div className="relative w-full aspect-square rounded-xl border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 group">
+              {imagePreview ? (
+                <>
                   <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                ) : product.image_url ? (
+                  <button
+                    type="button"
+                    onClick={() => { setImageFile(null); setImagePreview(null) }}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5 text-white" />
+                  </button>
+                </>
+              ) : product.image_url ? (
+                <>
                   <img src={product.image_url.startsWith('http') ? product.image_url : `${API_URL}${product.image_url}`} alt="current" className="w-full h-full object-cover" />
-                ) : (
-                  <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                )}
-              </div>
-              <span className="text-base text-gray-500 group-hover:text-gray-700">
-                {imagePreview || product.image_url ? 'Change image' : 'Upload image'}
-              </span>
-              <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-            </label>
+                  <label className="absolute inset-0 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <span className="text-xs font-medium text-white bg-black/50 px-3 py-1 rounded-full">Change image</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  </label>
+                </>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-full gap-2 cursor-pointer">
+                  <ImagePlus className="w-7 h-7 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                  <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Upload image</span>
+                  <span className="text-xs text-gray-300">PNG, JPG up to 5MB</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+              )}
+            </div>
           </div>
 
           </div>
@@ -236,10 +297,15 @@ export default function EditProductPage() {
             </div>
           </div>
 
-          <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 mt-4" onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            {isSaving ? 'Saving…' : 'Save changes'}
-          </Button>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" className="h-9 px-4 text-sm text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" onClick={() => setConfirmDelete(true)} disabled={isDeleting}>
+              Delete
+            </Button>
+            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving}>
+              {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              {isSaving ? 'Saving…' : 'Update'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
