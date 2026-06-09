@@ -2,11 +2,12 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const STORE_ID = 'cmpqsvajf0005etuohdixtgli';
 
 const p = (seed: string) => `https://picsum.photos/seed/${seed}/800/400`;
 
 async function main(): Promise<void> {
+  const store = await prisma.store.findFirstOrThrow({ where: { domain: 'freshmart.localhost' } });
+  const STORE_ID = store.id;
   console.log('Adding banners to store:', STORE_ID);
 
   // Fetch existing collections and products for linking

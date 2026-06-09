@@ -141,11 +141,45 @@ async function main(): Promise<void> {
     prisma.product.create({ data: { name: 'Nachos', description: 'Tortilla chips with dips', sellingPrice: 120, unit: '1 plate', categoryId: cafeCategories[3].id, storeId: cafe.id } }),
   ]);
 
+  console.log('Creating sample customers...');
+  await Promise.all([
+    prisma.customer.create({
+      data: {
+        name: 'Ravi Kumar',
+        phone: '+919876543210',
+        storeId: store.id,
+      },
+    }),
+    prisma.customer.create({
+      data: {
+        name: 'Priya Sharma',
+        phone: '+919876543211',
+        storeId: store.id,
+      },
+    }),
+  ]);
+
+  console.log('Creating demo user...');
+  const demoHashedPassword = await bcrypt.hash('demo1234', 10);
+  const demoUser = await prisma.user.create({
+    data: {
+      name: 'Demo User',
+      email: 'demo@freshmart.com',
+      password: demoHashedPassword,
+      isVerified: true,
+    },
+  });
+
+  await prisma.userStore.create({
+    data: { userId: demoUser.id, storeId: store.id, role: 'STAFF' },
+  });
+
   console.log('Seeding completed!');
   console.log(`\nStore: ${store.name} | Domain: ${store.domain}`);
   console.log(`Store: ${cafe.name} | Domain: ${cafe.domain}`);
   console.log('Fresh Mart login — Email: admin@freshmart.com | Password: admin123');
   console.log('Dream Cafe login  — Email: admin@dreamcafe.com | Password: admin123');
+  console.log('Demo user login   — Email: demo@freshmart.com  | Password: demo1234');
 }
 
 main()
