@@ -1,10 +1,7 @@
 import {
   Controller, Get, Post, Put, Delete, Patch,
-  Body, Param, UseGuards, UseInterceptors,
-  UploadedFile, HttpCode, HttpStatus,
+  Body, Param, UseGuards, HttpCode, HttpStatus,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
 import { BannersService } from './banners.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -24,13 +21,11 @@ export class BannersController {
 
   // POST /api/banners
   @Post()
-  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
   createBanner(
     @CurrentUser() user: { userId: string },
     @Body() body: any,
-    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.bannersService.createBanner(user.userId, body, file);
+    return this.bannersService.createBanner(user.userId, body);
   }
 
   // PATCH /api/banners/reorder
@@ -45,19 +40,16 @@ export class BannersController {
 
   // PUT /api/banners/:id
   @Put(':id')
-  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
   updateBanner(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
     @Body() body: any,
-    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.bannersService.updateBanner(user.userId, id, body, file);
+    return this.bannersService.updateBanner(user.userId, id, body);
   }
 
   // DELETE /api/banners/:id
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   deleteBanner(

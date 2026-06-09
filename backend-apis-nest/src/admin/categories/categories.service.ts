@@ -4,7 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { StorageService } from '../../shared/storage.service';
+import { FileService } from '../../shared/file.service';
+import { MediaEntity } from '@prisma/client';
 
 type RawCategory = {
   id: string; name: string; imageUrl: string | null;
@@ -15,7 +16,7 @@ type RawCategory = {
 export class CategoriesService {
   constructor(
     private prisma: PrismaService,
-    private storageService: StorageService,
+    private fileService: FileService,
   ) {}
 
   private formatCategory(cat: RawCategory, children: RawCategory[] = []): any {
@@ -35,6 +36,13 @@ export class CategoriesService {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
     return userStore.storeId;
+  }
+
+  private async deleteCategoryMedia(categoryId: string, storeId: string) {
+    const media = await this.prisma.media.findFirst({
+      where: { entityType: MediaEntity.CATEGORY, entityId: categoryId, storeId },
+    });
+    if (media) await this.fileService.deleteMedia(media.id, storeId);
   }
 
   async listCategories(userId: string) {
@@ -63,8 +71,7 @@ export class CategoriesService {
 
   async createCategory(
     userId: string,
-    body: { name: string; is_active?: string; parent_id?: string },
-    file?: Express.Multer.File,
+    body: { name: string; is_active?: string; parent_id?: string; media_id?: string },
   ) {
     const storeId = await this.getStoreId(userId);
 
@@ -79,7 +86,11 @@ export class CategoriesService {
     }
 
     let imageUrl: string | null = null;
-    if (file) imageUrl = await this.storageService.uploadImage(file.buffer, 'categories') || null;
+    if (body.media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.media_id, storeId } });
+      if (!media) throw new NotFoundException('Media not found');
+      imageUrl = media.url ?? null;
+    }
 
     const category = await this.prisma.category.create({
       data: {
@@ -91,14 +102,20 @@ export class CategoriesService {
       },
     });
 
+    if (body.media_id) {
+      await this.prisma.media.update({
+        where: { id: body.media_id },
+        data: { entityId: category.id },
+      });
+    }
+
     return { category: this.formatCategory(category) };
   }
 
   async updateCategory(
     userId: string,
     categoryId: string,
-    body: { name?: string; is_active?: string; parent_id?: string },
-    file?: Express.Multer.File,
+    body: { name?: string; is_active?: string; parent_id?: string; media_id?: string; remove_image?: string },
   ) {
     const storeId = await this.getStoreId(userId);
 
@@ -112,19 +129,44 @@ export class CategoriesService {
       if (parent.parentId) throw new BadRequestException('Only one level of sub-categories is allowed');
     }
 
-    let imageUrl: string | undefined = undefined;
-    if (file) imageUrl = await this.storageService.uploadImage(file.buffer, 'categories') || undefined;
+    let imageUrl: string | null | undefined = undefined;
+
+    if (body.media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.media_id, storeId } });
+      if (!media) throw new NotFoundException('Media not found');
+      // Delete old media from R2 before replacing
+      if (existing.imageUrl) await this.deleteCategoryMedia(categoryId, storeId);
+      imageUrl = media.url ?? null;
+      await this.prisma.media.update({
+        where: { id: body.media_id },
+        data: { entityId: categoryId },
+      });
+    } else if (body.remove_image === 'true') {
+      if (existing.imageUrl) await this.deleteCategoryMedia(categoryId, storeId);
+      imageUrl = null;
+    }
 
     const category = await this.prisma.category.update({
       where: { id: categoryId },
       data: {
         ...(body.name && { name: body.name.trim() }),
         ...(imageUrl !== undefined && { imageUrl }),
-        ...(body.is_active !== undefined && { isActive: body.is_active === 'true' }),
+        ...(body.is_active !== undefined && { isActive: body.is_active === 'true' || (body.is_active as unknown) === true }),
         ...(body.parent_id !== undefined && { parentId: body.parent_id || null }),
       },
     });
 
+    return { category: this.formatCategory(category) };
+  }
+
+  async updateCategoryStatus(userId: string, categoryId: string, isActive: boolean) {
+    const storeId = await this.getStoreId(userId);
+    const existing = await this.prisma.category.findFirst({ where: { id: categoryId, storeId } });
+    if (!existing) throw new NotFoundException('Category not found');
+    const category = await this.prisma.category.update({
+      where: { id: categoryId },
+      data: { isActive },
+    });
     return { category: this.formatCategory(category) };
   }
 
@@ -138,8 +180,9 @@ export class CategoriesService {
     if (!existing) throw new NotFoundException('Category not found');
     if (existing.children.length > 0) throw new BadRequestException('Delete all sub-categories first');
 
-    await this.prisma.category.delete({ where: { id: categoryId } });
+    if (existing.imageUrl) await this.deleteCategoryMedia(categoryId, storeId);
 
+    await this.prisma.category.delete({ where: { id: categoryId } });
     return { message: 'Category deleted successfully' };
   }
 }

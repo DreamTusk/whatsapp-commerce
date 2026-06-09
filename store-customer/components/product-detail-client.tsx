@@ -9,6 +9,7 @@ import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
 import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
+import type { ProductImage } from '@/types'
 
 const BlockNotePreview = dynamic(
   () => import('@/components/blocknote-editor/BlockNotePreview'),
@@ -23,6 +24,7 @@ interface Props {
   productId: string
   productName: string
   productImage: string | null
+  images: ProductImage[]
   sellingPrice: number
   originalPrice: number | null
   inStock: boolean
@@ -32,8 +34,13 @@ interface Props {
   breadcrumbs: Crumb[]
 }
 
+function toDisplay(url: string | null): string | null {
+  if (!url) return null
+  return url.startsWith('http') ? url : `${API_URL}${url}`
+}
+
 export default function ProductDetailClient({
-  productId, productName, productImage,
+  productId, productName, productImage, images,
   sellingPrice, originalPrice, inStock,
   unit, description, categoryName, breadcrumbs,
 }: Props) {
@@ -41,6 +48,11 @@ export default function ProductDetailClient({
   const { isAuthenticated, requireAuth } = useAuth()
   const { refresh, items: cartItems } = useCart()
   const { openCart } = useCartDrawer()
+
+  const primaryUrl = images.find(i => i.is_primary)?.url ?? images[0]?.url ?? productImage
+  const [activeUrl, setActiveUrl] = useState<string | null>(primaryUrl)
+
+  const activeImgSrc = toDisplay(activeUrl)
 
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
@@ -137,10 +149,6 @@ export default function ProductDetailClient({
     }
   }
 
-  const imgSrc = productImage
-    ? (productImage.startsWith('http') ? productImage : `${API_URL}${productImage}`)
-    : null
-
   const CartStepper = ({ className }: { className?: string }) => (
     <div className={`flex items-center justify-between rounded-xl border border-indigo-400 overflow-hidden [font-family:var(--font-instrument-sans)] ${className}`}>
       <button onClick={handleDecrease} disabled={cartLoading}
@@ -198,6 +206,36 @@ export default function ProductDetailClient({
     )
   }
 
+  // Thumbnail strip — shared between mobile and desktop
+  const ThumbnailStrip = ({ size = 56 }: { size?: number }) => {
+    if (images.length <= 1) return null
+    return (
+      <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {images.map((img, i) => {
+          const thumbSrc = toDisplay(img.thumbnail_url ?? img.url)
+          const isActive = activeUrl === img.url
+          return (
+            <button
+              key={i}
+              onClick={() => setActiveUrl(img.url)}
+              className="flex-shrink-0 rounded-xl overflow-hidden transition-all"
+              style={{
+                width: size, height: size,
+                border: isActive ? '2px solid #6366f1' : '2px solid #f3f4f6',
+              }}
+            >
+              {thumbSrc ? (
+                <img src={thumbSrc} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-lg">🛍️</div>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <>
       {/* ══════════════════════════════════════
@@ -218,16 +256,23 @@ export default function ProductDetailClient({
           </button>
         </div>
 
-        {/* Card: image + info combined */}
+        {/* Card: image + thumbnails + info */}
         <div className="mx-3 mt-3 bg-white rounded-2xl shadow-sm overflow-hidden space-y-3">
-          {/* Image */}
-          <div className="w-full aspect-square overflow-hidden">
-            {imgSrc ? (
-              <img src={imgSrc} alt={productName} className="w-full h-full object-cover" />
+          {/* Main image */}
+          <div className="w-full aspect-square overflow-hidden bg-gray-50">
+            {activeImgSrc ? (
+              <img src={activeImgSrc} alt={productName} className="w-full h-full object-cover transition-all duration-200" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-6xl bg-gray-50">🛍️</div>
+              <div className="w-full h-full flex items-center justify-center text-6xl">🛍️</div>
             )}
           </div>
+
+          {/* Thumbnails */}
+          {images.length > 1 && (
+            <div className="px-3">
+              <ThumbnailStrip size={56} />
+            </div>
+          )}
 
           {/* Info */}
           <div className="p-4 space-y-3">
@@ -348,13 +393,18 @@ export default function ProductDetailClient({
           </nav>
 
           <div className="grid grid-cols-[55%_45%] gap-10">
-            {/* Left: image */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square">
-              {imgSrc ? (
-                <img src={imgSrc} alt={productName} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-8xl bg-gray-50">🛍️</div>
-              )}
+            {/* Left: image + thumbnails */}
+            <div className="space-y-3">
+              {/* Main image */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square">
+                {activeImgSrc ? (
+                  <img src={activeImgSrc} alt={productName} className="w-full h-full object-cover transition-all duration-200" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-8xl bg-gray-50">🛍️</div>
+                )}
+              </div>
+              {/* Thumbnails */}
+              <ThumbnailStrip size={72} />
             </div>
 
             {/* Right: info */}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, ImagePlus, Loader2, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, ImagePlus, Loader2, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import api from '@/lib/api'
@@ -20,6 +20,7 @@ export default function CategoriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [latestFirst, setLatestFirst] = useState(false)
 
   useEffect(() => { fetchCategories() }, [])
 
@@ -50,17 +51,6 @@ export default function CategoriesPage() {
     }
   }
 
-  async function toggleActive(cat: Category) {
-    try {
-      const formData = new FormData()
-      formData.append('is_active', String(!cat.is_active))
-      await api.put(`/api/categories/${cat.id}`, formData)
-      await fetchCategories()
-    } catch {
-      toast.error('Failed to update category')
-    }
-  }
-
   function toggleExpand(id: string) {
     setExpandedIds(prev => {
       const next = new Set(prev)
@@ -71,6 +61,10 @@ export default function CategoriesPage() {
 
   const totalCount = categories.reduce((sum, c) => sum + 1 + (c.children?.length ?? 0), 0)
 
+  const sortedCategories = latestFirst
+    ? [...categories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    : categories
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 px-6 pt-6 pb-4 bg-gray-50">
@@ -79,9 +73,17 @@ export default function CategoriesPage() {
             <h1 className="text-[26px] font-bold text-gray-900">Categories</h1>
             <p className="text-base text-gray-500 mt-0.5">{totalCount} categories</p>
           </div>
-          <Button onClick={() => router.push('/dashboard/categories/new')} className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2">
-            <Plus className="w-4 h-4" /> Add category
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLatestFirst(v => !v)}
+              className={`text-sm font-medium px-3 py-2 rounded-lg border transition-colors ${latestFirst ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}
+            >
+              Latest added
+            </button>
+            <Button onClick={() => router.push('/dashboard/categories/new')} className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2">
+              <Plus className="w-4 h-4" /> Add category
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -107,7 +109,7 @@ export default function CategoriesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {categories.map(cat => {
+                  {sortedCategories.map(cat => {
                     const isExpanded = expandedIds.has(cat.id)
                     const hasChildren = cat.children && cat.children.length > 0
                     return (
@@ -135,10 +137,10 @@ export default function CategoriesPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => toggleActive(cat)} className={`text-base font-medium px-2.5 py-1 rounded-full transition-colors cursor-pointer ${cat.is_active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                          <td className="px-4 py-3">
+                            <span className={`text-base font-medium px-2.5 py-1 rounded-full ${cat.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                               {cat.is_active ? 'Active' : 'Inactive'}
-                            </button>
+                            </span>
                           </td>
                           <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center gap-1 justify-end">
@@ -165,10 +167,10 @@ export default function CategoriesPage() {
                                 <span className="text-gray-700">{child.name}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
-                              <button onClick={() => toggleActive(child)} className={`text-sm font-medium px-2.5 py-1 rounded-full transition-colors cursor-pointer ${child.is_active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                            <td className="px-4 py-2.5">
+                              <span className={`text-sm font-medium px-2.5 py-1 rounded-full ${child.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                                 {child.is_active ? 'Active' : 'Inactive'}
-                              </button>
+                              </span>
                             </td>
                             <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                               <div className="flex items-center gap-1 justify-end">

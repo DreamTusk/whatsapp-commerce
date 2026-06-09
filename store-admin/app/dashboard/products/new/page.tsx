@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, Star, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import type { Category, Brand } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
@@ -19,8 +20,9 @@ const BlockNoteEditor = dynamic(
   { ssr: false },
 )
 
-export default function NewProductPage() {
+function NewProductForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
@@ -28,16 +30,18 @@ export default function NewProductPage() {
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [categoryId, setCategoryId] = useState('')
+  const [categoryId, setCategoryId] = useState(searchParams.get('category_id') ?? '')
   const [brandId, setBrandId] = useState('')
   const [isActive, setIsActive] = useState(true)
   const [sellingPrice, setSellingPrice] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
   const [inStock, setInStock] = useState(true)
   const [unit, setUnit] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [primaryIndex, setPrimaryIndex] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
+  const { uploadFile, isUploading } = useFileUpload()
 
   useEffect(() => {
     Promise.all([
@@ -48,10 +52,22 @@ export default function NewProductPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null
-    setImageFile(file)
-    setImagePreview(file ? URL.createObjectURL(file) : null)
+  function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
+    setImageFiles(prev => [...prev, ...files])
+    setImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
+    e.target.value = ''
+  }
+
+  function removeImage(index: number) {
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+    setPrimaryIndex(prev => {
+      if (prev === index) return 0
+      if (prev > index) return prev - 1
+      return prev
+    })
   }
 
   async function handleSave() {
@@ -60,19 +76,29 @@ export default function NewProductPage() {
     if (!sellingPrice || isNaN(parseFloat(sellingPrice))) { toast.error('Selling price is required'); return }
     setIsSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      if (description.trim()) formData.append('description', description.trim())
-      formData.append('category_id', categoryId)
-      if (brandId) formData.append('brand_id', brandId)
-      formData.append('is_active', String(isActive))
-      formData.append('selling_price', sellingPrice)
-      if (originalPrice) formData.append('original_price', originalPrice)
-      formData.append('in_stock', String(inStock))
-      if (unit.trim()) formData.append('unit', unit.trim())
-      if (imageFile) formData.append('image', imageFile)
+      // Upload in order with primary first
+      const ordered = [
+        ...imageFiles.slice(primaryIndex),
+        ...imageFiles.slice(0, primaryIndex),
+      ]
+      const mediaIds: string[] = []
+      for (const file of ordered) {
+        const mid = await uploadFile(file, { entityType: 'PRODUCT' })
+        mediaIds.push(mid)
+      }
 
-      await api.post('/api/products', formData)
+      await api.post('/api/products', {
+        name: name.trim(),
+        ...(description.trim() && { description: description.trim() }),
+        category_id: categoryId,
+        ...(brandId && { brand_id: brandId }),
+        is_active: String(isActive),
+        selling_price: sellingPrice,
+        ...(originalPrice && { original_price: originalPrice }),
+        in_stock: String(inStock),
+        ...(unit.trim() && { unit: unit.trim() }),
+        ...(mediaIds.length && { media_ids: mediaIds }),
+      })
       toast.success('Product created')
       router.push('/dashboard/products')
     } catch (err: unknown) {
@@ -90,9 +116,9 @@ export default function NewProductPage() {
           <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600">
             <ArrowLeft className="w-3.5 h-3.5" /> Products
           </button>
-          <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-            {isSaving ? 'Saving…' : 'Add product'}
+          <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+            {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+            {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add product'}
           </Button>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mt-3">Add product</h1>
@@ -124,9 +150,9 @@ export default function NewProductPage() {
                     onValueChange={setCategoryId}
                     placeholder="Select category"
                     searchPlaceholder="Search categories..."
-                    options={categories.flatMap(c =>
+                    options={categories.filter(c => c.is_active).flatMap(c =>
                       c.children && c.children.length > 0
-                        ? c.children.map(ch => ({ value: ch.id, label: `${c.name} — ${ch.name}` }))
+                        ? c.children.filter(ch => ch.is_active).map(ch => ({ value: ch.id, label: `${c.name} — ${ch.name}` }))
                         : [{ value: c.id, label: c.name }]
                     )}
                   />
@@ -147,33 +173,68 @@ export default function NewProductPage() {
                 </div>
               </div>
 
-              {/* Image */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+              {/* Images */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">Image</h2>
+                  <h2 className="text-sm font-semibold text-gray-900">Images</h2>
                   <div className="mt-2 border-t border-gray-100" />
                 </div>
-                <div className="relative w-full aspect-square rounded-xl border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 group">
-                  {imagePreview ? (
-                    <>
-                      <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => { setImageFile(null); setImagePreview(null) }}
-                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors"
+
+                <div className="grid grid-cols-3 gap-2">
+                  {imagePreviews.map((preview, i) => {
+                    const isPrimary = i === primaryIndex
+                    return (
+                      <div
+                        key={i}
+                        className="relative aspect-square rounded-xl overflow-hidden border bg-gray-50 group"
+                        style={{ borderColor: isPrimary ? '#eab308' : '#f3f4f6', borderWidth: isPrimary ? 2 : 1 }}
                       >
-                        <X className="w-3.5 h-3.5 text-white" />
-                      </button>
-                    </>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-full gap-2 cursor-pointer group-hover:border-[#6366f1]">
-                      <ImagePlus className="w-7 h-7 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                      <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Upload image</span>
-                      <span className="text-xs text-gray-300">PNG, JPG up to 5MB</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                    </label>
-                  )}
+                        <img src={preview} alt="" className="w-full h-full object-cover" />
+
+                        {/* Primary badge */}
+                        {isPrimary && (
+                          <span className="absolute top-1 left-1 bg-yellow-400 rounded-full p-0.5">
+                            <Star className="w-2.5 h-2.5 text-white" fill="white" />
+                          </span>
+                        )}
+
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+
+                        {/* Set primary button */}
+                        {!isPrimary && (
+                          <button
+                            type="button"
+                            title="Set as primary"
+                            onClick={() => setPrimaryIndex(i)}
+                            className="absolute top-1 left-1 w-5 h-5 bg-black/40 hover:bg-yellow-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Star className="w-3 h-3 text-white" />
+                          </button>
+                        )}
+
+                        {/* Remove button */}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    )
+                  })}
+
+                  {/* Add button */}
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#6366f1] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors bg-gray-50 hover:bg-[#6366f1]/5 group">
+                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                    <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Add</span>
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImagesChange} />
+                  </label>
                 </div>
+
+                {imagePreviews.length > 0 && (
+                  <p className="text-xs text-gray-400">Click ★ on an image to set it as primary</p>
+                )}
               </div>
             </div>
 
@@ -219,14 +280,22 @@ export default function NewProductPage() {
             </div>
 
             <div className="flex justify-end mt-4">
-              <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving}>
-                {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                {isSaving ? 'Saving…' : 'Add product'}
+              <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+                {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add product'}
               </Button>
             </div>
           </div>
         )}
       </div>
     </div>
+  )
+}
+
+export default function NewProductPage() {
+  return (
+    <Suspense>
+      <NewProductForm />
+    </Suspense>
   )
 }

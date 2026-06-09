@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 import { DateTimePicker } from '@/components/ui/date-time-picker'
 import api from '@/lib/api'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import type { Product, Collection, Banner } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
-import { AppSelect } from '@/components/ui/app-select'
 import { AppCombobox } from '@/components/ui/app-combobox'
 
 type BannerType = 'product' | 'collection' | 'url'
@@ -37,6 +37,7 @@ export default function EditBannerPage() {
   const [expiresAt, setExpiresAt]       = useState('')
   const [startsAt, setStartsAt]         = useState('')
   const [isSaving, setIsSaving]         = useState(false)
+  const { uploadFile, isUploading }     = useFileUpload()
 
   function toLocalDatetime(iso: string | null) {
     if (!iso) return ''
@@ -82,18 +83,21 @@ export default function EditBannerPage() {
 
     setIsSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('is_active', String(isActive))
-      formData.append('product_id', type === 'product' ? productId : '')
-      formData.append('collection_id', type === 'collection' ? collectionId : '')
-      formData.append('url', type === 'url' ? url.trim() : '')
-      if (imageFile) formData.append('image', imageFile)
-      else formData.append('image_url', imageUrl.trim())
-      formData.append('starts_at', startsAt ? new Date(startsAt).toISOString() : '')
-      formData.append('expires_at', expiresAt ? new Date(expiresAt).toISOString() : '')
+      let mediaId: string | undefined
+      if (imageFile) {
+        mediaId = await uploadFile(imageFile, { entityType: 'BANNER' })
+      }
 
-      await api.put(`/api/banners/${id}`, formData)
+      await api.put(`/api/banners/${id}`, {
+        name: name.trim(),
+        is_active: String(isActive),
+        product_id: type === 'product' ? productId : '',
+        collection_id: type === 'collection' ? collectionId : '',
+        url: type === 'url' ? url.trim() : '',
+        ...(mediaId ? { media_id: mediaId } : { image_url: imageUrl.trim() }),
+        starts_at: startsAt ? new Date(startsAt).toISOString() : '',
+        expires_at: expiresAt ? new Date(expiresAt).toISOString() : '',
+      })
       toast.success('Banner updated')
       router.push('/dashboard/banners')
     } catch (err: unknown) {
@@ -198,19 +202,30 @@ export default function EditBannerPage() {
             {/* Image */}
             <div className="space-y-2">
               <Label className="text-base">Banner image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="w-24 h-14 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
-                  {(imagePreview || imageUrl) ? (
-                    <img src={imagePreview ?? imageUrl} alt="preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  )}
-                </div>
-                <span className="text-base text-gray-500 group-hover:text-gray-700">
-                  {(imagePreview || imageUrl) ? 'Change image' : 'Upload image'}
-                </span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                  <div className="w-24 h-14 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+                    {(imagePreview || imageUrl) ? (
+                      <img src={imagePreview ?? imageUrl} alt="preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                    )}
+                  </div>
+                  <span className="text-base text-gray-500 group-hover:text-gray-700">
+                    {(imagePreview || imageUrl) ? 'Change image' : 'Upload image'}
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+                {imagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => { setImageFile(null); setImagePreview(null) }}
+                    className="p-1.5 rounded-full bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               {!imageFile && (
                 <div className="space-y-1">
                   <p className="text-sm text-gray-400">or paste an image URL</p>
@@ -245,10 +260,10 @@ export default function EditBannerPage() {
             <Button
               className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || isUploading}
             >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {isSaving ? 'Saving…' : 'Save changes'}
+              {(isSaving || isUploading) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Save changes'}
             </Button>
           </div>
         )}

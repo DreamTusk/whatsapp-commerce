@@ -6,22 +6,23 @@ meta {
 
 post {
   url: {{base_url_local}}/products
-  body: multipartForm
+  body: json
   auth: inherit
 }
 
-body:multipart-form {
-  name: Fresh Apples
-  name_local:
-  description: Fresh imported apples
-  selling_price: 99
-  original_price: 120
-  category_id:
-  brand_id:
-  sort_order: 0
-  is_active: true
-  in_stock: true
-  image:
+body:json {
+  {
+    "name": "Fresh Apples",
+    "description": "Fresh imported apples",
+    "selling_price": "99",
+    "original_price": "120",
+    "category_id": "",
+    "brand_id": "",
+    "is_active": "true",
+    "in_stock": "true",
+    "unit": "kg",
+    "media_id": ""
+  }
 }
 
 settings {

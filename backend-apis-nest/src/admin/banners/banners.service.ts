@@ -4,14 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { StorageService } from '../../shared/storage.service';
+import { FileService } from '../../shared/file.service';
 import { BannerType } from '@prisma/client';
 
 @Injectable()
 export class BannersService {
   constructor(
     private prisma: PrismaService,
-    private storageService: StorageService,
+    private fileService: FileService,
   ) {}
 
   private async getStoreId(userId: string): Promise<string> {
@@ -59,9 +59,8 @@ export class BannersService {
       name: string; type: string; display_order?: string;
       product_id?: string; collection_id?: string; url?: string;
       is_active?: string; starts_at?: string; expires_at?: string;
-      image_url?: string;
+      image_url?: string; media_id?: string;
     },
-    file?: Express.Multer.File,
   ) {
     const storeId = await this.getStoreId(userId);
 
@@ -77,8 +76,12 @@ export class BannersService {
     if (type === 'URL' && !body.url) throw new BadRequestException('url is required for URL type');
 
     let imageUrl: string | null = null;
-    if (file) {
-      imageUrl = await this.storageService.uploadImage(file.buffer, 'banners') || null;
+    if (body.media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.media_id, storeId } });
+      if (media?.url) {
+        imageUrl = media.url;
+        await this.prisma.media.update({ where: { id: body.media_id }, data: { entityType: 'BANNER' } });
+      }
     } else if (body.image_url?.trim()) {
       imageUrl = body.image_url.trim();
     }
@@ -111,9 +114,8 @@ export class BannersService {
       name?: string; display_order?: string;
       product_id?: string; collection_id?: string; url?: string;
       is_active?: string; starts_at?: string; expires_at?: string;
-      image_url?: string;
+      image_url?: string; media_id?: string;
     },
-    file?: Express.Multer.File,
   ) {
     const storeId = await this.getStoreId(userId);
 
@@ -121,8 +123,12 @@ export class BannersService {
     if (!existing) throw new NotFoundException('Banner not found');
 
     let imageUrl: string | undefined = undefined;
-    if (file) {
-      imageUrl = await this.storageService.uploadImage(file.buffer, 'banners') || undefined;
+    if (body.media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.media_id, storeId } });
+      if (media?.url) {
+        imageUrl = media.url;
+        await this.prisma.media.update({ where: { id: body.media_id }, data: { entityType: 'BANNER' } });
+      }
     } else if (body.image_url !== undefined) {
       imageUrl = body.image_url.trim() || undefined;
     }

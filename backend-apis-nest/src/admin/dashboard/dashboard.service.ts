@@ -62,7 +62,7 @@ export class DashboardService {
         where: { storeId, inStock: false, isActive: true },
         take: 5,
         select: {
-          id: true, name: true, imageUrl: true, sellingPrice: true,
+          id: true, name: true, sellingPrice: true,
           category: { select: { name: true } },
         },
       }),
@@ -96,7 +96,7 @@ export class DashboardService {
       out_of_stock_products: outOfStockProducts.map((p) => ({
         id: p.id,
         name: p.name,
-        image_url: p.imageUrl,
+        image_url: null,
         selling_price: p.sellingPrice,
         category: p.category.name,
       })),

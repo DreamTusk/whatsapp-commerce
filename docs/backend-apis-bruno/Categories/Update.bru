@@ -5,17 +5,23 @@ meta {
 }
 
 put {
-  url: {{base_url_local}}/categories/cmphy1wwa0001hk2g4nyyrb7j
-  body: multipartForm
+  url: {{base_url_local}}/categories/:id
+  body: json
   auth: inherit
 }
 
-body:multipart-form {
-  name: Fruits & Vegetables
-  name_local: 
-  sort_order: 1
-  is_active: true
-  image: 
+params:path {
+  id: category_id_here
+}
+
+body:json {
+  {
+    "name": "Fruits & Vegetables",
+    "is_active": "true",
+    "parent_id": "",
+    "media_id": "",
+    "remove_image": "false"
+  }
 }
 
 settings {

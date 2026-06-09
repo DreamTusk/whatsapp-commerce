@@ -4,7 +4,7 @@ import { OrderStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
 import { generateOrderNumber } from '../../utils/order-number';
 
 const orderInclude = {
-  items: { include: { product: { select: { imageUrl: true } } } },
+  items: true,
   payment: true,
 };
 
@@ -20,7 +20,7 @@ export class StorefrontOrdersService {
       price: item.price,
       quantity: item.quantity,
       subtotal: item.subtotal,
-      image_url: item.product?.imageUrl ?? null,
+      image_url: null,
     };
   }
 

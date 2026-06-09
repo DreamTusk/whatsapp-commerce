@@ -3,8 +3,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader2, MapPin, User, CreditCard, Package, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Loader2, MapPin, CreditCard, Package, MessageSquare, ClipboardList, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Order } from '@/types'
 
@@ -163,8 +171,6 @@ export default function OrderDetailPage() {
   const canAct = status !== 'DELIVERED' && status !== 'CANCELLED'
   const nextLabel = STATUS_NEXT_LABEL[status]
 
-  const addressParts = [order.door_no, order.street, order.address, order.city, order.state, order.pincode, order.country].filter(Boolean)
-  const hasAddress = addressParts.length > 0
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -192,119 +198,216 @@ export default function OrderDetailPage() {
             </div>
             <p className="text-sm text-gray-400">{formatDate(order.created_at)}</p>
           </div>
-          {canAct && nextLabel && (
-            <Button
-              className="flex-shrink-0 bg-[#6366f1] hover:bg-[#4f46e5] text-white"
-              onClick={handleAdvance}
-              disabled={isAdvancing}
-            >
-              {isAdvancing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {isAdvancing ? 'Updating…' : nextLabel}
-            </Button>
+          {canAct && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+                onClick={() => setShowCancelForm(true)}
+              >
+                Cancel order
+              </Button>
+              {nextLabel && (
+                <Button
+                  className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+                  onClick={handleAdvance}
+                  disabled={isAdvancing}
+                >
+                  {isAdvancing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  {isAdvancing ? 'Updating…' : nextLabel}
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-auto min-h-0">
-        <div className="px-6 py-6 max-w-2xl mx-auto space-y-4">
+        <div className="px-3 py-4 space-y-4">
 
-          {/* Order Items */}
-          <SectionCard>
-            <SectionLabel>
-              <span className="flex items-center gap-1.5"><Package className="w-3.5 h-3.5 inline" /> Order items</span>
-            </SectionLabel>
-            <div className="space-y-3">
-              {order.items.map((item, i) => (
-                <div key={item.id}>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-6 h-6 flex-shrink-0 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center">
-                        {item.quantity}
-                      </span>
-                      <span className="text-sm text-gray-800 truncate">{item.product_name}</span>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <span className="text-sm font-semibold text-gray-900">₹{item.subtotal}</span>
-                      {item.quantity > 1 && (
-                        <p className="text-xs text-gray-400">₹{item.price} each</p>
-                      )}
-                    </div>
-                  </div>
-                  {i < order.items.length - 1 && <div className="mt-3 border-t border-gray-50" />}
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-              <span className="text-sm font-semibold text-gray-700">Total</span>
-              <span className="text-xl font-bold text-gray-900">₹{order.total_amount}</span>
-            </div>
-          </SectionCard>
+          {/* Two-column layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-          {/* Customer + Payment row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Left column: Customer + Delivery Address */}
+            <div className="space-y-4">
 
-            {/* Customer */}
-            <SectionCard>
-              <SectionLabel>
-                <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 inline" /> Customer</span>
-              </SectionLabel>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-gray-900">
-                  {order.customer.name ?? <span className="text-gray-400 font-normal italic">No name</span>}
-                </p>
-                {order.customer.phone && (
-                  <p className="text-sm text-gray-500">{order.customer.phone}</p>
-                )}
-                {order.alt_phone && (
-                  <p className="text-sm text-gray-400">Alt: {order.alt_phone}</p>
-                )}
-                {order.created_by && (
-                  <p className="text-xs text-gray-400 pt-1">Ordered by {order.created_by}</p>
-                )}
-              </div>
-            </SectionCard>
-
-            {/* Payment */}
-            {order.payment && (
+              {/* Order Detail */}
               <SectionCard>
                 <SectionLabel>
-                  <span className="flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 inline" /> Payment</span>
+                  <span className="flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5 inline" /> Order detail</span>
                 </SectionLabel>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-gray-900">
-                    {order.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}
-                  </p>
-                  <p className={`text-sm font-semibold ${PAYMENT_STATUS_COLORS[order.payment.status] ?? 'text-gray-500'}`}>
-                    {PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status}
-                  </p>
-                  {order.payment.paid_at && (
-                    <p className="text-xs text-gray-400 pt-1">{formatDate(order.payment.paid_at)}</p>
+                <div className="divide-y divide-gray-50">
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <span className="text-sm text-gray-400">Order ID</span>
+                    <span className="text-base font-semibold text-gray-900">{order.order_number}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <span className="text-sm text-gray-400">Ordered on</span>
+                    <span className="text-base text-gray-700">{formatDate(order.created_at)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <span className="text-sm text-gray-400">Status</span>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLORS[status]}`}>
+                      {STATUS_DISPLAY[status]}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <span className="text-sm text-gray-400">Type</span>
+                    <span className="text-base text-gray-700">
+                      {order.source === 'MANUAL' ? 'Manual' : 'WhatsApp'}
+                    </span>
+                  </div>
+                  {order.created_by && (
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400">Created by</span>
+                      <span className="text-base text-gray-700">{order.created_by}</span>
+                    </div>
                   )}
                 </div>
               </SectionCard>
-            )}
-          </div>
 
-          {/* Delivery Address */}
-          {hasAddress && (
-            <SectionCard>
-              <SectionLabel>
-                <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 inline" /> Delivery address</span>
-              </SectionLabel>
-              <p className="text-sm text-gray-700 leading-relaxed">{addressParts.join(', ')}</p>
-              {order.latitude && order.longitude && (
-                <a
-                  href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-[#6366f1] hover:underline font-medium mt-2"
-                >
-                  <MapPin className="w-3.5 h-3.5" /> View on map
-                </a>
+              {/* Customer + Delivery Address */}
+              <SectionCard>
+                <SectionLabel>
+                  <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 inline" /> Customer detail</span>
+                </SectionLabel>
+                <div className="divide-y divide-gray-50">
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <span className="text-sm text-gray-400">Name</span>
+                    <span className="text-base font-semibold text-gray-900">
+                      {order.customer.name ?? <span className="text-gray-400 font-normal italic">No name</span>}
+                    </span>
+                  </div>
+                  {order.customer.phone && (
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400">Phone</span>
+                      <span className="text-base text-gray-700">{order.customer.phone}</span>
+                    </div>
+                  )}
+                  {order.alt_phone && (
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400">Alt phone</span>
+                      <span className="text-base text-gray-700">{order.alt_phone}</span>
+                    </div>
+                  )}
+                  {order.door_no && (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400 shrink-0">Door no.</span>
+                      <span className="text-base text-gray-700 text-right">{order.door_no}</span>
+                    </div>
+                  )}
+                  {order.street && (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400 shrink-0">Street</span>
+                      <span className="text-base text-gray-700 text-right">{order.street}</span>
+                    </div>
+                  )}
+                  {order.address && (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400 shrink-0">Address</span>
+                      <span className="text-base text-gray-700 text-right">{order.address}</span>
+                    </div>
+                  )}
+                  {order.city && (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400 shrink-0">City</span>
+                      <span className="text-base text-gray-700 text-right">{order.city}</span>
+                    </div>
+                  )}
+                  {order.state && (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400 shrink-0">State</span>
+                      <span className="text-base text-gray-700 text-right">{order.state}</span>
+                    </div>
+                  )}
+                  {order.pincode && (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400 shrink-0">Pincode</span>
+                      <span className="text-base text-gray-700 text-right">{order.pincode}</span>
+                    </div>
+                  )}
+                  {order.country && (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400 shrink-0">Country</span>
+                      <span className="text-base text-gray-700 text-right">{order.country}</span>
+                    </div>
+                  )}
+                  {order.latitude && order.longitude && (
+                    <div className="py-3">
+                      <a
+                        href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-[#6366f1] hover:underline font-medium"
+                      >
+                        <MapPin className="w-3.5 h-3.5" /> View on map
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
+            </div>
+
+            {/* Right column: Order Items + Payment */}
+            <div className="space-y-4">
+
+              {/* Order Items */}
+              <SectionCard>
+                <div className="flex items-center justify-between mb-3">
+                  <SectionLabel>
+                    <span className="flex items-center gap-1.5"><Package className="w-3.5 h-3.5 inline" /> Order items</span>
+                  </SectionLabel>
+                  <span className="text-xs font-semibold text-gray-400 -mt-3">{order.items.length} {order.items.length === 1 ? 'item' : 'items'}</span>
+                </div>
+                <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                  {order.items.map((item, i) => (
+                    <div key={item.id}>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="w-6 h-6 flex-shrink-0 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center">
+                            {item.quantity}
+                          </span>
+                          <span className="text-sm text-gray-800 truncate">{item.product_name}</span>
+                        </div>
+                        <div className="flex-shrink-0 text-right">
+                          <span className="text-sm font-semibold text-gray-900">₹{item.subtotal}</span>
+                          {item.quantity > 1 && (
+                            <p className="text-xs text-gray-400">₹{item.price} each</p>
+                          )}
+                        </div>
+                      </div>
+                      {i < order.items.length - 1 && <div className="mt-3 border-t border-gray-50" />}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <span className="text-sm font-semibold text-gray-700">Total</span>
+                  <span className="text-xl font-bold text-gray-900">₹{order.total_amount}</span>
+                </div>
+              </SectionCard>
+
+              {/* Payment */}
+              {order.payment && (
+                <SectionCard>
+                  <SectionLabel>
+                    <span className="flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 inline" /> Payment</span>
+                  </SectionLabel>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {order.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}
+                    </p>
+                    <p className={`text-sm font-semibold ${PAYMENT_STATUS_COLORS[order.payment.status] ?? 'text-gray-500'}`}>
+                      {PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status}
+                    </p>
+                    {order.payment.paid_at && (
+                      <p className="text-xs text-gray-400 pt-1">{formatDate(order.payment.paid_at)}</p>
+                    )}
+                  </div>
+                </SectionCard>
               )}
-            </SectionCard>
-          )}
+            </div>
+          </div>
 
           {/* Notes */}
           {order.notes && (
@@ -327,53 +430,48 @@ export default function OrderDetailPage() {
             </SectionCard>
           )}
 
-          {/* Cancel action */}
-          {canAct && !showCancelForm && (
-            <button
-              onClick={() => setShowCancelForm(true)}
-              className="text-sm text-red-400 hover:text-red-600"
-            >
-              Cancel order
-            </button>
-          )}
-
-          {showCancelForm && (
-            <SectionCard className="border-red-100">
-              <SectionLabel>Cancellation reason</SectionLabel>
-              <div className="space-y-3">
-                <textarea
-                  value={cancelReason}
-                  onChange={e => setCancelReason(e.target.value)}
-                  placeholder="Reason for cancellation…"
-                  rows={3}
-                  autoFocus
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 resize-none bg-white"
-                />
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => { setShowCancelForm(false); setCancelReason('') }}
-                    disabled={isCancelling}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white"
-                    onClick={handleCancel}
-                    disabled={isCancelling || !cancelReason.trim()}
-                  >
-                    {isCancelling && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    {isCancelling ? 'Cancelling…' : 'Confirm cancel'}
-                  </Button>
-                </div>
-              </div>
-            </SectionCard>
-          )}
-
           <div className="pb-4" />
         </div>
       </div>
+
+      {/* Cancel order dialog */}
+      <Dialog
+        open={showCancelForm}
+        onOpenChange={(open) => { if (!open) { setShowCancelForm(false); setCancelReason('') } }}
+        dismissible={false}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Cancel order</DialogTitle>
+            <DialogDescription>Please provide a reason for cancellation.</DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={cancelReason}
+            onChange={e => setCancelReason(e.target.value)}
+            placeholder="Reason for cancellation…"
+            rows={4}
+            autoFocus
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 resize-none bg-white"
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setShowCancelForm(false); setCancelReason('') }}
+              disabled={isCancelling}
+            >
+              Back
+            </Button>
+            <Button
+              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={handleCancel}
+              disabled={isCancelling || !cancelReason.trim()}
+            >
+              {isCancelling && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {isCancelling ? 'Cancelling…' : 'Confirm cancel'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

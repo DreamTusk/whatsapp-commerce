@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppCombobox } from '@/components/ui/app-combobox'
 import type { Category } from '@/types'
@@ -22,6 +23,7 @@ export default function NewCategoryPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const { uploadFile, isUploading } = useFileUpload()
 
   useEffect(() => {
     api.get('/api/categories')
@@ -39,13 +41,17 @@ export default function NewCategoryPage() {
     if (!name.trim()) { toast.error('Category name is required'); return }
     setIsSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('is_active', String(isActive))
-      formData.append('parent_id', parentId)
-      if (imageFile) formData.append('image', imageFile)
+      let mediaId: string | undefined
+      if (imageFile) {
+        mediaId = await uploadFile(imageFile, { entityType: 'CATEGORY' })
+      }
 
-      await api.post('/api/categories', formData)
+      await api.post('/api/categories', {
+        name: name.trim(),
+        is_active: String(isActive),
+        parent_id: parentId || undefined,
+        ...(mediaId && { media_id: mediaId }),
+      })
       toast.success('Category created')
       router.push('/dashboard/categories')
     } catch (err: unknown) {
@@ -79,22 +85,33 @@ export default function NewCategoryPage() {
               <Label className="text-sm font-medium text-gray-700">
                 Image <span className="text-gray-400 font-normal text-xs">(optional)</span>
               </Label>
-              <label className="flex items-center gap-4 cursor-pointer group w-fit">
-                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 group-hover:text-[#6366f1] transition-colors">
-                    {imagePreview ? 'Change image' : 'Upload image'}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
-                </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-4 cursor-pointer group w-fit">
+                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 group-hover:text-[#6366f1] transition-colors">
+                      {imagePreview ? 'Change image' : 'Upload image'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+                {imagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => { setImageFile(null); setImagePreview(null) }}
+                    className="p-1.5 rounded-full bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="border-t border-gray-50" />
@@ -140,10 +157,10 @@ export default function NewCategoryPage() {
               <Button
                 className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11"
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || isUploading}
               >
-                {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                {isSaving ? 'Saving…' : 'Add category'}
+                {(isSaving || isUploading) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add category'}
               </Button>
             </div>
           </div>

@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2, Package, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, Package, Star, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
 import api from '@/lib/api'
-import type { Product, Category, Brand } from '@/types'
+import { useFileUpload } from '@/hooks/useFileUpload'
+import type { Product, ProductMediaItem, Category, Brand } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
 import { AppCombobox } from '@/components/ui/app-combobox'
@@ -19,8 +19,6 @@ const BlockNoteEditor = dynamic(
   () => import('@/components/blocknote-editor/BlockNoteEditor'),
   { ssr: false },
 )
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
 export default function EditProductPage() {
   const { id } = useParams<{ id: string }>()
@@ -40,9 +38,11 @@ export default function EditProductPage() {
   const [originalPrice, setOriginalPrice] = useState('')
   const [inStock, setInStock] = useState(true)
   const [unit, setUnit] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [existingImages, setExistingImages] = useState<ProductMediaItem[]>([])
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([])
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  const { uploadFile, isUploading } = useFileUpload()
   const [isDeleting, setIsDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -58,6 +58,8 @@ export default function EditProductPage() {
     setSellingPrice(String(p.selling_price))
     setOriginalPrice(p.original_price != null ? String(p.original_price) : '')
     setInStock(p.in_stock)
+    setUnit(p.unit ?? '')
+    setExistingImages(p.images)
   }, [id])
 
   useEffect(() => {
@@ -70,33 +72,68 @@ export default function EditProductPage() {
       .finally(() => setLoading(false))
   }, [fetchProduct])
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null
-    setImageFile(file)
-    setImagePreview(file ? URL.createObjectURL(file) : null)
+  function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
+    setNewImageFiles(prev => [...prev, ...files])
+    setNewImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
+    e.target.value = ''
+  }
+
+  function removeNewImage(index: number) {
+    setNewImageFiles(prev => prev.filter((_, i) => i !== index))
+    setNewImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
+  async function removeExistingImage(pmId: string) {
+    try {
+      await api.delete(`/api/products/${id}/media/${pmId}`)
+      setExistingImages(prev => {
+        const wasPrimary = prev.find(img => img.id === pmId)?.is_primary
+        const next = prev.filter(img => img.id !== pmId)
+        if (wasPrimary && next.length > 0) {
+          return next.map((img, i) => ({ ...img, is_primary: i === 0 }))
+        }
+        return next
+      })
+    } catch {
+      toast.error('Failed to remove image')
+    }
+  }
+
+  async function setPrimaryImage(pmId: string) {
+    try {
+      await api.patch(`/api/products/${id}/media/${pmId}/primary`)
+      setExistingImages(prev => prev.map(img => ({ ...img, is_primary: img.id === pmId })))
+    } catch {
+      toast.error('Failed to set primary image')
+    }
   }
 
   async function handleSave() {
     if (!name.trim()) { toast.error('Product name is required'); return }
     if (!categoryId) { toast.error('Category is required'); return }
-    if (!sellingPrice || isNaN(parseFloat(sellingPrice))) {
-      toast.error('Selling price is required'); return
-    }
+    if (!sellingPrice || isNaN(parseFloat(sellingPrice))) { toast.error('Selling price is required'); return }
     setIsSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      if (description.trim()) formData.append('description', description.trim())
-      formData.append('category_id', categoryId)
-      if (brandId) formData.append('brand_id', brandId)
-      formData.append('is_active', String(isActive))
-      formData.append('selling_price', sellingPrice)
-      if (originalPrice) formData.append('original_price', originalPrice)
-      formData.append('in_stock', String(inStock))
-      if (unit.trim()) formData.append('unit', unit.trim())
-      if (imageFile) formData.append('image', imageFile)
+      const mediaIds: string[] = []
+      for (const file of newImageFiles) {
+        const mid = await uploadFile(file, { entityType: 'PRODUCT' })
+        mediaIds.push(mid)
+      }
 
-      await api.put(`/api/products/${id}`, formData)
+      await api.put(`/api/products/${id}`, {
+        name: name.trim(),
+        description: description.trim() || null,
+        category_id: categoryId,
+        brand_id: brandId || null,
+        is_active: String(isActive),
+        selling_price: sellingPrice,
+        original_price: originalPrice || null,
+        in_stock: String(inStock),
+        unit: unit.trim() || null,
+        ...(mediaIds.length && { media_ids: mediaIds }),
+      })
       toast.success('Product updated')
       router.push('/dashboard/products')
     } catch (err: unknown) {
@@ -134,7 +171,7 @@ export default function EditProductPage() {
       <div className="text-center py-40 text-gray-400">
         <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
         <p className="text-lg font-medium">Product not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-base text-[#6366f1] hover:underline cursor-pointer">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-base text-[#6366f1] hover:underline">Go back</button>
       </div>
     )
   }
@@ -150,16 +187,15 @@ export default function EditProductPage() {
             <Button variant="outline" className="h-9 px-4 text-sm text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" onClick={() => setConfirmDelete(true)} disabled={isDeleting}>
               Delete
             </Button>
-            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving}>
-              {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-              {isSaving ? 'Saving…' : 'Update'}
+            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+              {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Update'}
             </Button>
           </div>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mt-3">Edit product</h1>
       </div>
 
-      {/* Delete confirmation */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
@@ -175,90 +211,133 @@ export default function EditProductPage() {
           </div>
         </div>
       )}
+
       <div className="flex-1 overflow-auto min-h-0 bg-gray-50">
         <div className="px-4 py-6">
-        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-3 gap-4 mb-4">
 
-          {/* ── Product Information ── */}
-          <div className="col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900">Product Information</h2>
-              <div className="mt-2 border-t border-gray-100" />
+            {/* Product Information */}
+            <div className="col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">Product Information</h2>
+                <div className="mt-2 border-t border-gray-100" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-base">Name <span className="text-destructive">*</span></Label>
+                <Input className="text-base h-11" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-base">Category <span className="text-destructive">*</span></Label>
+                <AppCombobox
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                  placeholder="Select category"
+                  searchPlaceholder="Search categories..."
+                  options={categories.filter(c => c.is_active).flatMap(c =>
+                    c.children && c.children.length > 0
+                      ? c.children.filter(ch => ch.is_active).map(ch => ({ value: ch.id, label: `${c.name} — ${ch.name}` }))
+                      : [{ value: c.id, label: c.name }]
+                  )}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+                <AppCombobox
+                  value={brandId}
+                  onValueChange={setBrandId}
+                  placeholder="No brand"
+                  searchPlaceholder="Search brands..."
+                  options={brands.map(b => ({ value: b.id, label: b.name }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+                <BlockNoteEditor onChange={setDescription} initialContent={description} />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-base">Name <span className="text-destructive">*</span></Label>
-              <Input className="text-base h-11" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-base">Category <span className="text-destructive">*</span></Label>
-              <AppCombobox
-                value={categoryId}
-                onValueChange={setCategoryId}
-                placeholder="Select category"
-                searchPlaceholder="Search categories..."
-                options={categories.flatMap(c =>
-                  c.children && c.children.length > 0
-                    ? c.children.map(ch => ({ value: ch.id, label: `${c.name} — ${ch.name}` }))
-                    : [{ value: c.id, label: c.name }]
-                )}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-base">Brand <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <AppCombobox
-                value={brandId}
-                onValueChange={setBrandId}
-                placeholder="No brand"
-                searchPlaceholder="Search brands..."
-                options={brands.map(b => ({ value: b.id, label: b.name }))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-base">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <BlockNoteEditor onChange={setDescription} initialContent={description} />
-            </div>
-          </div>
 
-          {/* ── Image ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900">Image</h2>
-              <div className="mt-2 border-t border-gray-100" />
-            </div>
-            <div className="relative w-full aspect-square rounded-xl border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 group">
-              {imagePreview ? (
-                <>
-                  <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => { setImageFile(null); setImagePreview(null) }}
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors"
+            {/* Images */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">Images</h2>
+                <div className="mt-2 border-t border-gray-100" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {/* Existing saved images */}
+                {existingImages.map(img => (
+                  <div
+                    key={img.id}
+                    className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 group"
+                    style={{ border: img.is_primary ? '2px solid #eab308' : '1px solid #f3f4f6' }}
                   >
-                    <X className="w-3.5 h-3.5 text-white" />
-                  </button>
-                </>
-              ) : product.image_url ? (
-                <>
-                  <img src={product.image_url.startsWith('http') ? product.image_url : `${API_URL}${product.image_url}`} alt="current" className="w-full h-full object-cover" />
-                  <label className="absolute inset-0 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <span className="text-xs font-medium text-white bg-black/50 px-3 py-1 rounded-full">Change image</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                  </label>
-                </>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full h-full gap-2 cursor-pointer">
-                  <ImagePlus className="w-7 h-7 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Upload image</span>
-                  <span className="text-xs text-gray-300">PNG, JPG up to 5MB</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                    <img src={img.url ?? ''} alt="" className="w-full h-full object-cover" />
+
+                    {img.is_primary && (
+                      <span className="absolute top-1 left-1 bg-yellow-400 rounded-full p-0.5">
+                        <Star className="w-2.5 h-2.5 text-white" fill="white" />
+                      </span>
+                    )}
+
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+
+                    {!img.is_primary && (
+                      <button
+                        type="button"
+                        title="Set as primary"
+                        onClick={() => setPrimaryImage(img.id)}
+                        className="absolute top-1 left-1 w-5 h-5 bg-black/40 hover:bg-yellow-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Star className="w-3 h-3 text-white" />
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => removeExistingImage(img.id)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Queued new images (dashed border = not yet saved) */}
+                {newImagePreviews.map((preview, i) => (
+                  <div
+                    key={`new-${i}`}
+                    className="relative aspect-square rounded-xl overflow-hidden border-2 border-dashed border-[#6366f1]/40 bg-gray-50 group"
+                  >
+                    <img src={preview} alt="" className="w-full h-full object-cover opacity-80" />
+                    <button
+                      type="button"
+                      onClick={() => removeNewImage(i)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-red-500 rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add more images */}
+                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#6366f1] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors bg-gray-50 hover:bg-[#6366f1]/5 group">
+                  <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                  <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Add</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleImagesChange} />
                 </label>
+              </div>
+
+              {existingImages.length > 0 && (
+                <p className="text-xs text-gray-400">Hover image — ★ sets primary · ✕ removes</p>
+              )}
+              {newImagePreviews.length > 0 && (
+                <p className="text-xs text-[#6366f1]/60">Dashed = will upload on save</p>
               )}
             </div>
-          </div>
 
           </div>
 
-          {/* ── Inventory ── */}
+          {/* Inventory */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Inventory</h2>
@@ -301,9 +380,9 @@ export default function EditProductPage() {
             <Button variant="outline" className="h-9 px-4 text-sm text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" onClick={() => setConfirmDelete(true)} disabled={isDeleting}>
               Delete
             </Button>
-            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving}>
-              {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-              {isSaving ? 'Saving…' : 'Update'}
+            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+              {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Update'}
             </Button>
           </div>
         </div>

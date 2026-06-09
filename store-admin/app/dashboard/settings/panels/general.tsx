@@ -82,11 +82,8 @@ export default function GeneralPanel() {
 
   async function toggleStoreStatus(active: boolean) {
     if (!active) { setDeactivateConfirm(true); return }
-    // Reactivate immediately
     try {
-      const formData = new FormData()
-      formData.append('is_active', 'true')
-      const res = await api.put('/api/store', formData)
+      const res = await api.put('/api/store', { is_active: 'true' })
       setStore(res.data.store)
       setIsActive(true)
       toast.success('Store reactivated')
@@ -98,9 +95,7 @@ export default function GeneralPanel() {
   async function handleDeactivate() {
     setIsDeactivating(true)
     try {
-      const formData = new FormData()
-      formData.append('is_active', 'false')
-      const res = await api.put('/api/store', formData)
+      const res = await api.put('/api/store', { is_active: 'false' })
       setStore(res.data.store)
       setIsActive(false)
       setDeactivateConfirm(false)

@@ -9,6 +9,12 @@ const productInclude = {
       parent: { select: { id: true, name: true } },
     },
   },
+  productMedia: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      media: { select: { url: true, thumbnailUrl: true } },
+    },
+  },
 };
 
 @Injectable()
@@ -16,11 +22,19 @@ export class StorefrontProductsService {
   constructor(private prisma: PrismaService) {}
 
   private formatProduct(p: any) {
+    const images = (p.productMedia ?? []).map((pm: any) => ({
+      url: pm.media.url,
+      thumbnail_url: pm.media.thumbnailUrl,
+      is_primary: pm.isPrimary,
+    }));
+    const primaryImage = images.find((i: any) => i.is_primary) ?? images[0] ?? null;
+
     return {
       id: p.id,
       name: p.name,
       description: p.description,
-      image_url: p.imageUrl,
+      image_url: primaryImage?.url ?? null,
+      images,
       category_id: p.categoryId,
       category: {
         id: p.category.id,

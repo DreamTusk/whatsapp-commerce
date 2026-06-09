@@ -43,16 +43,27 @@ export interface Brand {
   created_at: string
 }
 
+export interface ProductMediaItem {
+  id: string
+  media_id: string
+  url: string | null
+  thumbnail_url: string | null
+  is_primary: boolean
+  sort_order: number
+}
+
 export interface Product {
   id: string
   name: string
   description: string | null
   image_url: string | null
+  images: ProductMediaItem[]
   is_active: boolean
   selling_price: number
   original_price: number | null
   in_stock: boolean
   discount_percent: number | null
+  unit: string | null
   brand: { id: string; name: string } | null
   category: { id: string; name: string }
   store_id: string

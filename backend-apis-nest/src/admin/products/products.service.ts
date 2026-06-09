@@ -4,18 +4,27 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { StorageService } from '../../shared/storage.service';
+import { FileService } from '../../shared/file.service';
+import { MediaEntity, BucketType } from '@prisma/client';
 
 const productInclude = {
   brand: { select: { id: true, name: true } },
   category: { select: { id: true, name: true } },
+  productMedia: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      media: {
+        select: { id: true, url: true, thumbnailUrl: true, originalName: true },
+      },
+    },
+  },
 };
 
 @Injectable()
 export class ProductsService {
   constructor(
     private prisma: PrismaService,
-    private storageService: StorageService,
+    private fileService: FileService,
   ) {}
 
   private formatProduct(p: any) {
@@ -24,11 +33,23 @@ export class ProductsService {
         ? Math.round((1 - p.sellingPrice / p.originalPrice) * 100)
         : null;
 
+    const images = (p.productMedia ?? []).map((pm: any) => ({
+      id: pm.id,
+      media_id: pm.mediaId,
+      url: pm.media.url,
+      thumbnail_url: pm.media.thumbnailUrl,
+      is_primary: pm.isPrimary,
+      sort_order: pm.sortOrder,
+    }));
+
+    const primaryImage = images.find((i: any) => i.is_primary) ?? images[0] ?? null;
+
     return {
       id: p.id,
       name: p.name,
       description: p.description,
-      image_url: p.imageUrl,
+      image_url: primaryImage?.url ?? null,
+      images,
       is_active: p.isActive,
       selling_price: p.sellingPrice,
       original_price: p.originalPrice,
@@ -80,18 +101,25 @@ export class ProductsService {
   async createProduct(
     userId: string,
     body: {
-      name: string; description?: string; category_id: string; brand_id?: string;
-      selling_price: string; original_price?: string; unit?: string;
-      is_active?: string; in_stock?: string; image_url?: string;
+      name: string;
+      description?: string;
+      category_id: string;
+      brand_id?: string;
+      selling_price: string;
+      original_price?: string;
+      unit?: string;
+      is_active?: string;
+      in_stock?: string;
+      media_id?: string;
+      media_ids?: string[];
     },
-    file?: Express.Multer.File,
   ) {
     const storeId = await this.getStoreId(userId);
 
     if (!body.name?.trim() || !body.category_id) {
       throw new BadRequestException('name and category_id are required');
     }
-    if (body.selling_price === undefined || body.selling_price === '') {
+    if (!body.selling_price) {
       throw new BadRequestException('selling_price is required');
     }
 
@@ -103,18 +131,15 @@ export class ProductsService {
       if (!brand) throw new NotFoundException('Brand not found');
     }
 
-    let imageUrl: string | null = null;
-    if (file) {
-      imageUrl = await this.storageService.uploadImage(file.buffer, 'products') || null;
-    } else if (body.image_url?.trim()) {
-      imageUrl = body.image_url.trim();
+    if (body.media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.media_id, storeId } });
+      if (!media) throw new NotFoundException('Media not found');
     }
 
     const product = await this.prisma.product.create({
       data: {
         name: body.name.trim(),
         description: body.description?.trim() || null,
-        imageUrl,
         isActive: body.is_active !== undefined ? body.is_active === 'true' : true,
         sellingPrice: parseFloat(body.selling_price),
         originalPrice: body.original_price ? parseFloat(body.original_price) : null,
@@ -127,18 +152,47 @@ export class ProductsService {
       include: productInclude,
     });
 
-    return { product: this.formatProduct(product) };
+    const createMediaIds: string[] = Array.isArray(body.media_ids)
+      ? body.media_ids
+      : body.media_id ? [body.media_id] : [];
+
+    if (createMediaIds.length > 0) {
+      await this.prisma.$transaction([
+        ...createMediaIds.map(mid =>
+          this.prisma.media.update({ where: { id: mid }, data: { entityId: product.id } }),
+        ),
+        ...createMediaIds.map((mid, i) =>
+          this.prisma.productMedia.create({
+            data: { productId: product.id, mediaId: mid, isPrimary: i === 0, sortOrder: i },
+          }),
+        ),
+      ]);
+    }
+
+    const updated = await this.prisma.product.findFirst({
+      where: { id: product.id },
+      include: productInclude,
+    });
+
+    return { product: this.formatProduct(updated) };
   }
 
   async updateProduct(
     userId: string,
     productId: string,
     body: {
-      name?: string; description?: string; category_id?: string; brand_id?: string;
-      selling_price?: string; original_price?: string; unit?: string;
-      is_active?: string; in_stock?: string;
+      name?: string;
+      description?: string;
+      category_id?: string;
+      brand_id?: string;
+      selling_price?: string;
+      original_price?: string;
+      unit?: string;
+      is_active?: string;
+      in_stock?: string;
+      media_id?: string;
+      media_ids?: string[];
     },
-    file?: Express.Multer.File,
   ) {
     const storeId = await this.getStoreId(userId);
 
@@ -155,17 +209,11 @@ export class ProductsService {
       if (!brand) throw new NotFoundException('Brand not found');
     }
 
-    let imageUrl: string | undefined = undefined;
-    if (file) {
-      imageUrl = await this.storageService.uploadImage(file.buffer, 'products') || undefined;
-    }
-
-    const product = await this.prisma.product.update({
+    await this.prisma.product.update({
       where: { id: productId },
       data: {
         ...(body.name && { name: body.name.trim() }),
         ...(body.description !== undefined && { description: body.description?.trim() || null }),
-        ...(imageUrl !== undefined && { imageUrl }),
         ...(body.is_active !== undefined && { isActive: body.is_active === 'true' }),
         ...(body.selling_price !== undefined && { sellingPrice: parseFloat(body.selling_price) }),
         ...(body.original_price !== undefined && { originalPrice: body.original_price ? parseFloat(body.original_price) : null }),
@@ -174,17 +222,98 @@ export class ProductsService {
         ...(body.brand_id !== undefined && { brandId: body.brand_id || null }),
         ...(body.category_id && { categoryId: body.category_id }),
       },
+    });
+
+    const updateMediaIds: string[] = Array.isArray(body.media_ids)
+      ? body.media_ids
+      : body.media_id ? [body.media_id] : [];
+
+    if (updateMediaIds.length > 0) {
+      let hasPrimary = !!(await this.prisma.productMedia.findFirst({ where: { productId, isPrimary: true } }));
+      let count = await this.prisma.productMedia.count({ where: { productId } });
+
+      for (const mid of updateMediaIds) {
+        const alreadyLinked = await this.prisma.productMedia.findFirst({ where: { productId, mediaId: mid } });
+        if (alreadyLinked) continue;
+
+        await this.prisma.$transaction([
+          this.prisma.media.update({ where: { id: mid }, data: { entityId: productId } }),
+          this.prisma.productMedia.create({
+            data: { productId, mediaId: mid, isPrimary: !hasPrimary, sortOrder: count },
+          }),
+        ]);
+        hasPrimary = true;
+        count++;
+      }
+    }
+
+    const updated = await this.prisma.product.findFirst({
+      where: { id: productId },
       include: productInclude,
     });
 
-    return { product: this.formatProduct(product) };
+    return { product: this.formatProduct(updated) };
+  }
+
+  async removeProductMedia(userId: string, productId: string, productMediaId: string) {
+    const storeId = await this.getStoreId(userId);
+
+    const pm = await this.prisma.productMedia.findFirst({
+      where: { id: productMediaId, productId },
+      include: { media: true },
+    });
+    if (!pm) throw new NotFoundException('Product media not found');
+    if (pm.media.storeId !== storeId) throw new NotFoundException('Product media not found');
+
+    await this.prisma.productMedia.delete({ where: { id: productMediaId } });
+    await this.fileService.deleteMedia(pm.mediaId, storeId);
+
+    if (pm.isPrimary) {
+      const next = await this.prisma.productMedia.findFirst({
+        where: { productId },
+        orderBy: { sortOrder: 'asc' },
+      });
+      if (next) {
+        await this.prisma.productMedia.update({
+          where: { id: next.id },
+          data: { isPrimary: true },
+        });
+      }
+    }
+
+    return { message: 'Image removed' };
+  }
+
+  async setPrimaryMedia(userId: string, productId: string, productMediaId: string) {
+    const storeId = await this.getStoreId(userId);
+    const existing = await this.prisma.product.findFirst({ where: { id: productId, storeId } });
+    if (!existing) throw new NotFoundException('Product not found');
+
+    await this.prisma.productMedia.updateMany({
+      where: { productId },
+      data: { isPrimary: false },
+    });
+    await this.prisma.productMedia.update({
+      where: { id: productMediaId },
+      data: { isPrimary: true },
+    });
+
+    return { message: 'Primary image updated' };
   }
 
   async deleteProduct(userId: string, productId: string) {
     const storeId = await this.getStoreId(userId);
 
-    const existing = await this.prisma.product.findFirst({ where: { id: productId, storeId } });
+    const existing = await this.prisma.product.findFirst({
+      where: { id: productId, storeId },
+      include: { productMedia: true },
+    });
     if (!existing) throw new NotFoundException('Product not found');
+
+    if (existing.productMedia.length > 0) {
+      const mediaIds = existing.productMedia.map((pm) => pm.mediaId);
+      await this.fileService.deleteMany(mediaIds, storeId);
+    }
 
     await this.prisma.product.delete({ where: { id: productId } });
     return { message: 'Product deleted' };

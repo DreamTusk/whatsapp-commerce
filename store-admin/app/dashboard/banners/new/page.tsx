@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 import { DateTimePicker } from '@/components/ui/date-time-picker'
 import api from '@/lib/api'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import type { Product, Collection } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
-import { AppSelect } from '@/components/ui/app-select'
 import { AppCombobox } from '@/components/ui/app-combobox'
 
 type BannerType = 'product' | 'collection' | 'url'
@@ -36,6 +36,7 @@ export default function NewBannerPage() {
   const [expiresAt, setExpiresAt]       = useState('')
   const [startsAt, setStartsAt]         = useState('')
   const [isSaving, setIsSaving]         = useState(false)
+  const { uploadFile, isUploading }     = useFileUpload()
 
   useEffect(() => {
     Promise.all([
@@ -61,19 +62,22 @@ export default function NewBannerPage() {
 
     setIsSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('type', type)
-      formData.append('is_active', String(isActive))
-      if (type === 'product') formData.append('product_id', productId)
-      if (type === 'collection') formData.append('collection_id', collectionId)
-      if (type === 'url') formData.append('url', url.trim())
-      if (imageFile) formData.append('image', imageFile)
-      else if (imageUrl.trim()) formData.append('image_url', imageUrl.trim())
-      if (startsAt) formData.append('starts_at', new Date(startsAt).toISOString())
-      if (expiresAt) formData.append('expires_at', new Date(expiresAt).toISOString())
+      let mediaId: string | undefined
+      if (imageFile) {
+        mediaId = await uploadFile(imageFile, { entityType: 'BANNER' })
+      }
 
-      await api.post('/api/banners', formData)
+      await api.post('/api/banners', {
+        name: name.trim(),
+        type,
+        is_active: String(isActive),
+        ...(type === 'product' && { product_id: productId }),
+        ...(type === 'collection' && { collection_id: collectionId }),
+        ...(type === 'url' && { url: url.trim() }),
+        ...(mediaId ? { media_id: mediaId } : imageUrl.trim() ? { image_url: imageUrl.trim() } : {}),
+        ...(startsAt && { starts_at: new Date(startsAt).toISOString() }),
+        ...(expiresAt && { expires_at: new Date(expiresAt).toISOString() }),
+      })
       toast.success('Banner created')
       router.push('/dashboard/banners')
     } catch (err: unknown) {
@@ -178,19 +182,30 @@ export default function NewBannerPage() {
             {/* Image */}
             <div className="space-y-2">
               <Label className="text-base">Banner image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="w-24 h-14 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  )}
-                </div>
-                <span className="text-base text-gray-500 group-hover:text-gray-700">
-                  {imagePreview ? 'Change image' : 'Upload image'}
-                </span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                  <div className="w-24 h-14 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                    )}
+                  </div>
+                  <span className="text-base text-gray-500 group-hover:text-gray-700">
+                    {imagePreview ? 'Change image' : 'Upload image'}
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+                {imagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => { setImageFile(null); setImagePreview(null) }}
+                    className="p-1.5 rounded-full bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               {!imageFile && (
                 <div className="space-y-1">
                   <p className="text-sm text-gray-400">or paste an image URL</p>
@@ -225,10 +240,10 @@ export default function NewBannerPage() {
             <Button
               className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || isUploading}
             >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {isSaving ? 'Saving…' : 'Add banner'}
+              {(isSaving || isUploading) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add banner'}
             </Button>
           </div>
         )}

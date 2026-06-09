@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import type { Category } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppCombobox } from '@/components/ui/app-combobox'
@@ -27,7 +28,10 @@ export default function EditCategoryPage() {
   const [isActive, setIsActive] = useState(true)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [removeImage, setRemoveImage] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
+  const { uploadFile, isUploading } = useFileUpload()
 
   useEffect(() => {
     api.get('/api/categories')
@@ -57,17 +61,35 @@ export default function EditCategoryPage() {
     setImagePreview(file ? URL.createObjectURL(file) : null)
   }
 
+  async function handleStatusToggle(newValue: boolean) {
+    setIsActive(newValue)
+    setIsTogglingStatus(true)
+    try {
+      await api.patch(`/api/categories/${id}/status`, { is_active: newValue })
+      toast.success(newValue ? 'Category activated' : 'Category deactivated')
+    } catch {
+      setIsActive(!newValue)
+      toast.error('Failed to update status')
+    } finally {
+      setIsTogglingStatus(false)
+    }
+  }
+
   async function handleSave() {
     if (!name.trim()) { toast.error('Category name is required'); return }
     setIsSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('is_active', String(isActive))
-      formData.append('parent_id', parentId)
-      if (imageFile) formData.append('image', imageFile)
+      let mediaId: string | undefined
+      if (imageFile) {
+        mediaId = await uploadFile(imageFile, { entityType: 'CATEGORY' })
+      }
 
-      await api.put(`/api/categories/${id}`, formData)
+      await api.put(`/api/categories/${id}`, {
+        name: name.trim(),
+        parent_id: parentId || undefined,
+        ...(mediaId && { media_id: mediaId }),
+        ...(removeImage && !imageFile && { remove_image: 'true' }),
+      })
       toast.success('Category updated')
       router.push('/dashboard/categories')
     } catch (err: unknown) {
@@ -111,7 +133,17 @@ export default function EditCategoryPage() {
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Categories
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit category</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold text-gray-900">Edit category</h1>
+          {isActive && (
+            <Button
+              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2"
+              onClick={() => router.push(`/dashboard/products/new?category_id=${id}`)}
+            >
+              <Plus className="w-4 h-4" /> Add product
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -124,24 +156,35 @@ export default function EditCategoryPage() {
               <Label className="text-sm font-medium text-gray-700">
                 Image <span className="text-gray-400 font-normal text-xs">(optional)</span>
               </Label>
-              <label className="flex items-center gap-4 cursor-pointer group w-fit">
-                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                  ) : currentImage ? (
-                    <img src={currentImage} alt="current" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 group-hover:text-[#6366f1] transition-colors">
-                    {imagePreview || currentImage ? 'Change image' : 'Upload image'}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
-                </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-4 cursor-pointer group w-fit">
+                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                    ) : !removeImage && currentImage ? (
+                      <img src={currentImage} alt="current" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 group-hover:text-[#6366f1] transition-colors">
+                      {imagePreview || (!removeImage && currentImage) ? 'Change image' : 'Upload image'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+                {(imagePreview || (!removeImage && currentImage)) && (
+                  <button
+                    type="button"
+                    onClick={() => { setImageFile(null); setImagePreview(null); setRemoveImage(true) }}
+                    className="p-1.5 rounded-full bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="border-t border-gray-50" />
@@ -175,8 +218,9 @@ export default function EditCategoryPage() {
             {/* Status */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-gray-700">Status</Label>
-              <div className="h-11 flex items-center">
-                <AppSwitch checked={isActive} onChange={setIsActive} />
+              <div className="h-11 flex items-center gap-3">
+                <AppSwitch checked={isActive} onChange={handleStatusToggle} />
+                {isTogglingStatus && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
               </div>
             </div>
 
@@ -184,10 +228,10 @@ export default function EditCategoryPage() {
               <Button
                 className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11"
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || isUploading}
               >
-                {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                {isSaving ? 'Saving…' : 'Save changes'}
+                {(isSaving || isUploading) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Save changes'}
               </Button>
             </div>
           </div>

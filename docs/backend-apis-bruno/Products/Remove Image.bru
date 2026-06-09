@@ -1,0 +1,21 @@
+meta {
+  name: Remove Product Image
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{base_url_local}}/products/:id/media/:pmId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: product_id_here
+  pmId: product_media_id_here
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -24,12 +24,19 @@ export interface Category {
   sort_order: number
 }
 
+export interface ProductImage {
+  url: string | null
+  thumbnail_url: string | null
+  is_primary: boolean
+}
+
 export interface Product {
   id: string
   name: string
   name_local: string | null
   description: string | null
   image_url: string | null
+  images: ProductImage[]
   unit: string | null
   in_stock: boolean
   sort_order: number

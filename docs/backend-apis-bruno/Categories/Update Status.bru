@@ -1,0 +1,22 @@
+meta {
+  name: Update Category Status
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url_local}}/categories/cmphy1wwa0001hk2g4nyyrb7j/status
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "is_active": false
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

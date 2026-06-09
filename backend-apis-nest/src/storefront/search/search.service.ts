@@ -27,7 +27,6 @@ export class StorefrontSearchService {
         select: {
           id: true,
           name: true,
-          imageUrl: true,
           sellingPrice: true,
           originalPrice: true,
           inStock: true,
@@ -53,7 +52,7 @@ export class StorefrontSearchService {
       products: products.map((p) => ({
         id: p.id,
         name: p.name,
-        image_url: p.imageUrl,
+        image_url: null,
         selling_price: p.sellingPrice,
         original_price: p.originalPrice,
         in_stock: p.inStock,

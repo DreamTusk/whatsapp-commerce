@@ -32,7 +32,7 @@ export class StoreController {
 
   // POST /api/store
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('logo', { storage: memoryStorage() }))
   createStore(
     @CurrentUser() user: { userId: string },
@@ -44,7 +44,7 @@ export class StoreController {
 
   // GET /api/store — all authenticated roles can read store info
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard)
   getStore(@CurrentUser() user: { userId: string }) {
     return this.storeService.getStore(user.userId);
   }

@@ -27,7 +27,7 @@ export class InventoryService {
       products: products.map((p) => ({
         id: p.id,
         name: p.name,
-        image_url: p.imageUrl,
+        image_url: null,
         selling_price: p.sellingPrice,
         unit: p.unit,
         in_stock: p.inStock,

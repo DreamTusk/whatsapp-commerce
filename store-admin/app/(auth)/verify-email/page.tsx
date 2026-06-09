@@ -77,7 +77,7 @@ function VerifyEmailForm() {
       auth.clearPendingUserId()
       if (hasToken) {
         toast.success('Email verified! Welcome to DT Commerce.')
-        router.push('/dashboard')
+        router.push('/create-store')
       } else {
         toast.success('Email verified! Please sign in.')
         router.push('/login')

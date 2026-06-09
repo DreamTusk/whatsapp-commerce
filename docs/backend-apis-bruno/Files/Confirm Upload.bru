@@ -1,0 +1,20 @@
+meta {
+  name: Confirm Upload
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_local}}/files/confirm/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: media_id_here
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

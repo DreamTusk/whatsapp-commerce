@@ -1,0 +1,26 @@
+meta {
+  name: Get Upload URL
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url_local}}/files/upload-url
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "entity_type": "PRODUCT",
+    "mime_type": "image/jpeg",
+    "size": 204800,
+    "visibility": "PUBLIC",
+    "original_name": "product-image.jpg"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -3,17 +3,14 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
   UseGuards,
-  UseInterceptors,
-  UploadedFile,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
 import { CategoriesService } from './categories.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -33,30 +30,35 @@ export class CategoriesController {
 
   // POST /api/categories
   @Post()
-  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
   createCategory(
     @CurrentUser() user: { userId: string },
-    @Body() body: { name: string; is_active?: string; parent_id?: string },
-    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { name: string; is_active?: string; parent_id?: string; media_id?: string },
   ) {
-    return this.categoriesService.createCategory(user.userId, body, file);
+    return this.categoriesService.createCategory(user.userId, body);
   }
 
   // PUT /api/categories/:id
   @Put(':id')
-  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
   updateCategory(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
-    @Body() body: { name?: string; is_active?: string; parent_id?: string },
-    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { name?: string; is_active?: string; parent_id?: string; media_id?: string; remove_image?: string },
   ) {
-    return this.categoriesService.updateCategory(user.userId, id, body, file);
+    return this.categoriesService.updateCategory(user.userId, id, body);
+  }
+
+  // PATCH /api/categories/:id/status
+  @Patch(':id/status')
+  updateCategoryStatus(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Body() body: { is_active: boolean },
+  ) {
+    return this.categoriesService.updateCategoryStatus(user.userId, id, body.is_active);
   }
 
   // DELETE /api/categories/:id
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('OWNER')
   @HttpCode(HttpStatus.OK)
   deleteCategory(
