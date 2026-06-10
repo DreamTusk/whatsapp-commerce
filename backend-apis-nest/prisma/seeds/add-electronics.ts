@@ -100,6 +100,10 @@ async function main(): Promise<void> {
   const STORE_ID = store.id;
   console.log(`Found store: ${store.name} (${STORE_ID})`);
 
+  const ownerRecord = await prisma.userStore.findFirst({ where: { storeId: STORE_ID, role: 'OWNER' } });
+  if (!ownerRecord) { console.error('No OWNER found for store.'); process.exit(1); }
+  const OWNER_ID = ownerRecord.userId;
+
   // ── Cleanup ───────────────────────────────────────────────────────────────
   console.log('Cleaning up existing data…');
   await prisma.collectionProduct.deleteMany({ where: { collection: { storeId: STORE_ID } } });
@@ -162,7 +166,7 @@ async function main(): Promise<void> {
   console.log('Creating products…');
 
   // Smartphones
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: apple.id,
     name: 'iPhone 15', unit: 'piece', sellingPrice: 79999, originalPrice: 84900,
     inStock: true, isActive: true,
@@ -177,7 +181,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: apple.id,
     name: 'iPhone 14', unit: 'piece', sellingPrice: 64999, originalPrice: 79900,
     inStock: true, isActive: true,
@@ -191,7 +195,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: samsung.id,
     name: 'Samsung Galaxy S24', unit: 'piece', sellingPrice: 74999, originalPrice: 79999,
     inStock: true, isActive: true,
@@ -205,7 +209,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: samsung.id,
     name: 'Samsung Galaxy A55', unit: 'piece', sellingPrice: 38999, originalPrice: 42999,
     inStock: true, isActive: true,
@@ -219,7 +223,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: oneplus.id,
     name: 'OnePlus 12', unit: 'piece', sellingPrice: 64999, originalPrice: 69999,
     inStock: true, isActive: true,
@@ -233,7 +237,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: oneplus.id,
     name: 'OnePlus Nord CE 4', unit: 'piece', sellingPrice: 24999, originalPrice: 27999,
     inStock: true, isActive: true,
@@ -246,7 +250,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: xiaomi.id,
     name: 'Xiaomi 14', unit: 'piece', sellingPrice: 69999, originalPrice: 74999,
     inStock: true, isActive: true,
@@ -260,7 +264,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smartphones.id, brandId: realme.id,
     name: 'Realme 13 Pro+', unit: 'piece', sellingPrice: 29999, originalPrice: 33999,
     inStock: true, isActive: true,
@@ -274,7 +278,7 @@ async function main(): Promise<void> {
   });
 
   // Laptops
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: laptops.id, brandId: apple.id,
     name: 'MacBook Air M2', unit: 'piece', sellingPrice: 114900, originalPrice: 119900,
     inStock: true, isActive: true,
@@ -289,7 +293,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: laptops.id, brandId: apple.id,
     name: 'MacBook Pro 14" M3', unit: 'piece', sellingPrice: 169900, originalPrice: 179900,
     inStock: true, isActive: true,
@@ -303,7 +307,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: laptops.id, brandId: dell.id,
     name: 'Dell XPS 15', unit: 'piece', sellingPrice: 159990, originalPrice: 174990,
     inStock: true, isActive: true,
@@ -317,7 +321,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: laptops.id, brandId: hp.id,
     name: 'HP Pavilion 15', unit: 'piece', sellingPrice: 72990, originalPrice: 79990,
     inStock: true, isActive: true,
@@ -331,7 +335,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: laptops.id, brandId: lenovo.id,
     name: 'Lenovo IdeaPad Slim 5', unit: 'piece', sellingPrice: 65990, originalPrice: 72990,
     inStock: true, isActive: true,
@@ -345,7 +349,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: laptops.id, brandId: asus.id,
     name: 'Asus VivoBook 15', unit: 'piece', sellingPrice: 52990, originalPrice: 59990,
     inStock: true, isActive: true,
@@ -360,7 +364,7 @@ async function main(): Promise<void> {
   });
 
   // Televisions
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: televisions.id, brandId: samsung.id,
     name: 'Samsung 55" QLED 4K Q70C', unit: 'piece', sellingPrice: 89999, originalPrice: 109900,
     inStock: true, isActive: true,
@@ -374,7 +378,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: televisions.id, brandId: lg.id,
     name: 'LG 55" OLED evo C3', unit: 'piece', sellingPrice: 129999, originalPrice: 149990,
     inStock: true, isActive: true,
@@ -388,7 +392,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: televisions.id, brandId: sony.id,
     name: 'Sony Bravia 43" X75L 4K', unit: 'piece', sellingPrice: 54999, originalPrice: 64990,
     inStock: true, isActive: true,
@@ -402,7 +406,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: televisions.id, brandId: samsung.id,
     name: 'Samsung 43" Crystal 4K CU7700', unit: 'piece', sellingPrice: 44999, originalPrice: 54990,
     inStock: true, isActive: true,
@@ -417,7 +421,7 @@ async function main(): Promise<void> {
   });
 
   // Audio & Headphones
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: audio.id, brandId: sony.id,
     name: 'Sony WH-1000XM5', unit: 'piece', sellingPrice: 34990, originalPrice: 39990,
     inStock: true, isActive: true,
@@ -431,7 +435,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: audio.id, brandId: apple.id,
     name: 'Apple AirPods Pro 2nd Gen', unit: 'piece', sellingPrice: 24900, originalPrice: 26900,
     inStock: true, isActive: true,
@@ -445,7 +449,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: audio.id, brandId: jbl.id,
     name: 'JBL Charge 5', unit: 'piece', sellingPrice: 14999, originalPrice: 17999,
     inStock: true, isActive: true,
@@ -459,7 +463,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: audio.id, brandId: jbl.id,
     name: 'JBL Flip 6', unit: 'piece', sellingPrice: 9999, originalPrice: 11999,
     inStock: true, isActive: true,
@@ -473,7 +477,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: audio.id, brandId: boat.id,
     name: 'boAt Airdopes 141', unit: 'piece', sellingPrice: 1499, originalPrice: 3990,
     inStock: true, isActive: true,
@@ -487,7 +491,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: audio.id, brandId: boat.id,
     name: 'boAt Rockerz 550', unit: 'piece', sellingPrice: 2499, originalPrice: 4990,
     inStock: true, isActive: true,
@@ -502,7 +506,7 @@ async function main(): Promise<void> {
   });
 
   // Cameras
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: cameras.id, brandId: canon.id,
     name: 'Canon EOS R50', unit: 'piece', sellingPrice: 79990, originalPrice: 89990,
     inStock: true, isActive: true,
@@ -517,7 +521,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: cameras.id, brandId: nikon.id,
     name: 'Nikon Z30', unit: 'piece', sellingPrice: 74995, originalPrice: 84995,
     inStock: true, isActive: true,
@@ -532,7 +536,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: cameras.id, brandId: sony.id,
     name: 'Sony ZV-E10 II', unit: 'piece', sellingPrice: 89990, originalPrice: 99990,
     inStock: true, isActive: true,
@@ -548,7 +552,7 @@ async function main(): Promise<void> {
   });
 
   // Gaming
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: gaming.id, brandId: sony.id,
     name: 'Sony PlayStation 5 Slim', unit: 'piece', sellingPrice: 54990, originalPrice: 59990,
     inStock: true, isActive: true,
@@ -563,7 +567,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: gaming.id, brandId: logitech.id,
     name: 'Logitech G502 X Gaming Mouse', unit: 'piece', sellingPrice: 5495, originalPrice: 6995,
     inStock: true, isActive: true,
@@ -577,7 +581,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: gaming.id, brandId: logitech.id,
     name: 'Logitech G435 Wireless Gaming Headset', unit: 'piece', sellingPrice: 6495, originalPrice: 7995,
     inStock: true, isActive: true,
@@ -593,7 +597,7 @@ async function main(): Promise<void> {
   });
 
   // Smart Home
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smarthome.id, brandId: google.id,
     name: 'Google Nest Mini 2nd Gen', unit: 'piece', sellingPrice: 4499, originalPrice: 4999,
     inStock: true, isActive: true,
@@ -607,7 +611,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smarthome.id, brandId: xiaomi.id,
     name: 'Xiaomi Smart Band 8 Pro', unit: 'piece', sellingPrice: 5999, originalPrice: 7499,
     inStock: true, isActive: true,
@@ -621,7 +625,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: smarthome.id, brandId: google.id,
     name: 'Google Chromecast with Google TV 4K', unit: 'piece', sellingPrice: 6399, originalPrice: 6999,
     inStock: true, isActive: true,
@@ -636,7 +640,7 @@ async function main(): Promise<void> {
   });
 
   // Accessories
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: accessories.id, brandId: samsung.id,
     name: 'Samsung 45W USB-C Charger', unit: 'piece', sellingPrice: 2999, originalPrice: 3499,
     inStock: true, isActive: true,
@@ -650,7 +654,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: accessories.id, brandId: wd.id,
     name: 'WD 1TB My Passport Portable HDD', unit: 'piece', sellingPrice: 4499, originalPrice: 5499,
     inStock: true, isActive: true,
@@ -664,7 +668,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: accessories.id, brandId: seagate.id,
     name: 'Seagate 2TB Expansion Portable HDD', unit: 'piece', sellingPrice: 5999, originalPrice: 6999,
     inStock: true, isActive: true,
@@ -678,7 +682,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: accessories.id, brandId: logitech.id,
     name: 'Logitech MX Master 3S Mouse', unit: 'piece', sellingPrice: 8995, originalPrice: 10995,
     inStock: true, isActive: true,
@@ -693,7 +697,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: accessories.id, brandId: samsung.id,
     name: 'Samsung 128GB Pro Plus MicroSD', unit: 'piece', sellingPrice: 1299, originalPrice: 1999,
     inStock: true, isActive: true,
@@ -708,7 +712,7 @@ async function main(): Promise<void> {
   });
 
   // Tablets
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: tablets.id, brandId: apple.id,
     name: 'iPad Air M2 11"', unit: 'piece', sellingPrice: 74900, originalPrice: 79900,
     inStock: true, isActive: true,
@@ -723,7 +727,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: tablets.id, brandId: samsung.id,
     name: 'Samsung Galaxy Tab S9 FE', unit: 'piece', sellingPrice: 46999, originalPrice: 52999,
     inStock: true, isActive: true,
@@ -737,7 +741,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: tablets.id, brandId: xiaomi.id,
     name: 'Xiaomi Pad 6', unit: 'piece', sellingPrice: 26999, originalPrice: 29999,
     inStock: true, isActive: true,
@@ -752,7 +756,7 @@ async function main(): Promise<void> {
   });
 
   // Wearables
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: wearables.id, brandId: apple.id,
     name: 'Apple Watch Series 9 GPS 45mm', unit: 'piece', sellingPrice: 44900, originalPrice: 47900,
     inStock: true, isActive: true,
@@ -767,7 +771,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: wearables.id, brandId: samsung.id,
     name: 'Samsung Galaxy Watch 6 Classic 47mm', unit: 'piece', sellingPrice: 36999, originalPrice: 42999,
     inStock: true, isActive: true,
@@ -782,7 +786,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: wearables.id, brandId: noise.id,
     name: 'Noise ColorFit Pro 5', unit: 'piece', sellingPrice: 4499, originalPrice: 7999,
     inStock: true, isActive: true,
@@ -797,7 +801,7 @@ async function main(): Promise<void> {
     ),
   });
 
-  await mkProduct({
+  await mkProduct(STORE_ID, OWNER_ID, {
     storeId: STORE_ID, categoryId: wearables.id, brandId: boat.id,
     name: 'boAt Wave Flex Connect', unit: 'piece', sellingPrice: 1799, originalPrice: 3999,
     inStock: true, isActive: true,
