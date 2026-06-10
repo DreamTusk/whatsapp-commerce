@@ -12,6 +12,7 @@ import { useFileUpload } from '@/hooks/useFileUpload'
 import type { Category } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppCombobox } from '@/components/ui/app-combobox'
+import { apiErrorMessage } from '@/lib/utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -93,7 +94,7 @@ export default function EditCategoryPage() {
       toast.success('Category updated')
       router.push('/dashboard/categories')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update category'
+      const msg = apiErrorMessage(err, 'Failed to update category')
       toast.error(msg)
     } finally {
       setIsSaving(false)
@@ -173,7 +174,7 @@ export default function EditCategoryPage() {
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
                   </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleImageChange} />
                 </label>
                 {(imagePreview || (!removeImage && currentImage)) && (
                   <button

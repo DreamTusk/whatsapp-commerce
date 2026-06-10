@@ -20,9 +20,93 @@ const bnBullet = (text: string) => ({
 const desc = (summary: string, ...points: string[]) =>
   JSON.stringify([bnPara(summary), ...points.map(bnBullet)]);
 
-// Picsum helpers — same seed = same image every run
-const img  = (seed: string) => `https://picsum.photos/seed/${seed}/400/400`;
-const cImg = (seed: string) => `https://picsum.photos/seed/${seed}/600/400`;
+// Real images uploaded to R2
+const R2 = 'https://pub-df15448cd5484b50be5ee5996a81f458.r2.dev/cmq6f37zu0000yzksmh4vafav';
+
+const CAT_IMGS: Record<string, string> = {
+  fruits:       `${R2}/categories/6c9d297d-a99f-4c74-a1cd-30ad99c60f0f.jpg`,
+  dairy:        `${R2}/categories/39ea98c5-f8a0-4176-bde4-04b7ed15081e.jpg`,
+  grains:       `${R2}/categories/76b3ca92-73fa-4404-9477-869787eedc3e.jpg`,
+  bakery:       `${R2}/categories/a48b2369-4a44-4b51-881f-f6f4c1d7e29d.jpg`,
+  cooking:      `${R2}/categories/0e91bce2-38e7-4bc5-8bcc-7460f41c9523.jpg`,
+  beverages:    `${R2}/categories/00fc8d58-4d8b-47d3-b938-e94de1d44e60.jpg`,
+  snacks:       `${R2}/categories/911cda4e-091a-4145-94b9-8a96a6f03409.jpg`,
+  breakfast:    `${R2}/categories/df877d01-ff5c-42f7-ac5c-a1210332a25d.jpg`,
+  personalCare: `${R2}/categories/421e12e4-b602-42b1-a67e-31f73339e018.jpg`,
+  cleaning:     `${R2}/categories/4870ab31-e8b2-451f-80f4-ccd4c1736a18.jpg`,
+  frozen:       `${R2}/categories/18771351-712c-4c87-a5ba-918167a35a3c.jpg`,
+};
+
+const PROD_IMGS: Record<string, string> = {
+  'tomatoes-fresh':      `${R2}/products/490a516f-fa40-45d8-91e6-f0f5c9a257ef.jpg`,
+  'potatoes-farm':       `${R2}/products/27f7be8d-dfb8-4b23-a53d-178f26c7a1b4.jpg`,
+  'onions-red':          `${R2}/products/c177d933-4a8f-4f2a-955e-81b13cc6da37.jpg`,
+  'spinach-leaves':      `${R2}/products/418d4fe9-5dac-4b2d-9b91-892cecca29d6.jpg`,
+  'bananas-robusta':     `${R2}/products/b4174ca3-2474-4dd8-930c-6b056260400b.jpg`,
+  'red-apples':          `${R2}/products/34697bdc-6ad4-43d8-84b1-3d431c8437fd.jpg`,
+  'lemons-fresh':        `${R2}/products/17a2f39f-b8c7-4ae2-bda7-073f9fd30c14.jpg`,
+  'carrots-orange':      `${R2}/products/40c72542-3f96-4f7f-9ae4-e5dab56591c7.jpg`,
+  'milk-amul':           `${R2}/products/f51e231d-ee94-4491-93de-4a902173265d.jpg`,
+  'curd-set':            `${R2}/products/b6a9d159-8f6d-48d0-a21f-59a96d59271f.jpg`,
+  'paneer-fresh':        `${R2}/products/92bd918a-cd51-4b19-94b1-a39c08c70bb8.jpg`,
+  'butter-amul':         `${R2}/products/fbee7f71-916f-4417-9c18-48f090021f3a.jpg`,
+  'cheese-slices':       `${R2}/products/70b160af-a20b-4e88-8caa-4773b97879a8.jpg`,
+  'eggs-farm':           `${R2}/products/28b71120-5cfb-4586-8d76-cdc13dc47d46.jpg`,
+  'ice-cream-vanilla':   `${R2}/products/9489d938-a95f-4a66-a236-c91e45f722c8.jpg`,
+  'basmati-rice':        `${R2}/products/2da48ca8-afda-4133-b277-e40061e5c669.jpg`,
+  'toor-dal':            `${R2}/products/c53c27e6-626e-4b50-93ea-83083537cc67.jpg`,
+  'wheat-flour':         `${R2}/products/9faca8c0-2860-4e48-8c1f-8220d1c1d64b.jpg`,
+  'moong-dal':           `${R2}/products/dddcd90e-1292-4e05-8abe-bfd37f4b6e89.jpg`,
+  'poha-flattened':      `${R2}/products/d3fdb1f6-7fb4-4fc7-8be5-edeed9900f6c.jpg`,
+  'quinoa-organic':      `${R2}/products/ceef42fb-c13b-4976-893c-492ff1b8f9cb.jpg`,
+  'white-bread':         `${R2}/products/6a563d66-0544-4f9a-bf32-591ce7f0f26d.jpg`,
+  'brown-bread':         `${R2}/products/8de63ad0-1afe-448b-b551-1210b5777e62.jpg`,
+  'marie-biscuits':      `${R2}/products/d77c40be-c125-402d-a0bf-55c12b7a4094.jpg`,
+  'goodday-biscuits':    `${R2}/products/1aa9119f-c91a-4824-a2be-9892e8a09750.jpg`,
+  'parle-g':             `${R2}/products/35c5d251-a88a-404f-9789-cab781a06075.jpg`,
+  'rusk-toast':          `${R2}/products/485c1fa7-f8f2-44b7-80ad-07df973c57a0.jpg`,
+  'pav-rolls':           `${R2}/products/f608aed2-9bc9-4fed-a3e0-1674000bf34e.jpg`,
+  'sunflower-oil':       `${R2}/products/d204acc6-6edf-4240-97a8-0040b0ec2cec.jpg`,
+  'turmeric-powder':     `${R2}/products/fd3e68f7-342a-485d-8587-1d8b368dcfb0.jpg`,
+  'red-chilli-powder':   `${R2}/products/b271d32a-317b-4309-8689-b8ae7ecf6be0.jpg`,
+  'garam-masala':        `${R2}/products/fb626656-ee9e-4d24-9bf7-34985dda4efe.jpg`,
+  'iodised-salt':        `${R2}/products/c9daf0cd-689e-4104-8ca0-c57edb04aaa2.jpg`,
+  'white-sugar':         `${R2}/products/31b323d0-c8f9-4e69-9d0c-67bf6e595768.jpg`,
+  'ghee-pure':           `${R2}/products/f06294fe-f6e6-46fc-9471-ffc4113577ae.jpg`,
+  'orange-juice':        `${R2}/products/12d33965-8e16-4da4-ba63-6ffe96e72f08.jpg`,
+  'mixed-fruit-juice':   `${R2}/products/e6a2aa84-28d9-4db8-9d17-7a0e147ae417.jpg`,
+  'tata-tea':            `${R2}/products/330f7cb9-a6c8-4c08-9eb9-da38d04c4a5c.jpg`,
+  'nescafe-classic':     `${R2}/products/57ced4b5-580b-47ad-9273-3f515c588ecf.jpg`,
+  'mineral-water':       `${R2}/products/af3aba0d-2f4f-4b1e-a189-53fb70421545.jpg`,
+  'coconut-water':       `${R2}/products/ce2ca26b-cd16-4a52-a136-e2fe2d8e51b3.jpg`,
+  'lays-classic':        `${R2}/products/1bbf981d-2f32-42ae-b617-1096dbb2a60e.jpg`,
+  'lays-masala':         `${R2}/products/d28d47b6-4723-4711-ba10-a18f68be9a45.jpg`,
+  'haldirams-bhujia':    `${R2}/products/032bbe08-6788-4b07-99ed-fe1c96c1efd4.jpg`,
+  'dairy-milk-choc':     `${R2}/products/0de84cd4-8cd3-4c10-a144-4d0e1d01637c.jpg`,
+  'microwave-popcorn':   `${R2}/products/01da6af8-0fc8-494f-a9e6-04b472e8525f.jpg`,
+  'granola-bar':         `${R2}/products/640bfdac-69d1-4341-8b88-9b385999206e.jpg`,
+  'corn-flakes':         `${R2}/products/498914f0-1aac-484f-a7a4-95781dffcb8e.jpg`,
+  'muesli-fruit':        `${R2}/products/d118bec7-3d14-4732-bfd6-a6c1e78482cf.jpg`,
+  'oats-quick':          `${R2}/products/40e2bd52-f149-42c6-8cfa-b4bfb2a5c794.jpg`,
+  'honey-dabur':         `${R2}/products/f2cab069-70be-48b8-befd-187334216ac0.jpg`,
+  'peanut-butter':       `${R2}/products/257c95fe-ec30-41a7-8bad-e67824f139ca.jpg`,
+  'dove-shampoo':        `${R2}/products/036a92db-9451-454e-b704-1640fa30ba6c.jpg`,
+  'head-shoulders':      `${R2}/products/f251c5e1-a6af-4535-ae00-a8d315f1faf7.jpg`,
+  'dove-soap':           `${R2}/products/6677caca-4b87-4ae3-9d88-7d469973b9ee.jpg`,
+  'lifebuoy-soap':       `${R2}/products/ed891a77-5547-4fc9-ab10-ef944ca3fda6.jpg`,
+  'colgate-maxfresh':    `${R2}/products/1ef7c45c-d840-4223-9f9f-64940fff8b30.jpg`,
+  'dove-lotion':         `${R2}/products/7a794bb7-1cbf-4cb4-aabe-9c00e35bad29.jpg`,
+  'surf-excel':          `${R2}/products/1abfa4c0-dd0b-4100-9692-e4538c1de7ef.jpg`,
+  'dish-wash-bar':       `${R2}/products/0848e9c1-96df-4f20-9a69-1c9cf3df36ae.jpg`,
+  'floor-cleaner':       `${R2}/products/c27b465f-9d74-481f-b07c-3864d802b740.jpg`,
+  'dettol-sanitizer':    `${R2}/products/b5829ae7-621f-4530-bfd5-7801115ef476.jpg`,
+  'dettol-handwash':     `${R2}/products/7ca26f49-af9b-4a02-8012-04f3d7628c43.jpg`,
+  'maggi-noodles':       `${R2}/products/93802a7b-4daf-492b-b06c-f86287bc80f4.jpg`,
+  'mtr-upma':            `${R2}/products/7a7746cc-4be5-47a6-8138-9ed2f54ecebe.jpg`,
+  'bikaneri-bhujia':     `${R2}/products/ae1fcaca-3cf6-4de7-9118-e8bb1d33af56.jpg`,
+  'mixed-namkeen':       `${R2}/products/3ac15acc-d619-4b6c-a054-30a82a022c47.jpg`,
+  'maggi-pasta':         `${R2}/products/260a2b35-8ff7-436e-b446-8a774b650b75.jpg`,
+};
 
 async function main(): Promise<void> {
   const store = await prisma.store.findUnique({ where: { domain: STORE_DOMAIN } });
@@ -48,16 +132,22 @@ async function main(): Promise<void> {
   await prisma.brand.deleteMany({ where: { storeId: STORE_ID } });
   console.log('Cleanup done.');
 
-  // ── Helper: create product + picsum Media + ProductMedia ──────────────────
+  // ── Helper: create product + real R2 Media + ProductMedia ────────────────
   async function mkProduct(data: any, imgSeed: string) {
     const product = await prisma.product.create({ data });
+    const url = PROD_IMGS[imgSeed];
+    const key = url.replace(`${R2}/`, `cmq6f37zu0000yzksmh4vafav/`);
+    const thumbKey = key.replace('/products/', '/products/thumbs/');
+    const thumbUrl = `${R2}/` + thumbKey.replace('cmq6f37zu0000yzksmh4vafav/', '');
     const media = await prisma.media.create({
       data: {
         storeId: STORE_ID,
         uploadedBy: OWNER_ID,
-        key: `seed/products/${imgSeed}`,
+        key,
         bucket: 'PUBLIC' as any,
-        url: img(imgSeed),
+        url,
+        thumbnailKey: thumbKey,
+        thumbnailUrl: thumbUrl,
         mimeType: 'image/jpeg',
         size: 60000,
         originalName: `${imgSeed}.jpg`,
@@ -100,21 +190,21 @@ async function main(): Promise<void> {
     ]);
   console.log('Brands done: 20');
 
-  // ── Categories (with picsum imageUrl) ─────────────────────────────────────
+  // ── Categories ────────────────────────────────────────────────────────────
   console.log('Creating categories…');
   const [fruits, dairy, grains, bakery, cooking, beverages, snacks, breakfast, personalCare, cleaning, frozen] =
     await Promise.all([
-      prisma.category.create({ data: { name: 'Fruits & Vegetables',   storeId: STORE_ID, imageUrl: cImg('fresh-vegetables-market') } }),
-      prisma.category.create({ data: { name: 'Dairy & Eggs',          storeId: STORE_ID, imageUrl: cImg('dairy-milk-eggs') } }),
-      prisma.category.create({ data: { name: 'Grains & Staples',      storeId: STORE_ID, imageUrl: cImg('grains-rice-dal') } }),
-      prisma.category.create({ data: { name: 'Bakery',                storeId: STORE_ID, imageUrl: cImg('bakery-bread-biscuits') } }),
-      prisma.category.create({ data: { name: 'Cooking Essentials',    storeId: STORE_ID, imageUrl: cImg('cooking-spices-oil') } }),
-      prisma.category.create({ data: { name: 'Beverages',             storeId: STORE_ID, imageUrl: cImg('beverages-drinks-juice') } }),
-      prisma.category.create({ data: { name: 'Snacks & Munchies',     storeId: STORE_ID, imageUrl: cImg('snacks-chips-namkeen') } }),
-      prisma.category.create({ data: { name: 'Breakfast & Cereals',   storeId: STORE_ID, imageUrl: cImg('breakfast-cereal-oats') } }),
-      prisma.category.create({ data: { name: 'Personal Care',         storeId: STORE_ID, imageUrl: cImg('personal-care-hygiene') } }),
-      prisma.category.create({ data: { name: 'Cleaning Supplies',     storeId: STORE_ID, imageUrl: cImg('cleaning-household') } }),
-      prisma.category.create({ data: { name: 'Frozen & Ready to Eat', storeId: STORE_ID, imageUrl: cImg('frozen-readymade-food') } }),
+      prisma.category.create({ data: { name: 'Fruits & Vegetables',   storeId: STORE_ID, imageUrl: CAT_IMGS.fruits } }),
+      prisma.category.create({ data: { name: 'Dairy & Eggs',          storeId: STORE_ID, imageUrl: CAT_IMGS.dairy } }),
+      prisma.category.create({ data: { name: 'Grains & Staples',      storeId: STORE_ID, imageUrl: CAT_IMGS.grains } }),
+      prisma.category.create({ data: { name: 'Bakery',                storeId: STORE_ID, imageUrl: CAT_IMGS.bakery } }),
+      prisma.category.create({ data: { name: 'Cooking Essentials',    storeId: STORE_ID, imageUrl: CAT_IMGS.cooking } }),
+      prisma.category.create({ data: { name: 'Beverages',             storeId: STORE_ID, imageUrl: CAT_IMGS.beverages } }),
+      prisma.category.create({ data: { name: 'Snacks & Munchies',     storeId: STORE_ID, imageUrl: CAT_IMGS.snacks } }),
+      prisma.category.create({ data: { name: 'Breakfast & Cereals',   storeId: STORE_ID, imageUrl: CAT_IMGS.breakfast } }),
+      prisma.category.create({ data: { name: 'Personal Care',         storeId: STORE_ID, imageUrl: CAT_IMGS.personalCare } }),
+      prisma.category.create({ data: { name: 'Cleaning Supplies',     storeId: STORE_ID, imageUrl: CAT_IMGS.cleaning } }),
+      prisma.category.create({ data: { name: 'Frozen & Ready to Eat', storeId: STORE_ID, imageUrl: CAT_IMGS.frozen } }),
     ]);
   console.log('Categories done: 11');
 
@@ -880,8 +970,7 @@ async function main(): Promise<void> {
   console.log('\n✅ Supermarket seed complete!');
   console.log(`Store  : ${store.name} | Domain: ${store.domain}`);
   console.log('Login  : admin@freshmart.com / admin123');
-  console.log('\nNote: Product images use picsum.photos placeholders.');
-  console.log('      Replace with real images via the admin Edit Product UI.');
+  console.log('\nImages: Real R2 images from whatsapp-commerce-public bucket.');
 }
 
 main()

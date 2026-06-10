@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import type { Brand } from '@/types'
+import { apiErrorMessage } from '@/lib/utils'
 
 export default function EditBrandPage() {
   const { id } = useParams<{ id: string }>()
@@ -40,7 +41,7 @@ export default function EditBrandPage() {
       toast.success('Brand updated')
       router.push('/dashboard/brands')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update brand'
+      const msg = apiErrorMessage(err, 'Failed to update brand')
       toast.error(msg)
     } finally {
       setIsSaving(false)

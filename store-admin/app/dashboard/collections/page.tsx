@@ -20,6 +20,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Collection } from '@/types'
 import { useIsOwner } from '@/contexts/role'
+import { apiErrorMessage } from '@/lib/utils'
 
 // ── Sortable row ─────────────────────────────────────────────────────────────
 
@@ -151,7 +152,7 @@ export default function CollectionsPage() {
       toast.success('Collection deleted')
       setDeleteTarget(null)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to delete collection'
+      const msg = apiErrorMessage(err, 'Failed to delete collection')
       toast.error(msg)
     } finally {
       setIsDeleting(false)

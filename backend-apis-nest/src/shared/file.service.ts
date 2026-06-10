@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { PutObjectCommand, HeadObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
@@ -7,7 +8,7 @@ import { r2Client } from './r2.client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BucketType, MediaEntity, MediaStatus } from '@prisma/client';
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const ALLOWED_DOC_TYPES = ['application/pdf'];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_DOC_SIZE = 25 * 1024 * 1024;   // 25 MB
@@ -66,7 +67,10 @@ export class FileService {
       ContentType: dto.mimeType,
     });
 
-    const uploadUrl = await getSignedUrl(r2Client, command, { expiresIn: 900 });
+    const uploadUrl = await getSignedUrl(r2Client, command, {
+      expiresIn: 900,
+      unhoistableHeaders: new Set(['content-type']),
+    });
 
     const media = await this.prisma.media.create({
       data: {
@@ -123,72 +127,13 @@ export class FileService {
     return { media: this.formatMedia(updated) };
   }
 
-  async uploadFile(dto: {
-    storeId: string;
-    entityType: MediaEntity;
-    mimeType: string;
-    size: number;
-    visibility: BucketType;
-    originalName: string;
-    uploadedBy: string;
-    buffer: Buffer;
-  }) {
-    this.validateFile(dto.mimeType, dto.size);
-
-    const ext = this.extFromMime(dto.mimeType);
-    const uuid = randomUUID();
-    const folder = ENTITY_FOLDER[dto.entityType] ?? dto.entityType.toLowerCase() + 's';
-    const key = `${dto.storeId}/${folder}/${uuid}.${ext}`;
-    const bucket = dto.visibility === BucketType.PUBLIC ? this.publicBucket : this.privateBucket;
-
-    await r2Client.send(new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: dto.buffer,
-      ContentType: dto.mimeType,
-    }));
-
-    const url = dto.visibility === BucketType.PUBLIC
-      ? `${this.publicUrl}/${key}`
-      : null;
-
-    let thumbnailKey: string | null = null;
-    let thumbnailUrl: string | null = null;
-
-    if (ALLOWED_IMAGE_TYPES.includes(dto.mimeType)) {
-      const result = await this.generateThumbnail(key, dto.entityType, dto.storeId, dto.visibility);
-      thumbnailKey = result.thumbnailKey;
-      thumbnailUrl = result.thumbnailUrl;
-    }
-
-    const media = await this.prisma.media.create({
-      data: {
-        storeId: dto.storeId,
-        key,
-        bucket: dto.visibility,
-        mimeType: dto.mimeType,
-        size: dto.size,
-        originalName: dto.originalName,
-        entityType: dto.entityType,
-        entityId: null,
-        status: MediaStatus.ACTIVE,
-        uploadedBy: dto.uploadedBy,
-        url,
-        thumbnailKey,
-        thumbnailUrl,
-      },
-    });
-
-    return { media: this.formatMedia(media) };
-  }
-
   async getPrivateUrl(mediaId: string, storeId: string, expiresInSeconds = 900) {
     const media = await this.prisma.media.findFirst({
       where: { id: mediaId, storeId, bucket: BucketType.PRIVATE },
     });
     if (!media) throw new NotFoundException('Media not found');
 
-    const command = new HeadObjectCommand({ Bucket: this.privateBucket, Key: media.key });
+    const command = new GetObjectCommand({ Bucket: this.privateBucket, Key: media.key });
     const url = await getSignedUrl(r2Client, command, { expiresIn: expiresInSeconds });
     return { url };
   }
@@ -213,6 +158,7 @@ export class FileService {
     await Promise.all(mediaIds.map(id => this.deleteMedia(id, storeId)));
   }
 
+  @Cron('0 * * * *')
   async cleanupOrphans() {
     const cutoff = new Date(Date.now() - 60 * 60 * 1000);
     const orphans = await this.prisma.media.findMany({
@@ -250,6 +196,7 @@ export class FileService {
       'image/jpeg': 'jpg',
       'image/png':  'png',
       'image/webp': 'webp',
+      'image/avif': 'avif',
       'application/pdf': 'pdf',
     };
     return map[mimeType] ?? 'bin';

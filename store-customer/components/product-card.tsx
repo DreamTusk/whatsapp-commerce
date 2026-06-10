@@ -44,8 +44,8 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
     ? Math.round((1 - p.selling_price / p.original_price!) * 100)
     : null
 
-  // Image takes ~60% of card height
-  const imgHeight = height ? Math.round(height * 0.6) : undefined
+  // Image takes ~55% of card height — leaves enough room for info + button on lg screens
+  const imgHeight = height ? Math.round(height * 0.55) : undefined
 
   async function handleAdd() {
     if (!p.in_stock) return
@@ -169,7 +169,7 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
         </div>
 
         {cartQty > 0 ? (
-          <div className="mt-auto w-full h-[40px] sm:h-[46px] lg:h-[52px] flex items-center justify-between rounded-lg border border-indigo-400 overflow-hidden [font-family:var(--font-instrument-sans)]">
+          <div className="mt-auto w-full h-[40px] sm:h-[46px] flex items-center justify-between rounded-lg border border-indigo-400 overflow-hidden [font-family:var(--font-instrument-sans)]">
             <button onClick={cartQty === 1 ? handleRemove : handleDecrease} disabled={loading}
               className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40"
             >
@@ -191,7 +191,7 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
           <button
             onClick={handleAdd}
             disabled={loading || !p.in_stock || added}
-            className={`mt-auto w-full h-[40px] sm:h-[46px] lg:h-[52px] flex items-center justify-center gap-[6px] lg:gap-[8px] px-[6px] lg:px-[8px] rounded-lg border transition-all font-semibold text-[12px] sm:text-[14px] lg:text-[16px] leading-none tracking-[0px] text-center [font-family:var(--font-instrument-sans)] ${
+            className={`mt-auto w-full h-[40px] sm:h-[46px] flex items-center justify-center gap-[6px] px-[6px] rounded-lg border transition-all font-semibold text-[12px] sm:text-[14px] leading-none tracking-[0px] text-center [font-family:var(--font-instrument-sans)] ${
               added
                 ? 'bg-green-500 border-green-500 text-white'
                 : loading

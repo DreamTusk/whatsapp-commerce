@@ -155,7 +155,14 @@ export class BannersService {
     const storeId = await this.getStoreId(userId);
     const existing = await this.prisma.banner.findFirst({ where: { id: bannerId, storeId } });
     if (!existing) throw new NotFoundException('Banner not found');
+
     await this.prisma.banner.delete({ where: { id: bannerId } });
+
+    const media = await this.prisma.media.findFirst({
+      where: { entityType: 'BANNER', entityId: bannerId, storeId },
+    });
+    if (media) await this.fileService.deleteMedia(media.id, storeId).catch(() => {});
+
     return { message: 'Banner deleted' };
   }
 

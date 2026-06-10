@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../shared/email.service';
-import { StorageService } from '../../shared/storage.service';
 import { buildCriteriaWhere } from '../../utils/collection-criteria';
 
 @Injectable()
@@ -14,7 +13,6 @@ export class StoreService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
-    private storageService: StorageService,
   ) {}
 
   private formatStore(store: {
@@ -44,10 +42,12 @@ export class StoreService {
   }
 
   private formatProductPublic(p: any) {
+    const media = (p.productMedia ?? []);
+    const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: p.id,
       name: p.name,
-      image_url: p.imageUrl,
+      image_url: primary?.media?.url ?? null,
       selling_price: p.sellingPrice,
       original_price: p.originalPrice,
       unit: p.unit,
@@ -55,6 +55,13 @@ export class StoreService {
       category_id: p.categoryId,
     };
   }
+
+  private readonly productMediaInclude = {
+    productMedia: {
+      orderBy: { sortOrder: 'asc' as const },
+      include: { media: { select: { url: true } } },
+    },
+  };
 
   async getStoreInfo(domain: string) {
     if (!domain) throw new BadRequestException('Missing x-store-domain header');
@@ -89,13 +96,14 @@ export class StoreService {
           const cp = await this.prisma.collectionProduct.findMany({
             where: { collectionId: c.id },
             orderBy: { position: 'asc' },
-            include: { product: true },
+            include: { product: { include: this.productMediaInclude } },
           });
           products = cp.map(({ product }) => this.formatProductPublic(product));
         } else {
           const ps = await this.prisma.product.findMany({
             where: buildCriteriaWhere(c.criteria, store.id),
             orderBy: { createdAt: 'desc' },
+            include: this.productMediaInclude,
           });
           products = ps.map((p) => this.formatProductPublic(p));
         }
@@ -142,9 +150,8 @@ export class StoreService {
       name: string; phone: string; domain: string; address?: string;
       min_order_amount?: string; delivery_radius?: string;
       whatsapp_phone_number_id?: string; whatsapp_business_account_id?: string;
-      whatsapp_access_token?: string;
+      whatsapp_access_token?: string; logo_media_id?: string;
     },
-    file?: Express.Multer.File,
   ) {
     const existingUserStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (existingUserStore) throw new ConflictException('You already have a store');
@@ -161,8 +168,9 @@ export class StoreService {
     if (domainExists) throw new ConflictException('Domain already in use');
 
     let logoUrl: string | null = null;
-    if (file) {
-      logoUrl = await this.storageService.uploadImage(file.buffer, 'store-logos') || null;
+    if (body.logo_media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.logo_media_id } });
+      if (media?.url) logoUrl = media.url;
     }
 
     const store = await this.prisma.store.create({
@@ -210,16 +218,16 @@ export class StoreService {
       name?: string; phone?: string; domain?: string; address?: string;
       min_order_amount?: string; delivery_radius?: string; is_active?: string;
       whatsapp_phone_number_id?: string; whatsapp_business_account_id?: string;
-      whatsapp_access_token?: string;
+      whatsapp_access_token?: string; logo_media_id?: string;
     },
-    file?: Express.Multer.File,
   ) {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
 
     let logoUrl: string | undefined = undefined;
-    if (file) {
-      logoUrl = await this.storageService.uploadImage(file.buffer, 'store-logos') || undefined;
+    if (body.logo_media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.logo_media_id } });
+      if (media?.url) logoUrl = media.url;
     }
 
     const store = await this.prisma.store.update({

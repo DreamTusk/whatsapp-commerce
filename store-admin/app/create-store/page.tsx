@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Store, ImagePlus } from 'lucide-react'
+import { Loader2, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
+import { apiErrorMessage } from '@/lib/utils'
 
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_STORE_DOMAIN ?? 'localhost'
 
@@ -22,8 +23,6 @@ function toSlug(value: string): string {
 
 export default function CreateStorePage() {
   const router = useRouter()
-  const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -42,12 +41,6 @@ export default function CreateStorePage() {
     setSlug(toSlug(value))
   }
 
-  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null
-    setLogoFile(file)
-    setLogoPreview(file ? URL.createObjectURL(file) : null)
-  }
-
   function validate() {
     const errs: Record<string, string> = {}
     if (name.trim().length < 2) errs.name = 'Store name must be at least 2 characters'
@@ -64,22 +57,19 @@ export default function CreateStorePage() {
     setErrors({})
     setIsSubmitting(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('phone', phone.trim())
-      formData.append('domain', fullDomain)
-      if (address.trim()) formData.append('address', address.trim())
-      formData.append('min_order_amount', String(parseFloat(minOrderAmount) || 0))
-      if (deliveryRadius) formData.append('delivery_radius', String(parseFloat(deliveryRadius)))
-      if (logoFile) formData.append('logo', logoFile)
-
-      await api.post('/api/store', formData)
+      await api.post('/api/store', {
+        name: name.trim(),
+        phone: phone.trim(),
+        domain: fullDomain,
+        ...(address.trim() && { address: address.trim() }),
+        min_order_amount: String(parseFloat(minOrderAmount) || 0),
+        ...(deliveryRadius && { delivery_radius: String(parseFloat(deliveryRadius)) }),
+      })
       toast.success('Store created! Welcome to your dashboard.')
       router.push('/dashboard')
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Failed to create store. Please try again.'
+        apiErrorMessage(err, 'Failed to create store. Please try again.')
       toast.error(msg)
     } finally {
       setIsSubmitting(false)
@@ -99,25 +89,6 @@ export default function CreateStorePage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <form onSubmit={onSubmit} className="space-y-5">
-
-            {/* Logo */}
-            <div className="space-y-1.5">
-              <Label>Store logo <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-              <label className="flex items-center gap-4 cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
-                  {logoPreview ? (
-                    <img src={logoPreview} alt="preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">{logoPreview ? 'Change logo' : 'Upload logo'}</p>
-                  <p className="text-xs text-gray-400">PNG, JPG up to 5 MB</p>
-                </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
-              </label>
-            </div>
 
             {/* Store name */}
             <div className="space-y-1.5">

@@ -1,17 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { Store, UserRound } from 'lucide-react'
-import GeneralPanel from './panels/general'
-import UsersPanel from './panels/users'
+import { Store, UserRound, Globe, HeartHandshake, ScrollText, Clock } from 'lucide-react'
+import GeneralPanel       from './panels/general'
+import UsersPanel         from './panels/users'
+import DomainPanel        from './panels/domain'
+import SupportSocialPanel from './panels/support-social'
+import PoliciesPanel      from './panels/policies'
+import StoreTimingsPanel  from './panels/store-timings'
 
-/**
- * SETTINGS_TABS — add new entries here to enable more settings sections.
- * Each entry maps to a panel component rendered on the right.
- */
 const SETTINGS_TABS = [
-  { key: 'general', label: 'General',         icon: Store,     component: GeneralPanel },
-  { key: 'users',   label: 'User Management', icon: UserRound, component: UsersPanel   },
+  { key: 'general',        label: 'General',          icon: Store,          component: GeneralPanel       },
+  { key: 'users',          label: 'Staffs',           icon: UserRound,      component: UsersPanel         },
+  { key: 'domain',         label: 'Domain',           icon: Globe,          component: DomainPanel        },
+  { key: 'support-social', label: 'Support & Social', icon: HeartHandshake, component: SupportSocialPanel },
+  { key: 'policies',       label: 'Policies',         icon: ScrollText,     component: PoliciesPanel      },
+  { key: 'store-timings',  label: 'Store timings',    icon: Clock,          component: StoreTimingsPanel  },
 ]
 
 type TabKey = typeof SETTINGS_TABS[number]['key']
@@ -22,13 +26,13 @@ export default function SettingsPage() {
   const ActivePanel = SETTINGS_TABS.find(t => t.key === activeTab)?.component ?? GeneralPanel
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex h-full bg-gray-50 p-4 gap-4 items-start">
 
       {/* ── Left submenu ── */}
-      <aside className="w-52 flex-shrink-0 bg-[#f5f5ff] border border-indigo-100 mt-4 mb-4 ml-4 shadow-sm rounded-xl overflow-hidden self-start h-[50vh]">
-        <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest px-4 pt-3 pb-2">Settings</p>
-        {SETTINGS_TABS.map(({ key, label, icon: Icon }) => {
+      <aside className="w-52 flex-shrink-0 bg-white border border-gray-100 shadow-sm rounded-sm py-3">
+        {SETTINGS_TABS.map(({ key, label, icon: Icon }, i) => {
           const active = activeTab === key
+          const isLast = i === SETTINGS_TABS.length - 1
           return (
             <div key={key}>
               <button
@@ -42,7 +46,7 @@ export default function SettingsPage() {
                 <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                 {label}
               </button>
-              <div className="border-b border-indigo-100 mx-3 my-2" />
+              {!isLast && <div className="h-px bg-indigo-100 mx-3 my-2" />}
             </div>
           )
         })}
@@ -50,14 +54,7 @@ export default function SettingsPage() {
 
       {/* ── Right content ── */}
       <div className="flex-1 overflow-auto">
-        <div className="px-8 py-6">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold text-gray-900">
-              {SETTINGS_TABS.find(t => t.key === activeTab)?.label}
-            </h1>
-          </div>
-          <ActivePanel />
-        </div>
+        <ActivePanel />
       </div>
 
     </div>

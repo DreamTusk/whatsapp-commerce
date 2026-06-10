@@ -14,6 +14,7 @@ import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
 import { AppCombobox } from '@/components/ui/app-combobox'
 import dynamic from 'next/dynamic'
+import { apiErrorMessage } from '@/lib/utils'
 
 const BlockNoteEditor = dynamic(
   () => import('@/components/blocknote-editor/BlockNoteEditor'),
@@ -102,7 +103,7 @@ function NewProductForm() {
       toast.success('Product created')
       router.push('/dashboard/products')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create product'
+      const msg = apiErrorMessage(err, 'Failed to create product')
       toast.error(msg)
     } finally {
       setIsSaving(false)
@@ -228,7 +229,7 @@ function NewProductForm() {
                   <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#6366f1] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors bg-gray-50 hover:bg-[#6366f1]/5 group">
                     <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
                     <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Add</span>
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImagesChange} />
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="hidden" onChange={handleImagesChange} />
                   </label>
                 </div>
 

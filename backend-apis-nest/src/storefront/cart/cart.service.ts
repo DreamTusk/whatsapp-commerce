@@ -1,9 +1,11 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
-const productSelect = {
-  id: true, name: true, imageUrl: true,
-  sellingPrice: true, originalPrice: true, unit: true, inStock: true,
+const productMediaInclude = {
+  productMedia: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: { media: { select: { url: true } } },
+  },
 };
 
 @Injectable()
@@ -11,6 +13,8 @@ export class CartService {
   constructor(private prisma: PrismaService) {}
 
   private formatItem(item: any) {
+    const media = item.product.productMedia ?? [];
+    const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: item.id,
       quantity: item.quantity,
@@ -19,7 +23,7 @@ export class CartService {
       product: {
         id: item.product.id,
         name: item.product.name,
-        image_url: item.product.imageUrl,
+        image_url: primary?.media?.url ?? null,
         selling_price: item.product.sellingPrice,
         original_price: item.product.originalPrice,
         unit: item.product.unit,
@@ -31,7 +35,7 @@ export class CartService {
   async getCart(customerId: string, storeId: string) {
     const items = await this.prisma.cartItem.findMany({
       where: { customerId, storeId },
-      include: { product: { select: productSelect } },
+      include: { product: { include: productMediaInclude } },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -45,7 +49,7 @@ export class CartService {
 
     const product = await this.prisma.product.findFirst({
       where: { id: product_id, storeId, isActive: true },
-      select: productSelect,
+      select: { inStock: true },
     });
     if (!product) throw new NotFoundException('Product not found');
     if (!product.inStock) throw new BadRequestException('Product is out of stock');
@@ -58,11 +62,11 @@ export class CartService {
       ? await this.prisma.cartItem.update({
           where: { customerId_productId: { customerId, productId: product_id } },
           data: { quantity: existing.quantity + quantity },
-          include: { product: { select: productSelect } },
+          include: { product: { include: productMediaInclude } },
         })
       : await this.prisma.cartItem.create({
           data: { customerId, productId: product_id, storeId, quantity },
-          include: { product: { select: productSelect } },
+          include: { product: { include: productMediaInclude } },
         });
 
     return { item: this.formatItem(item) };
@@ -79,7 +83,7 @@ export class CartService {
     const item = await this.prisma.cartItem.update({
       where: { customerId_productId: { customerId, productId } },
       data: { quantity },
-      include: { product: { select: productSelect } },
+      include: { product: { include: productMediaInclude } },
     });
 
     return { item: this.formatItem(item) };

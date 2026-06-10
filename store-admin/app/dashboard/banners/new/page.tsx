@@ -14,6 +14,7 @@ import { useFileUpload } from '@/hooks/useFileUpload'
 import type { Product, Collection } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppCombobox } from '@/components/ui/app-combobox'
+import { apiErrorMessage } from '@/lib/utils'
 
 type BannerType = 'product' | 'collection' | 'url'
 
@@ -81,7 +82,7 @@ export default function NewBannerPage() {
       toast.success('Banner created')
       router.push('/dashboard/banners')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create banner'
+      const msg = apiErrorMessage(err, 'Failed to create banner')
       toast.error(msg)
     } finally {
       setIsSaving(false)
@@ -194,7 +195,7 @@ export default function NewBannerPage() {
                   <span className="text-base text-gray-500 group-hover:text-gray-700">
                     {imagePreview ? 'Change image' : 'Upload image'}
                   </span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleImageChange} />
                 </label>
                 {imagePreview && (
                   <button

@@ -223,7 +223,7 @@ export default function StoreHeaderClient({ store }: Props) {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               {store.logo && (
-                <img src={store.logo.startsWith('http') ? store.logo : `${API_URL}${store.logo}`} alt={store.name} className="w-7 h-7 rounded-lg object-cover" />
+                <img src={store.logo} alt={store.name} className="w-7 h-7 rounded-lg object-cover" />
               )}
               <span className="text-[22px] font-normal leading-none text-violet-600" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
                 {store.name}
@@ -277,7 +277,7 @@ export default function StoreHeaderClient({ store }: Props) {
             <div className="flex items-center gap-4 flex-shrink-0">
               <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
                 {store.logo && (
-                  <img src={store.logo.startsWith('http') ? store.logo : `${API_URL}${store.logo}`} alt={store.name} className="w-8 h-8 rounded-xl object-cover" />
+                  <img src={store.logo} alt={store.name} className="w-8 h-8 rounded-xl object-cover" />
                 )}
                 <span className="text-[30px] font-normal leading-none tracking-normal text-violet-600" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
                   {store.name}

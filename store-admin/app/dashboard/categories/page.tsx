@@ -9,6 +9,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Category } from '@/types'
 import { useIsOwner } from '@/contexts/role'
+import { apiErrorMessage } from '@/lib/utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -44,7 +45,7 @@ export default function CategoriesPage() {
       toast.success('Category deleted')
       setDeleteTarget(null)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to delete category'
+      const msg = apiErrorMessage(err, 'Failed to delete category')
       toast.error(msg)
     } finally {
       setIsDeleting(false)

@@ -7,13 +7,9 @@ import {
   Body,
   Headers,
   UseGuards,
-  UseInterceptors,
-  UploadedFile,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
 import { StoreService } from './store.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -33,13 +29,11 @@ export class StoreController {
   // POST /api/store
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('logo', { storage: memoryStorage() }))
   createStore(
     @CurrentUser() user: { userId: string },
     @Body() body: any,
-    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.storeService.createStore(user.userId, body, file);
+    return this.storeService.createStore(user.userId, body);
   }
 
   // GET /api/store — all authenticated roles can read store info
@@ -53,13 +47,11 @@ export class StoreController {
   @Put()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('OWNER')
-  @UseInterceptors(FileInterceptor('logo', { storage: memoryStorage() }))
   updateStore(
     @CurrentUser() user: { userId: string },
     @Body() body: any,
-    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.storeService.updateStore(user.userId, body, file);
+    return this.storeService.updateStore(user.userId, body);
   }
 
   // DELETE /api/store

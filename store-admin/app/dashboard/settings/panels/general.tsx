@@ -10,8 +10,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Store as StoreType } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+import { apiErrorMessage } from '@/lib/utils'
+import { useFileUpload } from '@/hooks/useFileUpload'
 
 export default function GeneralPanel() {
   const [store, setStore]     = useState<StoreType | null>(null)
@@ -26,10 +26,11 @@ export default function GeneralPanel() {
   const [isActive, setIsActive] = useState(true)
   const [deactivateConfirm, setDeactivateConfirm] = useState(false)
   const [isDeactivating, setIsDeactivating] = useState(false)
-  const [logoFile, setLogoFile]     = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { uploadFile, isUploading } = useFileUpload()
 
   useEffect(() => {
     api.get('/api/store')
@@ -49,8 +50,9 @@ export default function GeneralPanel() {
 
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
-    setLogoFile(file)
-    setLogoPreview(file ? URL.createObjectURL(file) : null)
+    if (!file) return
+    setPendingLogoFile(file)
+    setLogoPreview(URL.createObjectURL(file))
   }
 
   async function handleSave() {
@@ -58,22 +60,26 @@ export default function GeneralPanel() {
     if (!phone.trim()) { toast.error('Phone is required'); return }
     setIsSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('phone', phone.trim())
-      formData.append('address', address.trim())
-      formData.append('min_order_amount', minOrder || '0')
-      if (radius) formData.append('delivery_radius', radius)
-      formData.append('is_active', String(isActive))
-      if (logoFile) formData.append('logo', logoFile)
+      let logoMediaId: string | undefined
+      if (pendingLogoFile) {
+        logoMediaId = await uploadFile(pendingLogoFile, { entityType: 'STORE' })
+      }
 
-      const res = await api.put('/api/store', formData)
+      const res = await api.put('/api/store', {
+        name: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        min_order_amount: minOrder || '0',
+        ...(radius && { delivery_radius: radius }),
+        is_active: String(isActive),
+        ...(logoMediaId && { logo_media_id: logoMediaId }),
+      })
       setStore(res.data.store)
-      setLogoFile(null)
+      setPendingLogoFile(null)
       setLogoPreview(null)
       toast.success('Store updated')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update store'
+      const msg = apiErrorMessage(err, 'Failed to update store')
       toast.error(msg)
     } finally {
       setIsSaving(false)
@@ -107,7 +113,7 @@ export default function GeneralPanel() {
     }
   }
 
-  const currentLogo = logoPreview ?? (store?.logo ? (store.logo.startsWith('http') ? store.logo : `${API_URL}${store.logo}`) : null)
+  const currentLogo = logoPreview ?? store?.logo ?? null
 
   if (loading) {
     return (
@@ -118,64 +124,74 @@ export default function GeneralPanel() {
   }
 
   return (
-    <div className="max-w-lg mx-auto space-y-5">
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+    <div className="space-y-5">
+    <div className="bg-white border rounded-sm border-gray-100 shadow-sm p-6 space-y-6">
+
+      {/* Header */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900">Store details</h2>
+        <p className="text-sm text-gray-400 mt-0.5">Update and customize your store's information.</p>
+      </div>
 
       {/* Logo */}
       <div className="space-y-2">
-        <Label className="text-base">Logo</Label>
+        <Label className="text-sm font-medium text-gray-700">Logo</Label>
         <label className="flex items-center gap-4 cursor-pointer group w-fit">
-          <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+          <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
             {currentLogo ? (
               <img src={currentLogo} alt="logo" className="w-full h-full object-cover" />
             ) : (
               <div className="flex flex-col items-center gap-1">
-                <Store className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                <ImagePlus className="w-4 h-4 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                <Store className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
               </div>
             )}
           </div>
-          <span className="text-base text-gray-500 group-hover:text-gray-700">
+          <span className="text-sm text-gray-500 group-hover:text-gray-700">
             {currentLogo ? 'Change logo' : 'Upload logo'}
           </span>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleLogoChange} />
         </label>
       </div>
 
       {/* Fields */}
       <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Label className="text-base">Store name <span className="text-destructive">*</span></Label>
-          <Input className="text-base h-11" value={name} onChange={e => setName(e.target.value)} placeholder="My Store" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-base">Phone <span className="text-destructive">*</span></Label>
-          <Input className="text-base h-11" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-base">Address <span className="text-gray-400 font-normal text-sm">(optional)</span></Label>
-          <Input className="text-base h-11" value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St, City" />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-base">Min order (₹)</Label>
-            <Input className="text-base h-11" type="number" min={0} value={minOrder} onChange={e => setMinOrder(e.target.value)} />
+            <Label className="text-sm font-medium text-gray-700">Store name <span className="text-destructive">*</span></Label>
+            <Input className="h-11" value={name} onChange={e => setName(e.target.value)} placeholder="My Store" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-base">Delivery radius (km) <span className="text-gray-400 font-normal text-sm">(optional)</span></Label>
-            <Input className="text-base h-11" type="number" min={0} step={0.1} value={radius} onChange={e => setRadius(e.target.value)} placeholder="e.g. 5" />
+            <Label className="text-sm font-medium text-gray-700">Phone <span className="text-destructive">*</span></Label>
+            <Input className="h-11" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-gray-700">Address <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+          <Input className="h-11" value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St, City" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-gray-700">Min order (₹)</Label>
+            <Input className="h-11" type="number" min={0} value={minOrder} onChange={e => setMinOrder(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-gray-700">Delivery radius (km) <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+            <Input className="h-11" type="number" min={0} step={0.1} value={radius} onChange={e => setRadius(e.target.value)} placeholder="e.g. 5" />
           </div>
         </div>
       </div>
 
-      <Button
-        className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white h-11 text-base"
-        onClick={handleSave}
-        disabled={isSaving}
-      >
-        {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-        {isSaving ? 'Saving…' : 'Save changes'}
-      </Button>
+      <div className="flex justify-end pt-2">
+        <Button
+          className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-10 px-6"
+          onClick={handleSave}
+          disabled={isSaving || isUploading}
+        >
+          {(isSaving || isUploading) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {isUploading ? 'Uploading logo…' : isSaving ? 'Saving…' : 'Save changes'}
+        </Button>
+      </div>
 
     </div>
 

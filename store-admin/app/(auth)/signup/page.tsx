@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
+import { apiErrorMessage } from '@/lib/utils'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -49,8 +50,7 @@ export default function SignupPage() {
       router.push('/verify-email')
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Signup failed. Please try again.'
+        apiErrorMessage(err, 'Signup failed. Please try again.')
       toast.error(msg)
     }
   }

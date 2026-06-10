@@ -1,67 +1,5 @@
-// This is your Prisma schema file
-
 generator client {
   provider = "prisma-client-js"
-}
-
-enum CollectionType {
-  MANUAL
-  AUTO
-}
-
-enum BucketType {
-  PUBLIC
-  PRIVATE
-}
-
-enum MediaStatus {
-  PENDING
-  ACTIVE
-}
-
-enum MediaEntity {
-  PRODUCT
-  CATEGORY
-  BANNER
-  STORE
-  INVOICE
-  DOCUMENT
-}
-
-enum BannerType {
-  PRODUCT
-  COLLECTION
-  URL
-}
-
-enum Role {
-  OWNER
-  STAFF
-}
-
-enum OrderStatus {
-  NEW
-  CONFIRMED
-  OUT_FOR_DELIVERY
-  DELIVERED
-  CANCELLED
-}
-
-enum OrderSource {
-  CUSTOMER
-  MANUAL
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
-}
-
-enum PaymentMethod {
-  COD
-  ONLINE
 }
 
 datasource db {
@@ -69,187 +7,131 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Store {
-  id                        String   @id @default(cuid())
-  name                      String
-  phone                     String   @unique
-  whatsappPhoneNumberId     String?  @unique
-  whatsappBusinessAccountId String?
-  whatsappAccessToken       String?
-  domain                    String?  @unique
-  catalogId                 String?
-  address                   String?
-  logo                      String?
-  minOrderAmount            Float    @default(0)
-  deliveryRadius            Float?
-  isActive                  Boolean  @default(true)
-  customerAuthMethods       String[] @default(["PHONE_OTP"])
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+model Banner {
+  id           String      @id
+  storeId      String
+  name         String
+  type         BannerType
+  imageUrl     String?
+  isActive     Boolean     @default(true)
+  displayOrder Int         @default(0)
+  productId    String?
+  collectionId String?
+  url          String?
+  startsAt     DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime
+  Collection   Collection? @relation(fields: [collectionId], references: [id])
+  Product      Product?    @relation(fields: [productId], references: [id])
+  Store        Store       @relation(fields: [storeId], references: [id])
 
-  brands            Brand[]
-  categories        Category[]
-  products          Product[]
-  orders            Order[]
-  customers         Customer[]
-  cartItems         CartItem[]
-  wishlistItems     WishlistItem[]
-  customerOtps      CustomerOtp[]
-  userStores        UserStore[]
-  storeInvites      StoreInvite[]
-  customerAddresses CustomerAddress[]
-  collections       Collection[]
-  banners           Banner[]
-  media             Media[]
-}
-
-model User {
-  id               String            @id @default(cuid())
-  name             String
-  email            String            @unique
-  password         String
-  isVerified       Boolean           @default(false)
-  createdAt        DateTime          @default(now())
-  userStores       UserStore[]
-  refreshTokens    RefreshToken[]
-  otpVerifications OtpVerification[]
-  media            Media[]
-}
-
-model OtpVerification {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  otp       String
-  isUsed    Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-}
-
-model UserStore {
-  id        String   @id @default(cuid())
-  userId    String
-  storeId   String
-  role      Role     @default(OWNER)
-  isActive  Boolean  @default(true)
-  user      User     @relation(fields: [userId], references: [id])
-  store     Store    @relation(fields: [storeId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@unique([userId, storeId])
-}
-
-model StoreInvite {
-  id        String   @id @default(cuid())
-  storeId   String
-  store     Store    @relation(fields: [storeId], references: [id])
-  email     String
-  role      Role     @default(STAFF)
-  token     String   @unique
-  isUsed    Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@unique([email, storeId])
-}
-
-model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  isRevoked Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  @@index([storeId])
 }
 
 model Brand {
-  id        String    @id @default(cuid())
+  id        String    @id
   name      String
   storeId   String
-  store     Store     @relation(fields: [storeId], references: [id])
-  products  Product[]
   createdAt DateTime  @default(now())
+  Store     Store     @relation(fields: [storeId], references: [id])
+  Product   Product[]
 
   @@unique([name, storeId])
 }
 
-model Category {
-  id        String     @id @default(cuid())
-  name      String
-  imageUrl  String?
-  isActive  Boolean    @default(true)
-  parentId  String?
-  parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
-  children  Category[] @relation("CategoryChildren")
-  storeId   String
-  store     Store      @relation(fields: [storeId], references: [id])
-  products  Product[]
-  createdAt DateTime   @default(now())
+model CartItem {
+  id         String   @id
+  customerId String
+  productId  String
+  storeId    String
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Customer   Customer @relation(fields: [customerId], references: [id])
+  Product    Product  @relation(fields: [productId], references: [id])
+  Store      Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([customerId, productId])
 }
 
-model Product {
-  id            String   @id @default(cuid())
-  name          String
-  description   String?
-  isActive      Boolean  @default(true)
-  sellingPrice  Float    @default(0)
-  originalPrice Float?
-  unit          String?
-  inStock       Boolean  @default(true)
-  brandId       String?
-  brand         Brand?   @relation(fields: [brandId], references: [id])
-  categoryId    String
-  category      Category @relation(fields: [categoryId], references: [id])
-  storeId       String
-  store         Store    @relation(fields: [storeId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model Category {
+  id             String     @id
+  name           String
+  imageUrl       String?
+  isActive       Boolean    @default(true)
+  parentId       String?
+  storeId        String
+  createdAt      DateTime   @default(now())
+  Category       Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  other_Category Category[] @relation("CategoryToCategory")
+  Store          Store      @relation(fields: [storeId], references: [id])
+  Product        Product[]
+}
 
-  orderItems         OrderItem[]
-  wishlistItems      WishlistItem[]
-  cartItems          CartItem[]
-  collectionProducts CollectionProduct[]
-  banners            Banner[]
-  productMedia       ProductMedia[]
+model Collection {
+  id                String              @id
+  storeId           String
+  name              String
+  type              CollectionType
+  criteria          Json?
+  isActive          Boolean             @default(true)
+  displayOrder      Int                 @default(0)
+  imageUrl          String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  Banner            Banner[]
+  Store             Store               @relation(fields: [storeId], references: [id])
+  CollectionProduct CollectionProduct[]
+}
+
+model CollectionProduct {
+  id           String     @id
+  collectionId String
+  productId    String
+  position     Int        @default(0)
+  addedAt      DateTime   @default(now())
+  Collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  Product      Product    @relation(fields: [productId], references: [id])
+
+  @@unique([collectionId, productId])
+}
+
+model ConversationSession {
+  id         String   @id
+  customerId String
+  state      String   @default("WELCOME")
+  cartData   Json     @default("[]")
+  storeId    String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Customer   Customer @relation(fields: [customerId], references: [id])
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  phone     String?
-  email     String?
-  name      String?
-  storeId   String
-  store     Store    @relation(fields: [storeId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  orders         Order[]
-  cartItems      CartItem[]
-  wishlistItems  WishlistItem[]
-  sessions       ConversationSession[]
-  addresses      CustomerAddress[]
-  customerTokens CustomerToken[]
+  id                  String                @id
+  phone               String?
+  email               String?
+  name                String?
+  storeId             String
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  CartItem            CartItem[]
+  ConversationSession ConversationSession[]
+  Store               Store                 @relation(fields: [storeId], references: [id])
+  CustomerAddress     CustomerAddress[]
+  CustomerToken       CustomerToken[]
+  Order               Order[]
+  WishlistItem        WishlistItem[]
 
   @@unique([phone, storeId])
 }
 
-model CustomerToken {
-  id         String   @id @default(cuid())
-  jti        String   @unique
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-  isRevoked  Boolean  @default(false)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-}
-
 model CustomerAddress {
-  id         String   @id @default(cuid())
+  id         String   @id
   customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
   storeId    String
-  store      Store    @relation(fields: [storeId], references: [id])
   label      String?
   address    String?
   doorNo     String?
@@ -262,39 +144,70 @@ model CustomerAddress {
   longitude  Float?
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime
+  Customer   Customer @relation(fields: [customerId], references: [id])
+  Store      Store    @relation(fields: [storeId], references: [id])
 }
 
 model CustomerOtp {
-  id        String   @id @default(cuid())
+  id        String   @id
   phone     String
   storeId   String
-  store     Store    @relation(fields: [storeId], references: [id])
   otp       String
   isUsed    Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  Store     Store    @relation(fields: [storeId], references: [id])
 }
 
-model ConversationSession {
-  id         String   @id @default(cuid())
+model CustomerToken {
+  id         String   @id
+  jti        String   @unique
   customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-  state      String   @default("WELCOME")
-  cartData   Json     @default("[]")
-  storeId    String
+  isRevoked  Boolean  @default(false)
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  Customer   Customer @relation(fields: [customerId], references: [id])
+}
+
+model Media {
+  id           String         @id
+  storeId      String
+  key          String         @unique
+  bucket       BucketType
+  url          String?
+  mimeType     String
+  size         Int
+  originalName String
+  entityType   MediaEntity
+  entityId     String?
+  status       MediaStatus    @default(PENDING)
+  thumbnailKey String?
+  thumbnailUrl String?
+  uploadedBy   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  Store        Store          @relation(fields: [storeId], references: [id])
+  User         User?          @relation(fields: [uploadedBy], references: [id])
+  ProductMedia ProductMedia[]
+}
+
+model MessageLog {
+  id            String   @id
+  storeId       String
+  customerPhone String
+  direction     String
+  messageType   String
+  content       Json
+  whatsappMsgId String?
+  createdAt     DateTime @default(now())
 }
 
 model Order {
-  id                 String      @id @default(cuid())
+  id                 String      @id
   orderNumber        String
   customerId         String
-  customer           Customer    @relation(fields: [customerId], references: [id])
   storeId            String
-  store              Store       @relation(fields: [storeId], references: [id])
   totalAmount        Float
   status             OrderStatus @default(NEW)
   address            String?
@@ -310,166 +223,243 @@ model Order {
   altPhone           String?
   cancellationReason String?
   cancelledBy        String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime
   createdBy          String?
   source             OrderSource @default(CUSTOMER)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-
-  items   OrderItem[]
-  payment Payment?
+  Customer           Customer    @relation(fields: [customerId], references: [id])
+  Store              Store       @relation(fields: [storeId], references: [id])
+  OrderItem          OrderItem[]
+  Payment            Payment?
 
   @@unique([storeId, orderNumber])
 }
 
 model OrderItem {
-  id          String  @id @default(cuid())
+  id          String  @id
   orderId     String
-  order       Order   @relation(fields: [orderId], references: [id])
   productId   String
-  product     Product @relation(fields: [productId], references: [id])
   productName String
   price       Float
   quantity    Int
   subtotal    Float
+  Order       Order   @relation(fields: [orderId], references: [id])
+  Product     Product @relation(fields: [productId], references: [id])
+}
+
+model OtpVerification {
+  id        String   @id
+  userId    String
+  otp       String
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
 }
 
 model Payment {
-  id                String        @id @default(cuid())
+  id                String        @id
   orderId           String        @unique
-  order             Order         @relation(fields: [orderId], references: [id])
   method            PaymentMethod
   status            PaymentStatus @default(PENDING)
   razorpayLinkId    String?
   razorpayPaymentId String?
   paidAt            DateTime?
   createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  updatedAt         DateTime
+  Order             Order         @relation(fields: [orderId], references: [id])
 }
 
-model CartItem {
-  id         String   @id @default(cuid())
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-  storeId    String
-  store      Store    @relation(fields: [storeId], references: [id])
-  quantity   Int      @default(1)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@unique([customerId, productId])
-}
-
-model WishlistItem {
-  id         String   @id @default(cuid())
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-  storeId    String
-  store      Store    @relation(fields: [storeId], references: [id])
-  createdAt  DateTime @default(now())
-
-  @@unique([customerId, productId])
-}
-
-model MessageLog {
-  id            String   @id @default(cuid())
-  storeId       String
-  customerPhone String
-  direction     String
-  messageType   String
-  content       Json
-  whatsappMsgId String?
-  createdAt     DateTime @default(now())
-}
-
-model Collection {
-  id           String         @id @default(cuid())
-  storeId      String
-  store        Store          @relation(fields: [storeId], references: [id])
-  name         String
-  type         CollectionType
-  criteria     Json?
-  isActive     Boolean        @default(true)
-  displayOrder Int            @default(0)
-  imageUrl     String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-
-  products CollectionProduct[]
-  banners  Banner[]
-}
-
-model CollectionProduct {
-  id           String     @id @default(cuid())
-  collectionId String
-  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  productId    String
-  product      Product    @relation(fields: [productId], references: [id])
-  position     Int        @default(0)
-  addedAt      DateTime   @default(now())
-
-  @@unique([collectionId, productId])
-}
-
-model Banner {
-  id           String     @id @default(cuid())
-  storeId      String
-  store        Store      @relation(fields: [storeId], references: [id])
-  name         String
-  type         BannerType
-  imageUrl     String?
-  isActive     Boolean    @default(true)
-  displayOrder Int        @default(0)
-
-  productId    String?
-  product      Product?    @relation(fields: [productId], references: [id])
-  collectionId String?
-  collection   Collection? @relation(fields: [collectionId], references: [id])
-  url          String?
-
-  startsAt     DateTime?
-  expiresAt    DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@index([storeId])
-}
-
-model Media {
-  id           String      @id @default(cuid())
-  storeId      String
-  store        Store       @relation(fields: [storeId], references: [id])
-  key          String      @unique
-  bucket       BucketType
-  url          String?
-  mimeType     String
-  size         Int
-  originalName String
-  entityType   MediaEntity
-  entityId     String?
-  status       MediaStatus @default(PENDING)
-  thumbnailKey String?
-  thumbnailUrl String?
-  uploadedBy   String?
-  user         User?       @relation(fields: [uploadedBy], references: [id])
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  productMedia ProductMedia[]
+model Product {
+  id                String              @id
+  name              String
+  description       String?
+  isActive          Boolean             @default(true)
+  sellingPrice      Float               @default(0)
+  originalPrice     Float?
+  unit              String?
+  inStock           Boolean             @default(true)
+  brandId           String?
+  categoryId        String
+  storeId           String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  Banner            Banner[]
+  CartItem          CartItem[]
+  CollectionProduct CollectionProduct[]
+  OrderItem         OrderItem[]
+  Brand             Brand?              @relation(fields: [brandId], references: [id])
+  Category          Category            @relation(fields: [categoryId], references: [id])
+  Store             Store               @relation(fields: [storeId], references: [id])
+  ProductMedia      ProductMedia[]
+  WishlistItem      WishlistItem[]
 }
 
 model ProductMedia {
-  id        String   @id @default(cuid())
+  id        String   @id
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   mediaId   String
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   isPrimary Boolean  @default(false)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  Media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  Product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, mediaId])
+}
+
+model RefreshToken {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model Store {
+  id                        String            @id
+  name                      String
+  phone                     String            @unique
+  whatsappPhoneNumberId     String?           @unique
+  whatsappBusinessAccountId String?
+  whatsappAccessToken       String?
+  domain                    String?           @unique
+  catalogId                 String?
+  address                   String?
+  logo                      String?
+  minOrderAmount            Float             @default(0)
+  deliveryRadius            Float?
+  isActive                  Boolean           @default(true)
+  customerAuthMethods       String[]          @default(["PHONE_OTP"])
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime
+  Banner                    Banner[]
+  Brand                     Brand[]
+  CartItem                  CartItem[]
+  Category                  Category[]
+  Collection                Collection[]
+  Customer                  Customer[]
+  CustomerAddress           CustomerAddress[]
+  CustomerOtp               CustomerOtp[]
+  Media                     Media[]
+  Order                     Order[]
+  Product                   Product[]
+  StoreInvite               StoreInvite[]
+  UserStore                 UserStore[]
+  WishlistItem              WishlistItem[]
+}
+
+model StoreInvite {
+  id        String   @id
+  storeId   String
+  email     String
+  role      Role     @default(STAFF)
+  token     String   @unique
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  Store     Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([email, storeId])
+}
+
+model User {
+  id              String            @id
+  name            String
+  email           String            @unique
+  password        String
+  isVerified      Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  Media           Media[]
+  OtpVerification OtpVerification[]
+  RefreshToken    RefreshToken[]
+  UserStore       UserStore[]
+}
+
+model UserStore {
+  id        String   @id
+  userId    String
+  storeId   String
+  role      Role     @default(OWNER)
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+  Store     Store    @relation(fields: [storeId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, storeId])
+}
+
+model WishlistItem {
+  id         String   @id
+  customerId String
+  productId  String
+  storeId    String
+  createdAt  DateTime @default(now())
+  Customer   Customer @relation(fields: [customerId], references: [id])
+  Product    Product  @relation(fields: [productId], references: [id])
+  Store      Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([customerId, productId])
+}
+
+enum BannerType {
+  PRODUCT
+  COLLECTION
+  URL
+}
+
+enum BucketType {
+  PUBLIC
+  PRIVATE
+}
+
+enum CollectionType {
+  MANUAL
+  AUTO
+}
+
+enum MediaEntity {
+  PRODUCT
+  CATEGORY
+  BANNER
+  STORE
+  INVOICE
+  DOCUMENT
+}
+
+enum MediaStatus {
+  PENDING
+  ACTIVE
+}
+
+enum OrderSource {
+  CUSTOMER
+  MANUAL
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+  ONLINE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum Role {
+  OWNER
+  STAFF
 }

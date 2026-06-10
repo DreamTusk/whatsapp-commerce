@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
+import { apiErrorMessage } from '@/lib/utils'
 
 const OTP_LENGTH = 6
 
@@ -83,8 +84,7 @@ function ResetPasswordForm() {
       router.push('/login')
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Reset failed. Try again.'
+        apiErrorMessage(err, 'Reset failed. Try again.')
       toast.error(msg)
     }
   }

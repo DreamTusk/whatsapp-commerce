@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import api from '@/lib/api'
 import type { Order } from '@/types'
+import { apiErrorMessage } from '@/lib/utils'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
@@ -122,7 +123,7 @@ export default function OrderDetailPage() {
       setOrder(res.data.order)
       toast.success(`Order ${STATUS_DISPLAY[nextStatus].toLowerCase()}`)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update status'
+      const msg = apiErrorMessage(err, 'Failed to update status')
       toast.error(msg)
     } finally {
       setIsAdvancing(false)
@@ -143,7 +144,7 @@ export default function OrderDetailPage() {
       setShowCancelForm(false)
       setCancelReason('')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to cancel order'
+      const msg = apiErrorMessage(err, 'Failed to cancel order')
       toast.error(msg)
     } finally {
       setIsCancelling(false)

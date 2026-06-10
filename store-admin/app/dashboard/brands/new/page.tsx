@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
+import { apiErrorMessage } from '@/lib/utils'
 
 export default function NewBrandPage() {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function NewBrandPage() {
       toast.success('Brand created')
       router.push('/dashboard/brands')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create brand'
+      const msg = apiErrorMessage(err, 'Failed to create brand')
       toast.error(msg)
     } finally {
       setIsSaving(false)

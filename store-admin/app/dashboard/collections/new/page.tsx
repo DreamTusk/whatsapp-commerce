@@ -12,6 +12,7 @@ import type { Product, Category, Brand } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppSelect } from '@/components/ui/app-select'
 import { AppCombobox } from '@/components/ui/app-combobox'
+import { apiErrorMessage } from '@/lib/utils'
 
 interface CriteriaRow { id: string; field: string; operator: string; value: string }
 
@@ -111,7 +112,7 @@ export default function NewCollectionPage() {
       toast.success('Collection created')
       router.push('/dashboard/collections')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create collection'
+      const msg = apiErrorMessage(err, 'Failed to create collection')
       toast.error(msg)
     } finally {
       setFormIsSaving(false)

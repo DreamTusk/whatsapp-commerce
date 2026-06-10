@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import type { Brand } from '@/types'
 import { useIsOwner } from '@/contexts/role'
+import { apiErrorMessage } from '@/lib/utils'
 
 export default function BrandsPage() {
   const isOwner = useIsOwner()
@@ -44,7 +45,7 @@ export default function BrandsPage() {
       setAddOpen(false)
       setAddName('')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create brand'
+      const msg = apiErrorMessage(err, 'Failed to create brand')
       toast.error(msg)
     } finally {
       setIsSavingAdd(false)
@@ -62,7 +63,7 @@ export default function BrandsPage() {
       setEditTarget(null)
       setEditName('')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update brand'
+      const msg = apiErrorMessage(err, 'Failed to update brand')
       toast.error(msg)
     } finally {
       setIsSavingEdit(false)
@@ -78,7 +79,7 @@ export default function BrandsPage() {
       toast.success('Brand deleted')
       setDeleteTarget(null)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to delete brand'
+      const msg = apiErrorMessage(err, 'Failed to delete brand')
       toast.error(msg)
     } finally {
       setIsDeleting(false)

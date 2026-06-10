@@ -12,6 +12,7 @@ import { useFileUpload } from '@/hooks/useFileUpload'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppCombobox } from '@/components/ui/app-combobox'
 import type { Category } from '@/types'
+import { apiErrorMessage } from '@/lib/utils'
 
 export default function NewCategoryPage() {
   const router = useRouter()
@@ -55,7 +56,7 @@ export default function NewCategoryPage() {
       toast.success('Category created')
       router.push('/dashboard/categories')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create category'
+      const msg = apiErrorMessage(err, 'Failed to create category')
       toast.error(msg)
     } finally {
       setIsSaving(false)
@@ -100,7 +101,7 @@ export default function NewCategoryPage() {
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
                   </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleImageChange} />
                 </label>
                 {imagePreview && (
                   <button

@@ -1,9 +1,11 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
-const productSelect = {
-  id: true, name: true, imageUrl: true,
-  sellingPrice: true, originalPrice: true, unit: true, inStock: true,
+const productInclude = {
+  productMedia: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: { media: { select: { url: true } } },
+  },
 };
 
 @Injectable()
@@ -11,13 +13,15 @@ export class WishlistService {
   constructor(private prisma: PrismaService) {}
 
   private formatItem(item: any) {
+    const media = item.product.productMedia ?? [];
+    const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: item.id,
       created_at: item.createdAt,
       product: {
         id: item.product.id,
         name: item.product.name,
-        image_url: item.product.imageUrl,
+        image_url: primary?.media?.url ?? null,
         selling_price: item.product.sellingPrice,
         original_price: item.product.originalPrice,
         unit: item.product.unit,
@@ -29,7 +33,7 @@ export class WishlistService {
   async getWishlist(customerId: string, storeId: string) {
     const items = await this.prisma.wishlistItem.findMany({
       where: { customerId, storeId },
-      include: { product: { select: productSelect } },
+      include: { product: { include: productInclude } },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -49,7 +53,7 @@ export class WishlistService {
 
     const item = await this.prisma.wishlistItem.create({
       data: { customerId, productId: product_id, storeId },
-      include: { product: { select: productSelect } },
+      include: { product: { include: productInclude } },
     });
 
     return { item: this.formatItem(item) };

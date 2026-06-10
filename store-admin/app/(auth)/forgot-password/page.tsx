@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
+import { apiErrorMessage } from '@/lib/utils'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -34,8 +35,7 @@ export default function ForgotPasswordPage() {
       router.push(`/reset-password?email=${encodeURIComponent(data.email)}`)
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Something went wrong. Try again.'
+        apiErrorMessage(err, 'Something went wrong. Try again.')
       toast.error(msg)
     }
   }

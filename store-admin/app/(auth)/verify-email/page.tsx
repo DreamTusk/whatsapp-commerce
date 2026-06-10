@@ -7,6 +7,7 @@ import { Loader2, MailCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
+import { apiErrorMessage } from '@/lib/utils'
 
 const OTP_LENGTH = 6
 
@@ -84,8 +85,7 @@ function VerifyEmailForm() {
       }
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Invalid or expired code. Try again.'
+        apiErrorMessage(err, 'Invalid or expired code. Try again.')
       toast.error(msg)
     } finally {
       setIsSubmitting(false)
@@ -100,8 +100,7 @@ function VerifyEmailForm() {
       toast.success('New verification code sent to your email.')
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Failed to resend. Try again.'
+        apiErrorMessage(err, 'Failed to resend. Try again.')
       toast.error(msg)
     } finally {
       setIsResending(false)

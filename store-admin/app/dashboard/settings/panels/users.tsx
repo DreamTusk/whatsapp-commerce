@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
-import { UserRound, Mail, Plus, Trash2, Clock } from 'lucide-react'
+import { Search, Plus, MoreVertical } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,30 +15,31 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { StoreUser, StoreInvite } from '@/types'
 
-type Tab = 'members' | 'invites'
+const INVITE_ROLES = [{ value: 'STAFF', label: 'Staff' }]
+
+function roleLabel(role: string) {
+  if (role === 'OWNER') return 'Owner'
+  return 'Staff - Store'
+}
 
 export default function UsersPanel() {
-  const [tab, setTab] = useState<Tab>('members')
-  const [members, setMembers] = useState<StoreUser[]>([])
-  const [invites, setInvites] = useState<StoreInvite[]>([])
-  const [loading, setLoading] = useState(true)
+  const [members, setMembers]   = useState<StoreUser[]>([])
+  const [invites, setInvites]   = useState<StoreInvite[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [search, setSearch]     = useState('')
 
-  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteOpen, setInviteOpen]   = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState('')
-  const [inviting, setInviting] = useState(false)
+  const [inviteRole, setInviteRole]   = useState('STAFF')
+  const [inviting, setInviting]       = useState(false)
 
-  // Roles available in the invite dropdown — add more here when ready
-  const INVITE_ROLES = [
-    { value: 'STAFF', label: 'Staff' },
-  ]
-
-  const [removeTarget, setRemoveTarget] = useState<StoreUser | null>(null)
+  const [removeTarget,     setRemoveTarget]     = useState<StoreUser | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<StoreUser | null>(null)
-  const [cancelTarget, setCancelTarget] = useState<StoreInvite | null>(null)
-  const [actionLoading, setActionLoading] = useState(false)
+  const [cancelTarget,     setCancelTarget]     = useState<StoreInvite | null>(null)
+  const [actionLoading,    setActionLoading]    = useState(false)
 
   async function fetchAll() {
     setLoading(true)
@@ -50,7 +51,7 @@ export default function UsersPanel() {
       setMembers(membersRes.data.members)
       setInvites(invitesRes.data.invites)
     } catch {
-      toast.error('Failed to load users')
+      toast.error('Failed to load staff')
     } finally {
       setLoading(false)
     }
@@ -58,12 +59,22 @@ export default function UsersPanel() {
 
   useEffect(() => { fetchAll() }, [])
 
+  const q = search.toLowerCase()
+  const filteredMembers = useMemo(
+    () => members.filter(m => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)),
+    [members, q],
+  )
+  const filteredInvites = useMemo(
+    () => invites.filter(i => i.email.toLowerCase().includes(q)),
+    [invites, q],
+  )
+
   async function sendInvite() {
     if (!inviteEmail.trim()) return
     setInviting(true)
     try {
       await api.post('/api/invite', { email: inviteEmail.trim(), role: inviteRole })
-      toast.success('Invite sent — check the server console for the link')
+      toast.success('Invite sent')
       setInviteEmail('')
       setInviteRole('STAFF')
       setInviteOpen(false)
@@ -76,19 +87,12 @@ export default function UsersPanel() {
   }
 
   async function toggleStatus(member: StoreUser) {
-    if (member.is_active) {
-      // Deactivating — show confirm first
-      setDeactivateTarget(member)
-      return
-    }
-    // Reactivating — call API immediately
+    if (member.is_active) { setDeactivateTarget(member); return }
     try {
       await api.put(`/api/users/${member.id}`, { is_active: true })
       toast.success(`${member.name} activated`)
       setMembers(prev => prev.map(m => m.id === member.id ? { ...m, is_active: true } : m))
-    } catch {
-      toast.error('Failed to activate user')
-    }
+    } catch { toast.error('Failed to activate') }
   }
 
   async function confirmDeactivate() {
@@ -99,11 +103,7 @@ export default function UsersPanel() {
       toast.success(`${deactivateTarget.name} deactivated`)
       setMembers(prev => prev.map(m => m.id === deactivateTarget.id ? { ...m, is_active: false } : m))
       setDeactivateTarget(null)
-    } catch {
-      toast.error('Failed to deactivate user')
-    } finally {
-      setActionLoading(false)
-    }
+    } catch { toast.error('Failed to deactivate') } finally { setActionLoading(false) }
   }
 
   async function removeMember() {
@@ -114,11 +114,7 @@ export default function UsersPanel() {
       toast.success(`${removeTarget.name} removed`)
       setMembers(prev => prev.filter(m => m.id !== removeTarget.id))
       setRemoveTarget(null)
-    } catch {
-      toast.error('Failed to remove user')
-    } finally {
-      setActionLoading(false)
-    }
+    } catch { toast.error('Failed to remove') } finally { setActionLoading(false) }
   }
 
   async function cancelInvite() {
@@ -129,187 +125,158 @@ export default function UsersPanel() {
       toast.success('Invite cancelled')
       setInvites(prev => prev.filter(i => i.id !== cancelTarget.id))
       setCancelTarget(null)
-    } catch {
-      toast.error('Failed to cancel invite')
-    } finally {
-      setActionLoading(false)
-    }
+    } catch { toast.error('Failed to cancel invite') } finally { setActionLoading(false) }
   }
 
-  function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
-
-  const staffMembers = members.filter(m => m.role === 'STAFF')
-  const ownerMembers = members.filter(m => m.role !== 'STAFF')
+  const owner = members.find(m => m.role === 'OWNER')
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="bg-white border rounded-sm border-gray-100 shadow-sm p-6 space-y-5">
 
-      {/* Invite button */}
-      <div className="flex justify-end">
-        <Button onClick={() => setInviteOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Invite Staff
+      {/* Header */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900">Staff accounts</h2>
+        <p className="text-sm text-gray-400 mt-0.5">Control and assign roles for your team members here.</p>
+      </div>
+
+      {/* Search + Add */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            className="pl-9 h-10 text-sm w-full"
+            placeholder="Search staff account"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <Button
+          onClick={() => setInviteOpen(true)}
+          className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-10 px-4 text-sm gap-1.5 flex-shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add staff
         </Button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
-        {(['members', 'invites'] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize cursor-pointer ${
-              tab === t
-                ? 'border-[#6366f1] text-[#6366f1]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {t === 'members' ? `Members (${members.length})` : `Pending Invites (${invites.length})`}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
-          ))}
+      {/* Table */}
+      <div className="border border-gray-100 rounded-xl overflow-hidden">
+        {/* Table header */}
+        <div className="grid grid-cols-[2fr_1fr_2fr_40px] bg-gray-50 px-4 py-2.5 border-b border-gray-100">
+          <span className="text-xs font-semibold text-gray-500">Name</span>
+          <span className="text-xs font-semibold text-gray-500">Role</span>
+          <span className="text-xs font-semibold text-gray-500">Contact details</span>
+          <span />
         </div>
-      ) : tab === 'members' ? (
 
-        <div className="space-y-6">
-          {/* Store owners/admins — read only */}
-          {ownerMembers.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Owners</p>
-              <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">
-                {ownerMembers.map(member => (
-                  <div key={member.id} className="flex items-center gap-4 px-4 py-3.5">
-                    <div className="w-9 h-9 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-semibold text-[#6366f1]">
-                        {member.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{member.name}</p>
-                      <p className="text-xs text-gray-400 truncate">{member.email}</p>
-                    </div>
-                    <span className="text-xs font-medium text-[#6366f1] bg-[#6366f1]/10 px-2.5 py-1 rounded-full">
-                      {member.role}
+        {loading ? (
+          <div className="divide-y divide-gray-50">
+            {[1, 2].map(i => (
+              <div key={i} className="h-14 px-4 flex items-center">
+                <div className="h-4 w-48 bg-gray-100 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {/* Owner row — always first, no actions */}
+            {owner && (
+              <div className="grid grid-cols-[2fr_1fr_2fr_40px] px-4 py-3.5 items-center">
+                <span className="text-sm font-medium text-gray-900">
+                  {owner.name} <span className="text-xs text-gray-400 font-normal">(You)</span>
+                </span>
+                <span className="text-sm text-gray-600">{roleLabel(owner.role)}</span>
+                <span className="text-sm text-gray-500">{owner.email}</span>
+                <span />
+              </div>
+            )}
+
+            {/* Active/inactive staff members */}
+            {filteredMembers.filter(m => m.role !== 'OWNER').map(member => (
+              <div key={member.id} className="grid grid-cols-[2fr_1fr_2fr_40px] px-4 py-3.5 items-center">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-900">{member.name}</span>
+                  {!member.is_active && (
+                    <span className="text-[11px] font-medium bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                      INACTIVE
                     </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Staff members */}
-          <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Staff</p>
-            {staffMembers.length === 0 ? (
-              <div className="bg-white rounded-xl border border-dashed border-gray-200 py-12 flex flex-col items-center gap-2 text-gray-400">
-                <UserRound className="w-8 h-8" />
-                <p className="text-sm font-medium">No staff members yet</p>
-                <p className="text-xs">Invite someone to give them access</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">
-                {staffMembers.map(member => (
-                  <div key={member.id} className="flex items-center gap-4 px-4 py-3.5">
-                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-semibold text-gray-600">
-                        {member.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{member.name}</p>
-                      <p className="text-xs text-gray-400 truncate">{member.email}</p>
-                    </div>
-                    <p className="text-xs text-gray-400 hidden sm:block flex-shrink-0">
-                      Joined {formatDate(member.joined_at)}
-                    </p>
-                    {/* Active / Inactive toggle */}
+                  )}
+                </div>
+                <span className="text-sm text-gray-600">{roleLabel(member.role)}</span>
+                <span className="text-sm text-gray-500">{member.email}</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-36 p-1">
                     <button
                       onClick={() => toggleStatus(member)}
-                      className={`relative w-10 h-5.5 rounded-full transition-colors flex-shrink-0 focus:outline-none cursor-pointer ${
-                        member.is_active ? 'bg-green-400' : 'bg-gray-200'
-                      }`}
-                      style={{ height: '22px', width: '40px' }}
-                      title={member.is_active ? 'Deactivate' : 'Activate'}
+                      className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
                     >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${
-                          member.is_active ? 'translate-x-[18px]' : 'translate-x-0'
-                        }`}
-                      />
+                      {member.is_active ? 'Deactivate' : 'Activate'}
                     </button>
-                    <span className={`text-xs font-medium w-16 text-center hidden sm:block flex-shrink-0 ${
-                      member.is_active ? 'text-green-600' : 'text-gray-400'
-                    }`}>
-                      {member.is_active ? 'Active' : 'Inactive'}
-                    </span>
                     <button
                       onClick={() => setRemoveTarget(member)}
-                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0 cursor-pointer"
-                      title="Remove"
+                      className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 text-red-500 transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      Remove
                     </button>
-                  </div>
-                ))}
+                  </PopoverContent>
+                </Popover>
+              </div>
+            ))}
+
+            {/* Pending invites */}
+            {filteredInvites.map(invite => (
+              <div key={invite.id} className="grid grid-cols-[2fr_1fr_2fr_40px] px-4 py-3.5 items-center">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-900">{invite.email.split('@')[0]}</span>
+                  <span className="text-[11px] font-medium bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded">
+                    PENDING
+                  </span>
+                </div>
+                <span className="text-sm text-gray-600">{roleLabel(invite.role)}</span>
+                <span className="text-sm text-gray-500">{invite.email}</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-36 p-1">
+                    <button
+                      onClick={() => setCancelTarget(invite)}
+                      className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-100 text-red-500 transition-colors"
+                    >
+                      Cancel invite
+                    </button>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            ))}
+
+            {/* Empty state */}
+            {!loading && filteredMembers.filter(m => m.role !== 'OWNER').length === 0 && filteredInvites.length === 0 && !owner && (
+              <div className="py-12 flex flex-col items-center gap-2 text-gray-400">
+                <p className="text-sm font-medium">No staff found</p>
+                {search && <p className="text-xs">Try a different search term</p>}
               </div>
             )}
           </div>
-        </div>
-
-      ) : (
-
-        // Pending invites tab
-        <div>
-          {invites.length === 0 ? (
-            <div className="bg-white rounded-xl border border-dashed border-gray-200 py-12 flex flex-col items-center gap-2 text-gray-400">
-              <Mail className="w-8 h-8" />
-              <p className="text-sm font-medium">No pending invites</p>
-              <p className="text-xs">Invited users will appear here until they accept</p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">
-              {invites.map(invite => (
-                <div key={invite.id} className="flex items-center gap-4 px-4 py-3.5">
-                  <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{invite.email}</p>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <Clock className="w-3 h-3 text-gray-300" />
-                      <p className="text-xs text-gray-400">Expires {formatDate(invite.expires_at)}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full flex-shrink-0">
-                    Pending
-                  </span>
-                  <button
-                    onClick={() => setCancelTarget(invite)}
-                    className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0 cursor-pointer"
-                    title="Cancel invite"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Invite modal */}
-      <Dialog open={inviteOpen} onOpenChange={open => { setInviteOpen(open); if (!open) { setInviteEmail(''); setInviteRole('') } }} disablePointerDismissal>
+      <Dialog
+        open={inviteOpen}
+        onOpenChange={open => { setInviteOpen(open); if (!open) { setInviteEmail(''); setInviteRole('STAFF') } }}
+        disablePointerDismissal
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite Staff Member</DialogTitle>
+            <DialogTitle>Add staff member</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
@@ -327,24 +294,25 @@ export default function UsersPanel() {
               <AppSelect
                 value={inviteRole}
                 onValueChange={setInviteRole}
-                placeholder="Select a role"
-                options={INVITE_ROLES.map(r => ({ value: r.value, label: r.label }))}
+                options={INVITE_ROLES}
               />
             </div>
-            <p className="text-xs text-gray-400">
-              The invite link will appear in the server console.
-            </p>
+            <p className="text-xs text-gray-400">The invite link will appear in the server console.</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
-            <Button onClick={sendInvite} disabled={inviting || !inviteEmail.trim() || !inviteRole}>
-              {inviting ? 'Sending…' : 'Send Invite'}
+            <Button
+              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+              onClick={sendInvite}
+              disabled={inviting || !inviteEmail.trim()}
+            >
+              {inviting ? 'Sending…' : 'Send invite'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Remove member confirm */}
+      {/* Remove confirm */}
       <AlertDialog open={!!removeTarget} onOpenChange={open => !open && setRemoveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -355,11 +323,7 @@ export default function UsersPanel() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600 text-white"
-              onClick={removeMember}
-              disabled={actionLoading}
-            >
+            <AlertDialogAction className="bg-red-500 hover:bg-red-600 text-white" onClick={removeMember} disabled={actionLoading}>
               {actionLoading ? 'Removing…' : 'Remove'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -372,38 +336,30 @@ export default function UsersPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel invite?</AlertDialogTitle>
             <AlertDialogDescription>
-              The invite sent to <span className="font-semibold">{cancelTarget?.email}</span> will be cancelled and the link will stop working.
+              The invite sent to <span className="font-semibold">{cancelTarget?.email}</span> will be cancelled.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600 text-white"
-              onClick={cancelInvite}
-              disabled={actionLoading}
-            >
-              {actionLoading ? 'Cancelling…' : 'Cancel Invite'}
+            <AlertDialogAction className="bg-red-500 hover:bg-red-600 text-white" onClick={cancelInvite} disabled={actionLoading}>
+              {actionLoading ? 'Cancelling…' : 'Cancel invite'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Deactivate member confirm */}
+      {/* Deactivate confirm */}
       <AlertDialog open={!!deactivateTarget} onOpenChange={open => !open && setDeactivateTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate {deactivateTarget?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              They will no longer be able to log in to the store. You can reactivate them at any time.
+              They will no longer be able to log in. You can reactivate them at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600 text-white"
-              onClick={confirmDeactivate}
-              disabled={actionLoading}
-            >
+            <AlertDialogAction className="bg-red-500 hover:bg-red-600 text-white" onClick={confirmDeactivate} disabled={actionLoading}>
               {actionLoading ? 'Deactivating…' : 'Deactivate'}
             </AlertDialogAction>
           </AlertDialogFooter>

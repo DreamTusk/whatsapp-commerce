@@ -1,6 +1,4 @@
-import { Controller, Post, Delete, Param, Body, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { Controller, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { FileService } from '../../shared/file.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -11,27 +9,6 @@ import { BucketType, MediaEntity } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class FilesController {
   constructor(private fileService: FileService) {}
-
-  // POST /api/files/upload — proxy upload (browser → backend → R2)
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
-  async upload(
-    @CurrentUser() user: { userId: string },
-    @UploadedFile() file: Express.Multer.File,
-    @Body() body: { entity_type: string; visibility?: string },
-  ) {
-    const storeId = await this.fileService.getStoreId(user.userId);
-    return this.fileService.uploadFile({
-      storeId,
-      entityType: body.entity_type as MediaEntity,
-      mimeType: file.mimetype,
-      size: file.size,
-      visibility: (body.visibility as BucketType) ?? BucketType.PUBLIC,
-      originalName: file.originalname,
-      uploadedBy: user.userId,
-      buffer: file.buffer,
-    });
-  }
 
   // POST /api/files/upload-url
   @Post('upload-url')

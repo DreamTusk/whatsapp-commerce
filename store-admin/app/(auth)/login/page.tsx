@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
+import { apiErrorMessage } from '@/lib/utils'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -84,7 +85,7 @@ export default function LoginPage() {
       toast.success('Verification code sent! Check your email.')
       router.push(`/verify-email?email=${encodeURIComponent(unverified.email)}`)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to send code. Try again.'
+      const msg = apiErrorMessage(err, 'Failed to send code. Try again.')
       toast.error(msg)
     } finally {
       setIsSending(false)

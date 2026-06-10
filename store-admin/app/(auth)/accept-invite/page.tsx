@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
+import { apiErrorMessage } from '@/lib/utils'
 
 interface InviteDetails {
   email: string
@@ -87,7 +88,7 @@ function AcceptInviteForm() {
       })
       await finalise(res.data.access_token, res.data.refresh_token)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to accept invite.'
+      const msg = apiErrorMessage(err, 'Failed to accept invite.')
       toast.error(msg)
       setIsSubmitting(false)
     }
@@ -99,7 +100,7 @@ function AcceptInviteForm() {
       const res = await api.post('/api/auth/accept-invite', { token })
       await finalise(res.data.access_token, res.data.refresh_token)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to accept invite.'
+      const msg = apiErrorMessage(err, 'Failed to accept invite.')
       toast.error(msg)
       setIsSubmitting(false)
     }

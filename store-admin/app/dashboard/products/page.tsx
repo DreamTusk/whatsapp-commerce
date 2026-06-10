@@ -11,6 +11,7 @@ import { AppCombobox } from '@/components/ui/app-combobox'
 import api from '@/lib/api'
 import type { Product, Category, Brand } from '@/types'
 import { useIsOwner } from '@/contexts/role'
+import { apiErrorMessage } from '@/lib/utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -78,7 +79,7 @@ export default function ProductsPage() {
       toast.success('Product deleted')
       setDeleteTarget(null)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to delete product'
+      const msg = apiErrorMessage(err, 'Failed to delete product')
       toast.error(msg)
     } finally {
       setIsDeleting(false)
