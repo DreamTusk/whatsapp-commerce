@@ -5,8 +5,10 @@ import { AuthProvider } from '@/contexts/auth'
 import { CartProvider } from '@/contexts/cart'
 import { CartDrawerProvider } from '@/contexts/cart-drawer'
 import { WishlistProvider } from '@/contexts/wishlist'
+import NextTopLoader from 'nextjs-toploader'
 import BottomNav from '@/components/bottom-nav'
 import CartDrawer from '@/components/cart-drawer'
+import StoreHeader from '@/components/store-header'
 import { apiFetch } from '@/lib/api'
 import type { Store } from '@/types'
 import './globals.css'
@@ -32,14 +34,19 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers()
+  const domain = headersList.get('x-store-domain') ?? ''
+
   return (
     <html lang="en" className={`${geist.className} ${instrumentSans.variable}`}>
       <body className="min-h-screen bg-white text-gray-900 antialiased pb-16 lg:pb-0">
+        <NextTopLoader color="#6366f1" height={3} showSpinner={false} />
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
               <CartDrawerProvider>
+                <StoreHeader domain={domain} />
                 {children}
                 <BottomNav />
                 <CartDrawer />

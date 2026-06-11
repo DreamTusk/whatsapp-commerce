@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -61,7 +61,7 @@ export default function NewBrandPage() {
             onClick={handleSave}
             disabled={isSaving}
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            {isSaving ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
             {isSaving ? 'Saving…' : 'Add brand'}
           </Button>
         </div>

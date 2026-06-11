@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Search, Plus, Minus, Trash2, UserPlus, X } from 'lucide-react'
+import { ArrowLeft, Search, Plus, Minus, Trash2, UserPlus, X } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

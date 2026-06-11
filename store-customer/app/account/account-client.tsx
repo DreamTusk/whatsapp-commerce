@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
+import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, X } from "@deemlol/next-icons"
+
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -51,7 +53,7 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-export default function AccountClient() {
+export default function AccountClient({ storeName }: { storeName?: string }) {
   const { customer, isAuthenticated, initialized, requireAuth, logout, updateCustomer } = useAuth()
   const { refresh: cartRefresh } = useCart()
   const { openCart } = useCartDrawer()
@@ -288,7 +290,7 @@ export default function AccountClient() {
       <button onClick={useCurrentLocation} disabled={locating}
         className="w-full flex items-center gap-3 p-3 rounded-xl border-2 border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-60"
       >
-        {locating ? <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" /> : <svg className="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+        {locating ? <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" /> : <MapPin className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
         <span className="text-sm font-semibold text-indigo-700">{locating ? 'Detecting…' : 'Use current location'}</span>
       </button>
       <div>
@@ -330,10 +332,10 @@ export default function AccountClient() {
 
   // ── NAV ITEMS ────────────────────────────────────────────────────────────────
   const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'profile', label: 'Profile', icon: <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> },
-    { id: 'orders', label: 'Orders', icon: <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg> },
-    { id: 'addresses', label: 'Addresses', icon: <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
-    { id: 'wishlist', label: 'Wishlist', icon: <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg> },
+    { id: 'profile', label: 'Profile', icon: <User /> },
+    { id: 'orders', label: 'Orders', icon: <Package />},
+    { id: 'addresses', label: 'Addresses', icon: <MapPin /> },
+    { id: 'wishlist', label: 'Wishlist', icon: <Heart /> },
   ]
 
   // ── MOBILE SIDEBAR ───────────────────────────────────────────────────────────
@@ -342,7 +344,7 @@ export default function AccountClient() {
       <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div className="px-4 h-14 flex items-center gap-2">
           <Link href="/" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <h1 className="font-bold text-gray-900 flex-1 text-base">Settings</h1>
         </div>
@@ -366,7 +368,7 @@ export default function AccountClient() {
           >
             <span className="text-gray-400 flex-shrink-0">{item.icon}</span>
             <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
-            <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
           </button>
         ))}
         {/* Section divider */}
@@ -374,7 +376,7 @@ export default function AccountClient() {
         {/* Personal section */}
         <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Personal</p>
         <button onClick={confirmLogout} className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 text-gray-700 hover:bg-gray-50 transition-colors">
-          <svg className="w-[18px] h-[18px] text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          <LogOut className="w-[18px] h-[18px] text-gray-400 flex-shrink-0" />
           <span className="text-sm font-medium">Logout</span>
         </button>
       </div>
@@ -386,7 +388,7 @@ export default function AccountClient() {
     <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
       <div className="px-4 h-14 flex items-center gap-2">
         <button onClick={() => { setMobilePanelOpen(false); setShowAddrForm(false) }} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
         <h1 className="font-bold text-gray-900 flex-1 text-base">{title}</h1>
       </div>
@@ -465,7 +467,7 @@ export default function AccountClient() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-400 flex items-center gap-1">
                         View details
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                        <ChevronRight className="w-3 h-3" />
                       </span>
                       <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
                         className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl bg-violet-100 text-violet-700 hover:bg-violet-200 disabled:opacity-50 transition-colors"
@@ -508,7 +510,7 @@ export default function AccountClient() {
                   ) : (
                     addresses.map(addr => (
                       <div key={addr.id} className="flex items-start gap-3 px-4 py-4">
-                        <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-semibold text-gray-800">{addr.label ?? 'Address'}</p>
@@ -520,10 +522,10 @@ export default function AccountClient() {
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button onClick={() => openEditAddress(addr)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            <Edit className="w-4 h-4" />
                           </button>
                           <button onClick={() => setDeleteAddrConfirmId(addr.id)} disabled={deletingId === addr.id} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
-                            {deletingId === addr.id ? <div className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+                            {deletingId === addr.id ? <div className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin" /> : <Trash className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
@@ -534,7 +536,7 @@ export default function AccountClient() {
                   <button onClick={() => { setShowAddrForm(true); setEditingAddress(null); setAddrForm(EMPTY_FORM); setAddrFormError('') }}
                     className="flex items-center gap-1.5 text-sm font-semibold text-indigo-500 hover:text-indigo-700 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                    <Plus className="w-4 h-4" />
                     Add New Address
                   </button>
                 </div>
@@ -588,7 +590,7 @@ export default function AccountClient() {
 
   // ── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
   const desktopSidebar = (
-    <div>
+    <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 py-5">
         <div className="w-11 h-11 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
           <span className="text-base font-bold text-white leading-none">{initial}</span>
@@ -616,11 +618,17 @@ export default function AccountClient() {
       <div className="border-t border-gray-200/60 mx-4" />
       <div className="px-3 py-4">
         <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-2 mb-2">Personal</p>
-        <button onClick={confirmLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-white/60 transition-colors">
-          <svg className="w-[18px] h-[18px] flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          <span className="text-sm font-medium">Logout</span>
-        </button>
+        <div className="flex justify-center mt-6">
+          <button onClick={confirmLogout} className="px-8 py-2 rounded-full border border-red-400 text-red-500 text-sm font-medium hover:bg-red-50 transition-colors">
+            Log Out
+          </button>
+        </div>
       </div>
+      {storeName && (
+        <div className="mt-auto px-5 pb-5">
+          <p className="text-2xl font-bold text-gray-300 text-center">{storeName}</p>
+        </div>
+      )}
     </div>
   )
 
@@ -667,7 +675,7 @@ export default function AccountClient() {
       <div className="p-3 bg-red-50 rounded-xl">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            <X className="w-4 h-4 text-red-500" />
           </div>
           <div>
             <p className="font-semibold text-red-600 text-sm">Order cancelled</p>
@@ -686,7 +694,7 @@ export default function AccountClient() {
             <div key={step.status} className={`flex gap-3 ${!isLast ? 'flex-1' : ''}`}>
               <div className="flex flex-col items-center">
                 <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-indigo-500 border-indigo-500' : 'bg-white border-gray-200'} ${active ? 'ring-4 ring-indigo-100' : ''}`}>
-                  {done && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                  {done && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
                 </div>
                 {!isLast && <div className={`w-0.5 flex-1 my-1 rounded-full ${currentStep > idx ? 'bg-indigo-400' : 'bg-gray-100'}`} />}
               </div>
@@ -704,7 +712,7 @@ export default function AccountClient() {
         {/* Back */}
         <div className="flex-shrink-0 px-5 pt-4 pb-3 border-b border-gray-100">
           <button onClick={backToOrders} className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            <ChevronLeft className="w-4 h-4" />
             Back to orders
           </button>
         </div>
@@ -757,7 +765,7 @@ export default function AccountClient() {
                 <div className="bg-white rounded-xl p-4 border border-gray-100">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery address</p>
                   <div className="flex items-start gap-3">
-                    <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-gray-700 leading-relaxed">{o.address}</p>
                   </div>
                 </div>
@@ -897,7 +905,7 @@ export default function AccountClient() {
         ? <p className="px-5 py-8 text-sm text-gray-400 text-center">No saved addresses</p>
         : addresses.map(addr => (
             <div key={addr.id} className="flex items-start gap-3 px-5 py-4">
-              <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-gray-800">{addr.label ?? 'Address'}</p>
@@ -908,10 +916,10 @@ export default function AccountClient() {
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button onClick={() => openEditAddress(addr)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  <Edit className="w-4 h-4" />
                 </button>
                 <button onClick={() => setDeleteAddrConfirmId(addr.id)} disabled={deletingId === addr.id} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
-                  {deletingId === addr.id ? <div className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+                  {deletingId === addr.id ? <div className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin" /> : <Trash className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -934,7 +942,7 @@ export default function AccountClient() {
             <button onClick={() => { setShowAddrForm(true); setEditingAddress(null); setAddrForm(EMPTY_FORM); setAddrFormError('') }}
               className="flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+              <Plus className="w-3.5 h-3.5" />
               Add New Address
             </button>
           </div>

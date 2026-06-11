@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { clientFetch } from '@/lib/client-api'
 import PageHeader from '@/components/page-header'
 import type { Order } from '@/types'
+import { X, Check, MapPin, CreditCard } from "@deemlol/next-icons"
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
@@ -105,9 +106,7 @@ export default function OrderDetailClient() {
         <div className="p-4 bg-red-50 rounded-xl">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5 text-red-500" />
             </div>
             <div>
               <p className="font-semibold text-red-600 text-sm">Order cancelled</p>
@@ -135,11 +134,7 @@ export default function OrderDetailClient() {
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                     done ? 'bg-indigo-500 border-indigo-500' : 'bg-white border-gray-200'
                   } ${active ? 'ring-4 ring-indigo-100' : ''}`}>
-                    {done && (
-                      <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
+                    {done && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
                   </div>
                   {!isLast && (
                     <div className={`w-0.5 flex-1 my-1 min-h-[32px] rounded-full ${done && currentStep > idx ? 'bg-indigo-400' : 'bg-gray-150'}`}
@@ -211,10 +206,7 @@ export default function OrderDetailClient() {
         <div className="px-6 py-4 border-b border-gray-100">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery address</p>
           <div className="flex items-start gap-3">
-            <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm text-gray-700 leading-relaxed">{order.address}</p>
               {order.notes && <p className="text-xs text-gray-400 italic mt-1">{order.notes}</p>}
@@ -229,9 +221,7 @@ export default function OrderDetailClient() {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Payment</p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
+              <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <p className="text-sm text-gray-700">{order.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}</p>
             </div>
             <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
@@ -306,7 +296,7 @@ export default function OrderDetailClient() {
                 return (
                   <div key={step.status} className="relative flex flex-col items-center gap-2 w-1/4">
                     <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'bg-indigo-500 border-indigo-500' : 'bg-white border-gray-200'} ${active ? 'ring-4 ring-indigo-100' : ''}`}>
-                      {done && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                      {done && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
                     </div>
                     <p className={`text-center leading-tight text-[11px] font-medium ${done ? 'text-indigo-600' : 'text-gray-400'}`}>{step.label}</p>
                   </div>
@@ -318,7 +308,7 @@ export default function OrderDetailClient() {
           <div className="bg-red-50 border border-red-100 rounded-2xl p-5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <X className="w-5 h-5 text-red-500" />
               </div>
               <div>
                 <p className="font-semibold text-red-600">Order cancelled</p>
@@ -364,7 +354,7 @@ export default function OrderDetailClient() {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery address</p>
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <MapPin className="w-4 h-4 text-indigo-500" />
               </div>
               <div>
                 <p className="text-sm text-gray-700 leading-relaxed">{order.address}</p>
@@ -381,7 +371,7 @@ export default function OrderDetailClient() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                  <CreditCard className="w-4 h-4 text-indigo-500" />
                 </div>
                 <p className="text-sm text-gray-700">{order.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}</p>
               </div>

@@ -1,16 +1,8 @@
-import { headers } from 'next/headers'
-import StoreHeader from '@/components/store-header'
 import OrderDetailClient from './order-detail-client'
 
-export default async function OrderDetailPage() {
-  const headersList = await headers()
-  const domain = headersList.get('x-store-domain') ?? ''
-
+export default function OrderDetailPage() {
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
-      <div className="hidden lg:block">
-        <StoreHeader domain={domain} />
-      </div>
       <OrderDetailClient />
     </main>
   )

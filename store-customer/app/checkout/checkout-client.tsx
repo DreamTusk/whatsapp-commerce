@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
 import type { Cart, Order } from '@/types'
+import { Check, X, MapPin, CreditCard } from "@deemlol/next-icons"
 
 type LocationState = 'idle' | 'requesting' | 'granted' | 'denied'
 
@@ -265,13 +266,13 @@ export default function CheckoutClient() {
           }`}
         >
           {locationState === 'granted' ? (
-            <><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>Location set</>
+            <><Check className="w-3 h-3" />Location set</>
           ) : locationState === 'requesting' ? (
             <><svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Detecting…</>
           ) : locationState === 'denied' ? (
-            <><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>Denied</>
+            <><X className="w-3 h-3" />Denied</>
           ) : (
-            <><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>Use location</>
+            <><MapPin className="w-3 h-3" />Use location</>
           )}
         </button>
       </div>
@@ -358,9 +359,7 @@ export default function CheckoutClient() {
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Payment</p>
       <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
         <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-          </svg>
+          <CreditCard className="w-4 h-4 text-indigo-600" />
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-900">Cash on delivery</p>
@@ -368,9 +367,7 @@ export default function CheckoutClient() {
         </div>
         <div className="ml-auto flex-shrink-0">
           <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
-            <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+            <Check className="w-2.5 h-2.5 text-white" />
           </span>
         </div>
       </div>

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Store, UserRound, Globe, HeartHandshake, ScrollText, Clock } from 'lucide-react'
+import { Globe, Clock } from '@deemlol/next-icons'
+import { Store, UserRound, HeartHandshake, ScrollText } from 'lucide-react'
 import GeneralPanel       from './panels/general'
 import UsersPanel         from './panels/users'
 import DomainPanel        from './panels/domain'

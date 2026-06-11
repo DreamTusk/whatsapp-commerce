@@ -3,7 +3,8 @@
 import { Suspense, useRef, useState, useEffect, KeyboardEvent, ClipboardEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, MailCheck } from 'lucide-react'
+import { Loader } from '@deemlol/next-icons'
+import { MailCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
@@ -151,7 +152,7 @@ function VerifyEmailForm() {
           className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isSubmitting ? 'Verifying…' : 'Verify email'}
         </Button>
       </div>

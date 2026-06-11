@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from '@deemlol/next-icons'
 import type { Banner } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -119,6 +120,20 @@ export default function BannerCarousel({ banners }: { banners: Banner[] }) {
             </Link>
           )
         })}
+
+        {/* Left / right arrows */}
+        <button
+          onClick={e => { e.preventDefault(); prev(); resetTimer() }}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4 text-white" />
+        </button>
+        <button
+          onClick={e => { e.preventDefault(); next(); resetTimer() }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-white" />
+        </button>
 
         {/* Dot indicators */}
         <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">

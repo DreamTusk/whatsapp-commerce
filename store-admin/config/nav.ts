@@ -1,7 +1,5 @@
-import {
-  LayoutDashboard, ShoppingBag, Package, Tag,
-  Users, Settings, BookMarked, Warehouse, Layers, Image,
-} from 'lucide-react'
+import { ShoppingBag, Package, Users, Settings } from '@deemlol/next-icons'
+import { LayoutDashboard, Tag, BookMarked, Warehouse, Layers, Image } from 'lucide-react'
 
 /**
  * roles: [] — visible to everyone

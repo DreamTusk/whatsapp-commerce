@@ -3,7 +3,8 @@
 import { useState, useEffect, type ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Pencil, Menu, X, Store } from 'lucide-react'
+import { LogOut, Edit, Menu, X } from '@deemlol/next-icons'
+import { Store } from 'lucide-react'
 import api from '@/lib/api'
 import { auth } from '@/lib/auth'
 import {
@@ -109,7 +110,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 onClick={() => setSidebarOpen(false)}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
               >
-                <Pencil className="w-3.5 h-3.5" />
+                <Edit className="w-3.5 h-3.5" />
               </Link>
             )}
           </div>

@@ -2,7 +2,6 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import StoreHeader from '@/components/store-header'
 import ProductCard from '@/components/product-card'
 import type { Product } from '@/types'
 
@@ -34,8 +33,6 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
 
   return (
     <main className="min-h-screen pb-24">
-      <StoreHeader domain={domain} />
-
       <div className="page-x pt-5 pb-2">
         <div className="flex items-center gap-2 mb-1">
           <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Home</Link>
@@ -62,7 +59,6 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
                 key={p.id}
                 product={p}
                 scrollable={false}
-                height={409}
                 source={{ type: 'all' }}
               />
             ))}

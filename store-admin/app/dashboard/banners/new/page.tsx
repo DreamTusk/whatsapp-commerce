@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader, X } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -104,7 +104,7 @@ export default function NewBannerPage() {
       <div className="flex-1 overflow-auto min-h-0 px-6 pb-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <Loader className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         ) : (
           <div className="max-w-lg mx-auto space-y-5 pt-2">
@@ -243,7 +243,7 @@ export default function NewBannerPage() {
               onClick={handleSave}
               disabled={isSaving || isUploading}
             >
-              {(isSaving || isUploading) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {(isSaving || isUploading) && <Loader className="w-4 h-4 animate-spin mr-2" />}
               {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add banner'}
             </Button>
           </div>

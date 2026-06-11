@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/cart'
 import { useAuth } from '@/contexts/auth'
 import { clientFetch } from '@/lib/client-api'
 import { getGuestCart, updateGuestQty, type GuestCartItem } from '@/lib/guest-cart'
+import { X, ChevronRight, Plus } from "@deemlol/next-icons"
 import type { Cart, CustomerAddress } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -153,9 +154,7 @@ export default function CartDrawer() {
             onClick={closeCart}
             className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -362,12 +361,10 @@ export default function CartDrawer() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => addresses.length > 0 ? setShowAddressPicker(true) : router.push('/checkout')}
+                    onClick={() => addresses.length > 0 ? setShowAddressPicker(true) : (closeCart(), router.push('/checkout'))}
                     className="w-full flex items-center gap-2 p-3 rounded-xl border border-dashed border-indigo-300 text-indigo-500 text-sm font-medium hover:bg-indigo-50 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
+                    <Plus className="w-4 h-4" />
                     {addresses.length > 0 ? 'Select delivery address' : 'Add delivery address'}
                   </button>
                 )}
@@ -385,9 +382,7 @@ export default function CartDrawer() {
               className="w-full flex items-center justify-between bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-semibold py-3.5 px-5 rounded-2xl text-sm transition-colors"
             >
               <span>Sign in &amp; Checkout</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -402,9 +397,7 @@ export default function CartDrawer() {
               <span>Proceed to Checkout</span>
               <div className="flex items-center gap-2">
                 <span className="font-bold">₹{subtotal}</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight className="w-4 h-4" />
               </div>
             </button>
           </div>

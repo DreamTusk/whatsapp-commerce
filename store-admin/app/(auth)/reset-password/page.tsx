@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Loader, ArrowLeft } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -187,7 +187,7 @@ function ResetPasswordForm() {
           className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isSubmitting ? 'Resetting…' : 'Reset password'}
         </Button>
       </form>

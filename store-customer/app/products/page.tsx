@@ -1,7 +1,6 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import StoreHeader from '@/components/store-header'
 import ProductCard from '@/components/product-card'
 import type { Product, Category } from '@/types'
 
@@ -20,20 +19,15 @@ export default async function ProductsPage({ searchParams }: Props) {
   let categories: Category[] = []
 
   try {
-    const catData = await apiFetch<{ categories: Category[] }>('/api/storefront/categories', domain)
+    const prodPath = search
+      ? `/api/storefront/search?q=${encodeURIComponent(search)}`
+      : categoryId ? `/api/storefront/products?category_id=${categoryId}` : '/api/storefront/products'
+    const [catData, prodData] = await Promise.all([
+      apiFetch<{ categories: Category[] }>('/api/storefront/categories', domain),
+      apiFetch<{ products: Product[] }>(prodPath, domain),
+    ])
     categories = catData.categories
-
-    if (search) {
-      const searchData = await apiFetch<{ products: Product[] }>(
-        `/api/storefront/search?q=${encodeURIComponent(search)}`,
-        domain
-      )
-      products = searchData.products
-    } else {
-      const qs = categoryId ? `?category_id=${categoryId}` : ''
-      const prodData = await apiFetch<{ products: Product[] }>(`/api/storefront/products${qs}`, domain)
-      products = prodData.products
-    }
+    products = prodData.products
   } catch { /* backend unavailable */ }
 
   const activeCategory = categories.find(c => c.id === categoryId)
@@ -41,9 +35,6 @@ export default async function ProductsPage({ searchParams }: Props) {
   return (
     // Full viewport height, flex column so header + panels fit exactly
     <main className="h-screen flex flex-col overflow-hidden">
-
-      <StoreHeader domain={domain} />
-
       {/* Panel row — fills remaining height, each column scrolls independently */}
       <div className="page-x flex flex-1 min-h-0 bg-gray-50">
 
@@ -135,8 +126,6 @@ export default async function ProductsPage({ searchParams }: Props) {
                   key={p.id}
                   product={p}
                   scrollable={false}
-                  width={210}
-                  height={409}
                   source={activeCategory
                     ? { type: 'category', id: activeCategory.id, name: activeCategory.name }
                     : { type: 'products' }

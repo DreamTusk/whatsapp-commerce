@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Loader2, Warehouse, Search } from 'lucide-react'
+import { Loader, Search } from '@deemlol/next-icons'
+import { Warehouse } from 'lucide-react'
 import api from '@/lib/api'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -88,7 +89,7 @@ export default function InventoryPage() {
       <div className="flex-1 min-h-0 px-6 pt-6 pb-4 flex flex-col">
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader className="w-6 h-6 animate-spin text-gray-400" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
@@ -135,7 +136,7 @@ export default function InventoryPage() {
                       className="h-9 w-full text-[14px] px-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       {toggling === product.id
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        ? <Loader className="w-4 h-4 animate-spin" />
                         : product.in_stock ? 'Mark out' : 'Mark in'
                       }
                     </button>

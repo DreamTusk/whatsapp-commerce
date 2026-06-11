@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Store } from 'lucide-react'
+import { Loader } from '@deemlol/next-icons'
+import { Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -194,7 +195,7 @@ export default function CreateStorePage() {
               className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white mt-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
               {isSubmitting ? 'Creating store…' : 'Create store'}
             </Button>
           </form>

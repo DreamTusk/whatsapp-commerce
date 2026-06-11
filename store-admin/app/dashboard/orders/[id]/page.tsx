@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader2, MapPin, CreditCard, Package, MessageSquare, ClipboardList, User } from 'lucide-react'
+import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -154,7 +154,7 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-40">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     )
   }
@@ -214,7 +214,7 @@ export default function OrderDetailPage() {
                   onClick={handleAdvance}
                   disabled={isAdvancing}
                 >
-                  {isAdvancing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  {isAdvancing && <Loader className="w-4 h-4 animate-spin mr-2" />}
                   {isAdvancing ? 'Updating…' : nextLabel}
                 </Button>
               )}
@@ -236,7 +236,7 @@ export default function OrderDetailPage() {
               {/* Order Detail */}
               <SectionCard>
                 <SectionLabel>
-                  <span className="flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5 inline" /> Order detail</span>
+                  <span className="flex items-center gap-1.5"><Clipboard className="w-3.5 h-3.5 inline" /> Order detail</span>
                 </SectionLabel>
                 <div className="divide-y divide-gray-50">
                   <div className="flex items-center justify-between gap-4 py-3">
@@ -467,7 +467,7 @@ export default function OrderDetailPage() {
               onClick={handleCancel}
               disabled={isCancelling || !cancelReason.trim()}
             >
-              {isCancelling && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {isCancelling && <Loader className="w-4 h-4 animate-spin mr-2" />}
               {isCancelling ? 'Cancelling…' : 'Confirm cancel'}
             </Button>
           </DialogFooter>

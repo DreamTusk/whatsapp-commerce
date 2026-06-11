@@ -1,6 +1,6 @@
 'use client'
 
-import { Globe } from 'lucide-react'
+import { Globe } from '@deemlol/next-icons'
 
 export default function DomainPanel() {
   return (

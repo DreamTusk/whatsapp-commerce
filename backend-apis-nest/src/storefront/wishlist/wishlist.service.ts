@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const productInclude = {
@@ -51,12 +52,18 @@ export class WishlistService {
     });
     if (existing) throw new ConflictException('Product already in wishlist');
 
-    const item = await this.prisma.wishlistItem.create({
-      data: { customerId, productId: product_id, storeId },
-      include: { product: { include: productInclude } },
-    });
-
-    return { item: this.formatItem(item) };
+    try {
+      const item = await this.prisma.wishlistItem.create({
+        data: { customerId, productId: product_id, storeId },
+        include: { product: { include: productInclude } },
+      });
+      return { item: this.formatItem(item) };
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Product already in wishlist');
+      }
+      throw e;
+    }
   }
 
   async removeFromWishlist(customerId: string, storeId: string, productId: string) {

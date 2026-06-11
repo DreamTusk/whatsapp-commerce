@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2, Star, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader, Star, X } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -118,7 +118,7 @@ function NewProductForm() {
             <ArrowLeft className="w-3.5 h-3.5" /> Products
           </button>
           <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
-            {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+            {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
             {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add product'}
           </Button>
         </div>
@@ -128,7 +128,7 @@ function NewProductForm() {
       <div className="flex-1 overflow-auto min-h-0 bg-gray-50">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <Loader className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         ) : (
           <div className="px-4 py-6">
@@ -282,7 +282,7 @@ function NewProductForm() {
 
             <div className="flex justify-end mt-4">
               <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
-                {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                 {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add product'}
               </Button>
             </div>

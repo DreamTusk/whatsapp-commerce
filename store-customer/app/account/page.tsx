@@ -1,17 +1,21 @@
 import { headers } from 'next/headers'
-import StoreHeader from '@/components/store-header'
+import { apiFetch } from '@/lib/api'
 import AccountClient from './account-client'
+import type { Store } from '@/types'
 
 export default async function AccountPage() {
   const headersList = await headers()
   const domain = headersList.get('x-store-domain') ?? ''
 
+  let storeName: string | undefined
+  try {
+    const data = await apiFetch<{ store: Store }>('/api/store/info', domain)
+    storeName = data.store.name
+  } catch { /* no store name */ }
+
   return (
     <main className="min-h-screen bg-white">
-      <div className="hidden lg:block">
-        <StoreHeader domain={domain} />
-      </div>
-      <AccountClient />
+      <AccountClient storeName={storeName} />
     </main>
   )
 }

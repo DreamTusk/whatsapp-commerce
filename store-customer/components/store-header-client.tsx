@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/auth'
 import { clientFetch } from '@/lib/client-api'
 import SearchBar from './search-bar'
 import type { Store, CustomerAddress } from '@/types'
+import { Heart, Package, ShoppingCart, MapPin, ChevronDown, ChevronLeft, X, Check, Plus, User } from "@deemlol/next-icons"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 const LABEL_OPTIONS = ['Home', 'Work', 'Other']
@@ -164,13 +165,9 @@ export default function StoreHeaderClient({ store }: Props) {
   }
 
   async function saveAddress() {
-    if (!form.door_no.trim()) { setFormError('Door No is required'); return }
-    if (!form.street.trim()) { setFormError('Street is required'); return }
-    if (!form.address.trim()) { setFormError('Area / Landmark is required'); return }
-    if (!form.city.trim()) { setFormError('City is required'); return }
-    if (!form.pincode.trim()) { setFormError('Pincode is required'); return }
-    if (!form.state.trim()) { setFormError('State is required'); return }
-    if (!form.country.trim()) { setFormError('Country is required'); return }
+    const missing = !form.door_no.trim() || !form.street.trim() || !form.address.trim() ||
+      !form.city.trim() || !form.pincode.trim() || !form.state.trim() || !form.country.trim()
+    if (missing) { setFormError('Please fill in all required fields'); return }
     setSaving(true)
     setFormError('')
     try {
@@ -216,7 +213,6 @@ export default function StoreHeaderClient({ store }: Props) {
     <>
       {/* ─── Header ─── */}
       <header className="sticky top-0 z-30 border-b border-gray-100 shadow-sm" style={{ backgroundColor: '#F4F4FE' }}>
-
         {/* ── Mobile + Tablet (< lg): column layout ── */}
         <div className="lg:hidden px-4 py-3 flex flex-col gap-2.5">
           {/* Store name + profile avatar row */}
@@ -235,9 +231,10 @@ export default function StoreHeaderClient({ store }: Props) {
                 className="p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
                 aria-label="Wishlist"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                {/* <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                </svg> */}
+                 <Heart className="w-5 h-5 text-gray-600" />
               </button>
               {isAuthenticated && customer ? (
                 <Link href="/account" className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0" aria-label="Account">
@@ -259,14 +256,9 @@ export default function StoreHeaderClient({ store }: Props) {
           <SearchBar />
           {/* Location */}
           <button onClick={openPicker} className="flex items-center gap-[5px] hover:opacity-70 transition-opacity self-start">
-            <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <MapPin className="w-4 h-4 text-indigo-500 flex-shrink-0" />
             <span className="text-sm font-medium text-gray-700 truncate max-w-[200px]">{addressLine}</span>
-            <svg className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
           </button>
         </div>
 
@@ -285,14 +277,9 @@ export default function StoreHeaderClient({ store }: Props) {
               </Link>
               <div className="w-px h-5 bg-gray-300 flex-shrink-0" />
               <button onClick={openPicker} className="flex items-center gap-1.5 hover:opacity-70 transition-opacity min-w-0">
-                <svg className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <MapPin className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700 truncate max-w-[140px]">{addressLine}</span>
-                <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
               </button>
             </div>
 
@@ -308,9 +295,10 @@ export default function StoreHeaderClient({ store }: Props) {
                 className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
                 aria-label="Orders"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                {/* <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
+                </svg> */}
+                <Package className="w-5 h-5 text-gray-600" />
                 <span className="text-[10px] font-medium text-gray-600 leading-none">Orders</span>
               </button>
               <button
@@ -318,9 +306,10 @@ export default function StoreHeaderClient({ store }: Props) {
                 className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
                 aria-label="Wishlist"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                {/* <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                </svg> */}
+                <Heart className="w-5 h-5 text-gray-600" />
                 <span className="text-[10px] font-medium text-gray-600 leading-none">Wishlist</span>
               </button>
               <button
@@ -329,10 +318,9 @@ export default function StoreHeaderClient({ store }: Props) {
                 aria-label="Cart"
               >
                 <div className="relative">
-                  <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 5H3m4 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
-                  </svg>
+                <ShoppingCart className="w-5 h-5 text-gray-600" />
                   {count > 0 && (
+                    
                     <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
                       {count > 99 ? '99+' : count}
                     </span>
@@ -379,18 +367,14 @@ export default function StoreHeaderClient({ store }: Props) {
                     onClick={() => { setPickerView('list'); setFormError('') }}
                     className="flex items-center gap-1.5 text-indigo-600 text-sm font-medium hover:text-indigo-800 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <ChevronLeft className="w-4 h-4" />
                     Back
                   </button>
                 ) : (
                   <h2 className="font-bold text-gray-900 text-base">Select Location</h2>
                 )}
                 <button onClick={closePicker} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
@@ -429,9 +413,7 @@ export default function StoreHeaderClient({ store }: Props) {
                                   </p>
                                 </div>
                                 {selectedAddress?.id === addr.id && (
-                                  <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                                  </svg>
+                                  <Check className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                                 )}
                               </button>
                             ))}
@@ -446,9 +428,7 @@ export default function StoreHeaderClient({ store }: Props) {
                         onClick={() => setPickerView('add')}
                         className="w-full flex items-center gap-2.5 p-3.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                       >
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
+                        <Plus className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">Add new address</span>
                       </button>
                     ) : (
@@ -456,9 +436,7 @@ export default function StoreHeaderClient({ store }: Props) {
                         onClick={() => { closePicker(); requireAuth(() => openPicker()) }}
                         className="w-full flex items-center gap-2.5 p-3.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                       >
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                        <User className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">Sign in to see saved addresses</span>
                       </button>
                     )}
@@ -479,10 +457,7 @@ export default function StoreHeaderClient({ store }: Props) {
                     {locating ? (
                       <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
                     ) : (
-                      <svg className="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                      <MapPin className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                     )}
                     <span className="text-sm font-semibold text-indigo-700">
                       {locating ? 'Detecting location…' : 'Use current location'}
@@ -513,7 +488,7 @@ export default function StoreHeaderClient({ store }: Props) {
                   {/* Door No + Street */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Door No</label>
+                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Door No <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.door_no}
@@ -523,7 +498,7 @@ export default function StoreHeaderClient({ store }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Street</label>
+                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Street <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.street}
@@ -536,7 +511,7 @@ export default function StoreHeaderClient({ store }: Props) {
 
                   {/* Area / Landmark */}
                   <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1.5">Area / Landmark</label>
+                    <label className="text-xs font-medium text-gray-500 block mb-1.5">Area / Landmark <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={form.address}
@@ -549,7 +524,7 @@ export default function StoreHeaderClient({ store }: Props) {
                   {/* City + Pincode */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-500 block mb-1.5">City</label>
+                      <label className="text-xs font-medium text-gray-500 block mb-1.5">City <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.city}
@@ -559,7 +534,7 @@ export default function StoreHeaderClient({ store }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Pincode</label>
+                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Pincode <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -575,7 +550,7 @@ export default function StoreHeaderClient({ store }: Props) {
                   {/* State + Country */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-500 block mb-1.5">State</label>
+                      <label className="text-xs font-medium text-gray-500 block mb-1.5">State <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.state}
@@ -585,7 +560,7 @@ export default function StoreHeaderClient({ store }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Country</label>
+                      <label className="text-xs font-medium text-gray-500 block mb-1.5">Country <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.country}
@@ -609,15 +584,21 @@ export default function StoreHeaderClient({ store }: Props) {
 
                   {formError && <p className="text-xs text-red-500 font-medium">{formError}</p>}
 
-                  <button
-                    onClick={saveAddress}
-                    disabled={saving}
-                    className="w-full flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
-                  >
-                    {saving ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : 'Save address'}
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { setPickerView('list'); setForm(EMPTY_FORM); setFormError('') }}
+                      className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveAddress}
+                      disabled={saving}
+                      className="flex-1 h-11 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
+                    >
+                      {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" /> : 'Save address'}
+                    </button>
+                  </div>
                 </div>
               )}
 

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Loader2, BookMarked, X } from 'lucide-react'
+import { Plus, Edit, Trash2, Loader, X } from '@deemlol/next-icons'
+import { BookMarked } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -103,7 +104,7 @@ export default function BrandsPage() {
       <div className="flex-1 min-h-0 px-6 pt-6 pb-4 flex flex-col">
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader className="w-6 h-6 animate-spin text-gray-400" />
         </div>
       ) : brands.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
@@ -137,7 +138,7 @@ export default function BrandsPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       <button onClick={() => { setEditTarget(b); setEditName(b.name) }} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Edit className="w-3.5 h-3.5" />
                       </button>
                       {isOwner && (
                         <button onClick={() => setDeleteTarget(b)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
@@ -182,7 +183,7 @@ export default function BrandsPage() {
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => { setAddOpen(false); setAddName('') }}>Cancel</Button>
               <Button className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white" onClick={handleAddBrand} disabled={isSavingAdd}>
-                {isSavingAdd ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSavingAdd ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
                 {isSavingAdd ? 'Saving…' : 'Add brand'}
               </Button>
             </div>
@@ -213,7 +214,7 @@ export default function BrandsPage() {
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => { setEditTarget(null); setEditName('') }}>Cancel</Button>
               <Button className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white" onClick={handleEditBrand} disabled={isSavingEdit}>
-                {isSavingEdit ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSavingEdit ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
                 {isSavingEdit ? 'Saving…' : 'Save changes'}
               </Button>
             </div>
@@ -240,7 +241,7 @@ export default function BrandsPage() {
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>Cancel</Button>
               <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isDeleting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
                 {isDeleting ? 'Deleting…' : 'Delete'}
               </Button>
             </div>

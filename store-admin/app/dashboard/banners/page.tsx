@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Loader2, Trash2, ImageOff, Pencil } from 'lucide-react'
+import { Plus, Loader, Trash2, ImageOff } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -73,7 +73,7 @@ export default function BannersPage() {
       <div className="flex-1 overflow-auto min-h-0 px-6 pb-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <Loader className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         ) : banners.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -133,7 +133,7 @@ export default function BannersPage() {
                       className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                     >
                       {deletingId === banner.id
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        ? <Loader className="w-4 h-4 animate-spin" />
                         : <Trash2 className="w-4 h-4" />
                       }
                     </button>

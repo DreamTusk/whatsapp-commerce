@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { Loader2, ImagePlus, Store, AlertTriangle } from 'lucide-react'
+import { Loader, ImagePlus, AlertTriangle } from '@deemlol/next-icons'
+import { Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -118,7 +119,7 @@ export default function GeneralPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     )
   }
@@ -188,7 +189,7 @@ export default function GeneralPanel() {
           onClick={handleSave}
           disabled={isSaving || isUploading}
         >
-          {(isSaving || isUploading) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {(isSaving || isUploading) ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isUploading ? 'Uploading logo…' : isSaving ? 'Saving…' : 'Save changes'}
         </Button>
       </div>

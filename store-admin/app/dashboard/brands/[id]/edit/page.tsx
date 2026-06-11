@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -51,7 +51,7 @@ export default function EditBrandPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-40">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     )
   }
@@ -94,7 +94,7 @@ export default function EditBrandPage() {
             onClick={handleSave}
             disabled={isSaving}
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            {isSaving ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
             {isSaving ? 'Saving…' : 'Save changes'}
           </Button>
         </div>

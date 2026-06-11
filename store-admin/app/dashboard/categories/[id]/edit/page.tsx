@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2, Plus, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader, Plus, X } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -104,7 +104,7 @@ export default function EditCategoryPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-40">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     )
   }
@@ -221,7 +221,7 @@ export default function EditCategoryPage() {
               <Label className="text-sm font-medium text-gray-700">Status</Label>
               <div className="h-11 flex items-center gap-3">
                 <AppSwitch checked={isActive} onChange={handleStatusToggle} />
-                {isTogglingStatus && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                {isTogglingStatus && <Loader className="w-4 h-4 animate-spin text-gray-400" />}
               </div>
             </div>
 
@@ -231,7 +231,7 @@ export default function EditCategoryPage() {
                 onClick={handleSave}
                 disabled={isSaving || isUploading}
               >
-                {(isSaving || isUploading) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {(isSaving || isUploading) && <Loader className="w-4 h-4 animate-spin mr-2" />}
                 {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Save changes'}
               </Button>
             </div>

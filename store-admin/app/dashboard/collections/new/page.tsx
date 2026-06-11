@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Loader2, ArrowLeft, MousePointerClick, Zap, Search, X, CheckSquare, Square } from 'lucide-react'
+import { Plus, Loader, ArrowLeft, Zap, Search, X, CheckSquare, Square } from '@deemlol/next-icons'
+import { MousePointerClick } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -198,7 +199,7 @@ export default function NewCollectionPage() {
                     </div>
                     <div className="border border-gray-200 rounded-xl overflow-hidden">
                       {productsLoading ? (
-                        <div className="flex items-center justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-gray-300" /></div>
+                        <div className="flex items-center justify-center py-10"><Loader className="w-5 h-5 animate-spin text-gray-300" /></div>
                       ) : filteredProducts.length === 0 ? (
                         <p className="text-center text-gray-400 py-8 text-sm">No products found</p>
                       ) : (
@@ -297,7 +298,7 @@ export default function NewCollectionPage() {
 
                 <div className="border-t border-gray-50 pt-1">
                   <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11" onClick={handleSave} disabled={formIsSaving}>
-                    {formIsSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    {formIsSaving && <Loader className="w-4 h-4 animate-spin mr-2" />}
                     {formIsSaving ? 'Saving…' : 'Create collection'}
                   </Button>
                 </div>

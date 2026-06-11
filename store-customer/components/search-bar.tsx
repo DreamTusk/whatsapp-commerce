@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { clientFetch } from '@/lib/client-api'
+import { Search, X, ChevronRight } from "@deemlol/next-icons"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -123,9 +124,7 @@ export default function SearchBar() {
           {loading ? (
             <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
           ) : (
-            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
-            </svg>
+            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           )}
           <input
             ref={inputRef}
@@ -142,9 +141,7 @@ export default function SearchBar() {
               onClick={clear}
               className="text-gray-400 hover:text-gray-600 flex-shrink-0 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -184,9 +181,7 @@ export default function SearchBar() {
                         )}
                       </div>
                       <span className="text-sm font-medium text-gray-800">{cat.name}</span>
-                      <svg className="w-3.5 h-3.5 text-gray-300 ml-auto flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-300 ml-auto flex-shrink-0" />
                     </Link>
                   ))}
                 </div>
@@ -237,9 +232,7 @@ export default function SearchBar() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 border-t border-gray-100 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
               >
                 See all results for &ldquo;{query}&rdquo;
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}

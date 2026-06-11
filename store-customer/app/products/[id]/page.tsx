@@ -1,7 +1,6 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import StoreHeader from '@/components/store-header'
 import ProductDetailClient from '@/components/product-detail-client'
 import type { Product } from '@/types'
 
@@ -26,7 +25,6 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
   if (!product) {
     return (
       <main className="min-h-screen bg-gray-50">
-        <StoreHeader domain={domain} />
         <div className="flex flex-col items-center justify-center py-24 text-gray-400">
           <p className="text-4xl mb-3">🔍</p>
           <p className="font-medium">Product not found</p>
@@ -59,9 +57,6 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
 
   return (
     <main>
-      <div className="hidden lg:block">
-        <StoreHeader domain={domain} />
-      </div>
       <ProductDetailClient
         productId={product.id}
         productName={product.name}

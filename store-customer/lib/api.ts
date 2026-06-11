@@ -13,7 +13,7 @@ export async function apiFetch<T>(
       'ngrok-skip-browser-warning': 'true',
       ...(options?.headers ?? {}),
     },
-    cache: 'no-store',
+    next: { revalidate: 30 },
   })
 
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`)

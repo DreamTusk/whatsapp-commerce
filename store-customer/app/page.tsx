@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
+import { ChevronRight } from '@deemlol/next-icons'
 import { apiFetch } from '@/lib/api'
-import StoreHeader from '@/components/store-header'
 import ProductCard from '@/components/product-card'
 import BannerCarousel from '@/components/banner-carousel'
 import type { Store, Category, Product, StoreCollection, Banner } from '@/types'
@@ -13,6 +13,8 @@ const scrollRow = 'flex gap-4 overflow-x-auto overflow-y-hidden pb-2 scrollbar-h
 export default async function HomePage() {
   const headersList = await headers()
   const domain = headersList.get('x-store-domain') ?? ''
+
+
 
   let store: Store | null = null
   let categories: Category[] = []
@@ -71,8 +73,6 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen pb-24">
-      <StoreHeader domain={domain} />
-
       {/* ── Banners ── */}
       {banners.length > 0 && <BannerCarousel banners={banners} />}
 
@@ -82,18 +82,18 @@ export default async function HomePage() {
           <div className="flex items-center justify-between page-x mb-3">
             <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold text-gray-900 [font-family:var(--font-instrument-sans)]">Category</h2>
             <Link href="/products" className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium text-indigo-500 [font-family:var(--font-instrument-sans)]">
-              <span>See All</span><span>&gt;</span>
+              <span>See All</span><ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="page-x">
             <div className="flex flex-nowrap justify-around gap-5 overflow-x-auto overflow-y-hidden pb-5 scrollbar-hide">
               {categories.map(cat => (
-                <Link key={cat.id} href={`/products?category=${cat.id}`} className="flex flex-col items-center gap-[10px] lg:gap-[15px] flex-shrink-0 w-[80px] sm:w-[110px] lg:w-[150px]">
-                  <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full overflow-hidden bg-gray-100 border-2 border-white flex-shrink-0" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+                <Link key={cat.id} href={`/products?category=${cat.id}`} className="flex flex-col items-center gap-[10px] lg:gap-[15px] flex-shrink-0 w-[80px] sm:w-[110px] lg:w-[150px] group">
+                  <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full overflow-hidden bg-gray-100 border-2 border-white flex-shrink-0 transition-all duration-300 group-hover:border-indigo-400 group-hover:shadow-[0_4px_16px_rgba(99,102,241,0.25)]" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
                     {cat.image_url ? (
-                      <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-full h-full object-cover" />
+                      <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xl lg:text-2xl">🛍️</div>
+                      <div className="w-full h-full flex items-center justify-center text-xl lg:text-2xl transition-transform duration-300 group-hover:scale-110">🛍️</div>
                     )}
                   </div>
                   <span className="text-[11px] sm:text-[13px] lg:text-[16px] font-semibold text-gray-700 text-center w-full [font-family:var(--font-instrument-sans)]">{cat.name}</span>
@@ -110,13 +110,13 @@ export default async function HomePage() {
           <div className="flex items-center justify-between page-x mb-3">
             <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold text-gray-900 [font-family:var(--font-instrument-sans)]">{col.name}</h2>
             <Link href={`/collection/${col.id}`} className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium text-indigo-500 [font-family:var(--font-instrument-sans)]">
-              <span>See All</span><span>&gt;</span>
+              <span>See All</span><ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="page-x">
             <div className={scrollRow}>
               {col.products.slice(0, 12).map(p => (
-                <ProductCard key={p.id} product={p} source={{ type: 'all' }} width={210} height={409} />
+                <ProductCard key={p.id} product={p} source={{ type: 'all' }} width={160} />
               ))}
             </div>
           </div>
@@ -129,13 +129,13 @@ export default async function HomePage() {
           <div className="flex items-center justify-between page-x mb-3">
             <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold text-gray-900 [font-family:var(--font-instrument-sans)]">{cat.name}</h2>
             <Link href={`/products?category=${cat.id}`} className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium text-indigo-500 [font-family:var(--font-instrument-sans)]">
-              <span>See All</span><span>&gt;</span>
+              <span>See All</span><ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="page-x">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {productsByCategory.get(cat.id)!.slice(0, 6).map(p => (
-                <ProductCard key={p.id} product={p} scrollable={false} height={409} source={{ type: 'category', id: cat.id, name: cat.name }} />
+                <ProductCard key={p.id} product={p} scrollable={false} source={{ type: 'category', id: cat.id, name: cat.name }} />
               ))}
             </div>
           </div>

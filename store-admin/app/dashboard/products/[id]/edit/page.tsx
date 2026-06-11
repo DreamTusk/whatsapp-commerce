@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, ImagePlus, Loader2, Package, Star, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader, Package, Star, X } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -162,7 +162,7 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-40">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     )
   }
@@ -189,7 +189,7 @@ export default function EditProductPage() {
               Delete
             </Button>
             <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
-              {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
               {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Update'}
             </Button>
           </div>
@@ -205,7 +205,7 @@ export default function EditProductPage() {
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1 h-10" onClick={() => setConfirmDelete(false)}>Cancel</Button>
               <Button className="flex-1 h-10 bg-red-500 hover:bg-red-600 text-white" onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                {isDeleting && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                 {isDeleting ? 'Deleting…' : 'Delete'}
               </Button>
             </div>
@@ -382,7 +382,7 @@ export default function EditProductPage() {
               Delete
             </Button>
             <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
-              {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
               {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Update'}
             </Button>
           </div>

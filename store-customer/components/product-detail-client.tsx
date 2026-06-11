@@ -9,6 +9,7 @@ import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
 import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
+import { ChevronLeft, ChevronRight, ShoppingCart, Check, Trash, Heart } from "@deemlol/next-icons"
 import type { ProductImage } from '@/types'
 
 const BlockNotePreview = dynamic(
@@ -49,10 +50,14 @@ export default function ProductDetailClient({
   const { refresh, items: cartItems } = useCart()
   const { openCart } = useCartDrawer()
 
-  const primaryUrl = images.find(i => i.is_primary)?.url ?? images[0]?.url ?? productImage
-  const [activeUrl, setActiveUrl] = useState<string | null>(primaryUrl)
-
+  const primaryIdx = images.findIndex(i => i.is_primary)
+  const [activeIdx, setActiveIdx] = useState(primaryIdx >= 0 ? primaryIdx : 0)
+  const activeUrl = images[activeIdx]?.url ?? productImage
   const activeImgSrc = toDisplay(activeUrl)
+
+  const canNavigate = images.length >= 2
+  const prev = () => setActiveIdx(i => (i - 1 + images.length) % images.length)
+  const next = () => setActiveIdx(i => (i + 1) % images.length)
 
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
@@ -168,7 +173,7 @@ export default function ProductDetailClient({
   const AddToCartBtn = ({ className }: { className?: string }) => (
     added ? (
       <button onClick={openCart} className={`flex items-center justify-center gap-2 bg-green-500 text-white font-semibold rounded-xl text-sm transition-colors ${className}`}>
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
+        <Check className="w-4 h-4" />
         Added · View cart
       </button>
     ) : (
@@ -180,9 +185,7 @@ export default function ProductDetailClient({
         {adding ? (
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 5H3m4 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
-          </svg>
+          <ShoppingCart className="w-4 h-4" />
         )}
         {inStock ? (adding ? 'Adding…' : 'Add to Cart') : 'Out of stock'}
       </button>
@@ -213,11 +216,11 @@ export default function ProductDetailClient({
       <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         {images.map((img, i) => {
           const thumbSrc = toDisplay(img.thumbnail_url ?? img.url)
-          const isActive = activeUrl === img.url
+          const isActive = activeIdx === i
           return (
             <button
               key={i}
-              onClick={() => setActiveUrl(img.url)}
+              onClick={() => setActiveIdx(i)}
               className="flex-shrink-0 rounded-xl overflow-hidden transition-all"
               style={{
                 width: size, height: size,
@@ -245,25 +248,34 @@ export default function ProductDetailClient({
         {/* Sticky top bar */}
         <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
           <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
           <button onClick={openCart} className="relative p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 5H3m4 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
-            </svg>
+            <ShoppingCart className="w-5 h-5 text-gray-700" />
           </button>
         </div>
 
         {/* Card: image + thumbnails + info */}
         <div className="mx-3 mt-3 bg-white rounded-2xl shadow-sm overflow-hidden space-y-3">
           {/* Main image */}
-          <div className="w-full aspect-square overflow-hidden bg-gray-50">
+          <div className="relative w-full aspect-square overflow-hidden bg-gray-50">
             {activeImgSrc ? (
               <img src={activeImgSrc} alt={productName} className="w-full h-full object-cover transition-all duration-200" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-6xl">🛍️</div>
+            )}
+            {canNavigate && (
+              <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                <button onClick={prev} className="w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors">
+                  <ChevronLeft className="w-4 h-4 text-white" />
+                </button>
+                <span className="text-xs font-semibold text-white bg-black/30 px-2 py-0.5 rounded-full">
+                  {activeIdx + 1}/{images.length}
+                </span>
+                <button onClick={next} className="w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors">
+                  <ChevronRight className="w-4 h-4 text-white" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -344,9 +356,7 @@ export default function ProductDetailClient({
                 disabled={cartLoading}
                 className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors disabled:opacity-40"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <Trash className="w-4 h-4" />
                 Remove from cart
               </button>
             </>
@@ -362,9 +372,7 @@ export default function ProductDetailClient({
                 : 'border-gray-200 text-gray-600 hover:border-violet-200 hover:text-violet-500'
             }`}
           >
-            <svg className="w-4 h-4" fill={wishlisted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+            <Heart className="w-4 h-4" fill={wishlisted ? 'currentColor' : 'none'} />
             {wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
           </button>
         </div>
@@ -396,11 +404,24 @@ export default function ProductDetailClient({
             {/* Left: image + thumbnails */}
             <div className="space-y-3">
               {/* Main image */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square">
+              <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square">
                 {activeImgSrc ? (
                   <img src={activeImgSrc} alt={productName} className="w-full h-full object-cover transition-all duration-200" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-8xl bg-gray-50">🛍️</div>
+                )}
+                {canNavigate && (
+                  <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                    <button onClick={prev} className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors">
+                      <ChevronLeft className="w-4 h-4 text-white" />
+                    </button>
+                    <span className="text-xs font-semibold text-white bg-black/30 px-2.5 py-1 rounded-full">
+                      {activeIdx + 1}/{images.length}
+                    </span>
+                    <button onClick={next} className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors">
+                      <ChevronRight className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
                 )}
               </div>
               {/* Thumbnails */}

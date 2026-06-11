@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, ChevronRight, Plus } from 'lucide-react'
+import { Loader, ChevronRight, Plus } from '@deemlol/next-icons'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import type { Order } from '@/types'
@@ -95,7 +95,7 @@ export default function OrdersPage() {
       <div className="flex-1 min-h-0 px-6 pt-6 pb-4 flex flex-col">
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader className="w-6 h-6 animate-spin text-gray-400" />
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-20 text-gray-400">

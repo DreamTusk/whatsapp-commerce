@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, ShoppingBag, Users, Package, TrendingUp, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Loader, ShoppingBag, Users, Package, TrendingUp, AlertTriangle, ArrowRight } from '@deemlol/next-icons'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import api from '@/lib/api'
@@ -74,7 +74,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     )
   }

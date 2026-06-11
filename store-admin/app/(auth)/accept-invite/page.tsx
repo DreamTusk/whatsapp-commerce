@@ -6,7 +6,8 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { Loader2, Store, Eye, EyeOff, XCircle, CheckCircle2, Clock } from 'lucide-react'
+import { Loader, Eye, EyeOff, XCircle, CheckCircle, Clock } from '@deemlol/next-icons'
+import { Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -119,7 +120,7 @@ function AcceptInviteForm() {
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center space-y-3 py-12">
-        <Loader2 className="w-8 h-8 text-[#6366f1] animate-spin" />
+        <Loader className="w-8 h-8 text-[#6366f1] animate-spin" />
         <p className="text-sm text-gray-500">Loading invite…</p>
       </div>
     )
@@ -129,7 +130,7 @@ function AcceptInviteForm() {
   if (status !== 'found') {
     const config = {
       not_found:       { icon: XCircle,       color: 'text-gray-400',  title: 'Invite not found',                body: 'This invite link is invalid or does not exist.' },
-      already_accepted:{ icon: CheckCircle2,  color: 'text-green-500', title: 'Already accepted',                body: 'This invite has already been accepted.' },
+      already_accepted:{ icon: CheckCircle,  color: 'text-green-500', title: 'Already accepted',                body: 'This invite has already been accepted.' },
       expired:         { icon: Clock,         color: 'text-amber-500', title: 'Invite expired',                  body: 'This invite link has expired. Ask the store owner to send a new one.' },
       error:           { icon: XCircle,       color: 'text-red-400',   title: 'Something went wrong',            body: 'Unable to load the invite. Please try again later.' },
     }[status]
@@ -202,7 +203,7 @@ function AcceptInviteForm() {
           onClick={acceptAsExistingUser}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isSubmitting ? 'Joining…' : 'Accept invite'}
         </Button>
       </div>
@@ -261,7 +262,7 @@ function AcceptInviteForm() {
           className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isSubmitting ? 'Joining…' : 'Accept invite'}
         </Button>
       </form>
@@ -273,7 +274,7 @@ export default function AcceptInvitePage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-[#6366f1] animate-spin" />
+        <Loader className="w-8 h-8 text-[#6366f1] animate-spin" />
       </div>
     }>
       <AcceptInviteForm />

@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Loader2, MailWarning, ShieldOff } from 'lucide-react'
+import { Eye, EyeOff, Loader, ShieldOff } from '@deemlol/next-icons'
+import { MailWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -148,7 +149,7 @@ export default function LoginPage() {
             className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
             disabled={isSending}
           >
-            {isSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            {isSending ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
             {isSending ? 'Sending code…' : 'Send verification code'}
           </Button>
 
@@ -234,7 +235,7 @@ export default function LoginPage() {
           className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
           disabled={isSubmitting}
         >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isSubmitting ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
