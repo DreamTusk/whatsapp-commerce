@@ -224,7 +224,7 @@ export class AuthService {
 
     const userStore = await this.prisma.userStore.findFirst({
       where: { userId: user.id },
-      include: { store: true },
+      include: { Store: true },
     });
 
     if (userStore && !userStore.isActive) {
@@ -243,7 +243,7 @@ export class AuthService {
       refresh_token,
       user: { id: user.id, name: user.name, email: user.email },
       role: userStore?.role ?? null,
-      store: userStore?.store ? this.formatStore(userStore.store) : null,
+      store: userStore?.Store ? this.formatStore(userStore.Store) : null,
     };
   }
 
@@ -283,20 +283,20 @@ export class AuthService {
 
     const userStore = await this.prisma.userStore.findFirst({
       where: { userId: user.id },
-      include: { store: true },
+      include: { Store: true },
     });
 
     return {
       user: { id: user.id, name: user.name, email: user.email },
       role: userStore?.role ?? null,
-      store: userStore?.store ? this.formatStore(userStore.store) : null,
+      store: userStore?.Store ? this.formatStore(userStore.Store) : null,
     };
   }
 
   async getInvite(token: string) {
     const invite = await this.prisma.storeInvite.findUnique({
       where: { token },
-      include: { store: { select: { name: true, logo: true } } },
+      include: { Store: { select: { name: true, logo: true } } },
     });
 
     if (!invite) throw new NotFoundException('Invite not found');
@@ -307,8 +307,8 @@ export class AuthService {
       invite: {
         email: invite.email,
         role: invite.role,
-        store_name: invite.store.name,
-        store_logo: invite.store.logo,
+        store_name: invite.Store.name,
+        store_logo: invite.Store.logo,
         expires_at: invite.expiresAt,
       },
     };
@@ -319,7 +319,7 @@ export class AuthService {
 
     const invite = await this.prisma.storeInvite.findUnique({
       where: { token },
-      include: { store: true },
+      include: { Store: true },
     });
 
     if (!invite) throw new NotFoundException('Invite not found');
@@ -382,7 +382,7 @@ export class AuthService {
       access_token,
       refresh_token,
       role: invite.role,
-      store_name: invite.store.name,
+      store_name: invite.Store.name,
     };
   }
 }

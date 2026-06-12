@@ -146,12 +146,13 @@ export interface Collection {
 export interface Banner {
   id: string
   name: string
-  type: 'product' | 'collection' | 'url'
+  type: 'product' | 'collection' | 'url' | 'category'
   image_url: string | null
   status: 'active' | 'inactive' | 'expired'
   display_order: number
   product_id: string | null
   collection_id: string | null
+  category_id: string | null
   url: string | null
   starts_at: string | null
   expires_at: string | null

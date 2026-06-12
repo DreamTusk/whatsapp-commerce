@@ -4,8 +4,8 @@ import { OrderStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
 import { generateOrderNumber } from '../../utils/order-number';
 
 const orderInclude = {
-  items: true,
-  payment: true,
+  OrderItem: true,
+  Payment: true,
 };
 
 @Injectable()
@@ -36,9 +36,9 @@ export class StorefrontOrdersService {
       cancelled_by: o.cancelledBy,
       created_at: o.createdAt,
       updated_at: o.updatedAt,
-      items: o.items.map((i: any) => this.formatOrderItem(i)),
-      payment: o.payment
-        ? { method: o.payment.method, status: o.payment.status, paid_at: o.payment.paidAt }
+      items: o.OrderItem.map((i: any) => this.formatOrderItem(i)),
+      payment: o.Payment
+        ? { method: o.Payment.method, status: o.Payment.status, paid_at: o.Payment.paidAt }
         : null,
     };
   }
@@ -146,8 +146,8 @@ export class StorefrontOrdersService {
             pincode: deliveryAddress.pincode?.trim() || null,
             latitude: typeof deliveryAddress.latitude === 'number' ? deliveryAddress.latitude : null,
             longitude: typeof deliveryAddress.longitude === 'number' ? deliveryAddress.longitude : null,
-            items: { create: orderItemsData },
-            payment: { create: { method, status: PaymentStatus.PENDING } },
+            OrderItem: { create: orderItemsData },
+            Payment: { create: { method, status: PaymentStatus.PENDING } },
           },
           include: orderInclude,
         });

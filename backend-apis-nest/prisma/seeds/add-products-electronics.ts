@@ -16,10 +16,10 @@ async function main(): Promise<void> {
 
   // ── Cleanup ────────────────────────────────────────────────────────────────
   console.log('Removing existing products, categories and brands...');
-  await prisma.collectionProduct.deleteMany({ where: { collection: { storeId: STORE_ID } } });
+  await prisma.collectionProduct.deleteMany({ where: { Collection: { storeId: STORE_ID } } });
   await prisma.cartItem.deleteMany({ where: { storeId: STORE_ID } });
   await prisma.wishlistItem.deleteMany({ where: { storeId: STORE_ID } });
-  await prisma.orderItem.deleteMany({ where: { order: { storeId: STORE_ID } } });
+  await prisma.orderItem.deleteMany({ where: { Order: { storeId: STORE_ID } } });
   await prisma.product.deleteMany({ where: { storeId: STORE_ID } });
   await prisma.category.deleteMany({ where: { storeId: STORE_ID } });
   await prisma.brand.deleteMany({ where: { storeId: STORE_ID } });

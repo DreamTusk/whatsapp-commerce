@@ -20,7 +20,7 @@ export class InventoryService {
 
     const products = await this.prisma.product.findMany({
       where: { storeId },
-      include: { category: { select: { id: true, name: true } } },
+      include: { Category: { select: { id: true, name: true } } },
     });
 
     return {
@@ -32,7 +32,7 @@ export class InventoryService {
         unit: p.unit,
         in_stock: p.inStock,
         is_active: p.isActive,
-        category: p.category,
+        category: p.Category,
       })),
     };
   }

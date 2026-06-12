@@ -3,9 +3,9 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const productInclude = {
-  productMedia: {
+  ProductMedia: {
     orderBy: { sortOrder: 'asc' as const },
-    include: { media: { select: { url: true } } },
+    include: { Media: { select: { url: true } } },
   },
 };
 
@@ -14,19 +14,19 @@ export class WishlistService {
   constructor(private prisma: PrismaService) {}
 
   private formatItem(item: any) {
-    const media = item.product.productMedia ?? [];
+    const media = item.Product.ProductMedia ?? [];
     const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: item.id,
       created_at: item.createdAt,
       product: {
-        id: item.product.id,
-        name: item.product.name,
-        image_url: primary?.media?.url ?? null,
-        selling_price: item.product.sellingPrice,
-        original_price: item.product.originalPrice,
-        unit: item.product.unit,
-        in_stock: item.product.inStock,
+        id: item.Product.id,
+        name: item.Product.name,
+        image_url: primary?.Media?.url ?? null,
+        selling_price: item.Product.sellingPrice,
+        original_price: item.Product.originalPrice,
+        unit: item.Product.unit,
+        in_stock: item.Product.inStock,
       },
     };
   }
@@ -34,7 +34,7 @@ export class WishlistService {
   async getWishlist(customerId: string, storeId: string) {
     const items = await this.prisma.wishlistItem.findMany({
       where: { customerId, storeId },
-      include: { product: { include: productInclude } },
+      include: { Product: { include: productInclude } },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -55,7 +55,7 @@ export class WishlistService {
     try {
       const item = await this.prisma.wishlistItem.create({
         data: { customerId, productId: product_id, storeId },
-        include: { product: { include: productInclude } },
+        include: { Product: { include: productInclude } },
       });
       return { item: this.formatItem(item) };
     } catch (e) {

@@ -36,8 +36,8 @@ export class CustomersService {
     const customers = await this.prisma.customer.findMany({
       where: { storeId },
       include: {
-        _count: { select: { orders: true } },
-        orders: {
+        _count: { select: { Order: true } },
+        Order: {
           select: { totalAmount: true, createdAt: true },
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -59,9 +59,9 @@ export class CustomersService {
         name: c.name,
         phone: c.phone,
         email: c.email,
-        order_count: c._count.orders,
+        order_count: c._count.Order,
         total_spent: totalMap.get(c.id) ?? 0,
-        last_order_at: c.orders[0]?.createdAt ?? null,
+        last_order_at: c.Order[0]?.createdAt ?? null,
         joined_at: c.createdAt,
       })),
     };

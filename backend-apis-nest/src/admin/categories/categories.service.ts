@@ -175,10 +175,10 @@ export class CategoriesService {
 
     const existing = await this.prisma.category.findFirst({
       where: { id: categoryId, storeId },
-      include: { children: true },
+      include: { other_Category: true },
     });
     if (!existing) throw new NotFoundException('Category not found');
-    if (existing.children.length > 0) throw new BadRequestException('Delete all sub-categories first');
+    if (existing.other_Category.length > 0) throw new BadRequestException('Delete all sub-categories first');
 
     if (existing.imageUrl) await this.deleteCategoryMedia(categoryId, storeId);
 

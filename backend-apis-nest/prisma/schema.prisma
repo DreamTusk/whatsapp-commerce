@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Banner {
-  id           String      @id
+  id           String      @id @default(cuid())
   storeId      String
   name         String
   type         BannerType
@@ -17,11 +17,13 @@ model Banner {
   displayOrder Int         @default(0)
   productId    String?
   collectionId String?
+  categoryId   String?
   url          String?
   startsAt     DateTime?
   expiresAt    DateTime?
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime    @updatedAt
+  Category     Category?   @relation(fields: [categoryId], references: [id])
   Collection   Collection? @relation(fields: [collectionId], references: [id])
   Product      Product?    @relation(fields: [productId], references: [id])
   Store        Store       @relation(fields: [storeId], references: [id])
@@ -30,7 +32,7 @@ model Banner {
 }
 
 model Brand {
-  id        String    @id
+  id        String    @id @default(cuid())
   name      String
   storeId   String
   createdAt DateTime  @default(now())
@@ -41,13 +43,13 @@ model Brand {
 }
 
 model CartItem {
-  id         String   @id
+  id         String   @id @default(cuid())
   customerId String
   productId  String
   storeId    String
   quantity   Int      @default(1)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   Customer   Customer @relation(fields: [customerId], references: [id])
   Product    Product  @relation(fields: [productId], references: [id])
   Store      Store    @relation(fields: [storeId], references: [id])
@@ -56,7 +58,7 @@ model CartItem {
 }
 
 model Category {
-  id             String     @id
+  id             String     @id @default(cuid())
   name           String
   imageUrl       String?
   isActive       Boolean    @default(true)
@@ -66,11 +68,12 @@ model Category {
   Category       Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
   other_Category Category[] @relation("CategoryToCategory")
   Store          Store      @relation(fields: [storeId], references: [id])
+  Banner         Banner[]
   Product        Product[]
 }
 
 model Collection {
-  id                String              @id
+  id                String              @id @default(cuid())
   storeId           String
   name              String
   type              CollectionType
@@ -79,14 +82,14 @@ model Collection {
   displayOrder      Int                 @default(0)
   imageUrl          String?
   createdAt         DateTime            @default(now())
-  updatedAt         DateTime
+  updatedAt         DateTime            @updatedAt
   Banner            Banner[]
   Store             Store               @relation(fields: [storeId], references: [id])
   CollectionProduct CollectionProduct[]
 }
 
 model CollectionProduct {
-  id           String     @id
+  id           String     @id @default(cuid())
   collectionId String
   productId    String
   position     Int        @default(0)
@@ -98,25 +101,25 @@ model CollectionProduct {
 }
 
 model ConversationSession {
-  id         String   @id
+  id         String   @id @default(cuid())
   customerId String
   state      String   @default("WELCOME")
   cartData   Json     @default("[]")
   storeId    String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   Customer   Customer @relation(fields: [customerId], references: [id])
 }
 
 model Customer {
-  id                  String                @id
+  id                  String                @id @default(cuid())
   phone               String?
   email               String?
   name                String?
   storeId             String
   createdAt           DateTime              @default(now())
-  updatedAt           DateTime
+  updatedAt           DateTime              @updatedAt
   CartItem            CartItem[]
   ConversationSession ConversationSession[]
   Store               Store                 @relation(fields: [storeId], references: [id])
@@ -129,7 +132,7 @@ model Customer {
 }
 
 model CustomerAddress {
-  id         String   @id
+  id         String   @id @default(cuid())
   customerId String
   storeId    String
   label      String?
@@ -144,13 +147,13 @@ model CustomerAddress {
   longitude  Float?
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   Customer   Customer @relation(fields: [customerId], references: [id])
   Store      Store    @relation(fields: [storeId], references: [id])
 }
 
 model CustomerOtp {
-  id        String   @id
+  id        String   @id @default(cuid())
   phone     String
   storeId   String
   otp       String
@@ -161,7 +164,7 @@ model CustomerOtp {
 }
 
 model CustomerToken {
-  id         String   @id
+  id         String   @id @default(cuid())
   jti        String   @unique
   customerId String
   isRevoked  Boolean  @default(false)
@@ -171,7 +174,7 @@ model CustomerToken {
 }
 
 model Media {
-  id           String         @id
+  id           String         @id @default(cuid())
   storeId      String
   key          String         @unique
   bucket       BucketType
@@ -186,14 +189,14 @@ model Media {
   thumbnailUrl String?
   uploadedBy   String?
   createdAt    DateTime       @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime       @updatedAt
   Store        Store          @relation(fields: [storeId], references: [id])
   User         User?          @relation(fields: [uploadedBy], references: [id])
   ProductMedia ProductMedia[]
 }
 
 model MessageLog {
-  id            String   @id
+  id            String   @id @default(cuid())
   storeId       String
   customerPhone String
   direction     String
@@ -204,7 +207,7 @@ model MessageLog {
 }
 
 model Order {
-  id                 String      @id
+  id                 String      @id @default(cuid())
   orderNumber        String
   customerId         String
   storeId            String
@@ -224,7 +227,7 @@ model Order {
   cancellationReason String?
   cancelledBy        String?
   createdAt          DateTime    @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime    @updatedAt
   createdBy          String?
   source             OrderSource @default(CUSTOMER)
   Customer           Customer    @relation(fields: [customerId], references: [id])
@@ -236,7 +239,7 @@ model Order {
 }
 
 model OrderItem {
-  id          String  @id
+  id          String  @id @default(cuid())
   orderId     String
   productId   String
   productName String
@@ -248,7 +251,7 @@ model OrderItem {
 }
 
 model OtpVerification {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String
   otp       String
   isUsed    Boolean  @default(false)
@@ -258,7 +261,7 @@ model OtpVerification {
 }
 
 model Payment {
-  id                String        @id
+  id                String        @id @default(cuid())
   orderId           String        @unique
   method            PaymentMethod
   status            PaymentStatus @default(PENDING)
@@ -266,12 +269,12 @@ model Payment {
   razorpayPaymentId String?
   paidAt            DateTime?
   createdAt         DateTime      @default(now())
-  updatedAt         DateTime
+  updatedAt         DateTime      @updatedAt
   Order             Order         @relation(fields: [orderId], references: [id])
 }
 
 model Product {
-  id                String              @id
+  id                String              @id @default(cuid())
   name              String
   description       String?
   isActive          Boolean             @default(true)
@@ -283,7 +286,7 @@ model Product {
   categoryId        String
   storeId           String
   createdAt         DateTime            @default(now())
-  updatedAt         DateTime
+  updatedAt         DateTime            @updatedAt
   Banner            Banner[]
   CartItem          CartItem[]
   CollectionProduct CollectionProduct[]
@@ -296,7 +299,7 @@ model Product {
 }
 
 model ProductMedia {
-  id        String   @id
+  id        String   @id @default(cuid())
   productId String
   mediaId   String
   isPrimary Boolean  @default(false)
@@ -309,7 +312,7 @@ model ProductMedia {
 }
 
 model RefreshToken {
-  id        String   @id
+  id        String   @id @default(cuid())
   token     String   @unique
   userId    String
   isRevoked Boolean  @default(false)
@@ -319,7 +322,7 @@ model RefreshToken {
 }
 
 model Store {
-  id                        String            @id
+  id                        String            @id @default(cuid())
   name                      String
   phone                     String            @unique
   whatsappPhoneNumberId     String?           @unique
@@ -334,7 +337,7 @@ model Store {
   isActive                  Boolean           @default(true)
   customerAuthMethods       String[]          @default(["PHONE_OTP"])
   createdAt                 DateTime          @default(now())
-  updatedAt                 DateTime
+  updatedAt                 DateTime          @updatedAt
   Banner                    Banner[]
   Brand                     Brand[]
   CartItem                  CartItem[]
@@ -352,7 +355,7 @@ model Store {
 }
 
 model StoreInvite {
-  id        String   @id
+  id        String   @id @default(cuid())
   storeId   String
   email     String
   role      Role     @default(STAFF)
@@ -366,7 +369,7 @@ model StoreInvite {
 }
 
 model User {
-  id              String            @id
+  id              String            @id @default(cuid())
   name            String
   email           String            @unique
   password        String
@@ -379,7 +382,7 @@ model User {
 }
 
 model UserStore {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String
   storeId   String
   role      Role     @default(OWNER)
@@ -392,7 +395,7 @@ model UserStore {
 }
 
 model WishlistItem {
-  id         String   @id
+  id         String   @id @default(cuid())
   customerId String
   productId  String
   storeId    String
@@ -408,6 +411,7 @@ enum BannerType {
   PRODUCT
   COLLECTION
   URL
+  CATEGORY
 }
 
 enum BucketType {

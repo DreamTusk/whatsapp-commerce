@@ -8,9 +8,9 @@ import { OrderStatus, OrderSource, PaymentMethod, PaymentStatus } from '@prisma/
 import { generateOrderNumber } from '../../utils/order-number';
 
 const orderInclude = {
-  customer: { select: { name: true, phone: true } },
-  items: true,
-  payment: true,
+  Customer: { select: { name: true, phone: true } },
+  OrderItem: true,
+  Payment: true,
 };
 
 @Injectable()
@@ -70,9 +70,9 @@ export class OrdersService {
       cancelled_by: o.cancelledBy ?? null,
       created_at: o.createdAt,
       updated_at: o.updatedAt,
-      customer: { name: o.customer.name, phone: o.customer.phone },
-      items: o.items.map((i: any) => this.formatOrderItem(i)),
-      payment: this.formatPayment(o.payment),
+      customer: { name: o.Customer.name, phone: o.Customer.phone },
+      items: o.OrderItem.map((i: any) => this.formatOrderItem(i)),
+      payment: this.formatPayment(o.Payment),
     };
   }
 
@@ -217,8 +217,8 @@ export class OrdersService {
             pincode: addr.pincode.trim(),
             state: addr.state.trim(),
             country: addr.country.trim(),
-            items: { create: orderItemsData },
-            payment: { create: { method, status: PaymentStatus.PENDING } },
+            OrderItem: { create: orderItemsData },
+            Payment: { create: { method, status: PaymentStatus.PENDING } },
           },
           include: orderInclude,
         });
@@ -305,7 +305,7 @@ export class OrdersService {
     });
 
     // Fire-and-forget — never blocks the response
-    this.notifyCustomer(storeId, order.customer.phone, order.orderNumber, status as OrderStatus, updateData.cancellationReason).catch(() => {});
+    this.notifyCustomer(storeId, order.Customer.phone, order.orderNumber, status as OrderStatus, updateData.cancellationReason).catch(() => {});
 
     return { order: this.formatOrder(order) };
   }

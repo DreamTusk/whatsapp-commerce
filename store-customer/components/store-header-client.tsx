@@ -218,9 +218,6 @@ export default function StoreHeaderClient({ store }: Props) {
           {/* Store name + profile avatar row */}
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              {store.logo && (
-                <img src={store.logo} alt={store.name} className="w-7 h-7 rounded-lg object-cover" />
-              )}
               <span className="text-[22px] font-normal leading-none text-violet-600" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
                 {store.name}
               </span>
@@ -268,9 +265,6 @@ export default function StoreHeaderClient({ store }: Props) {
             {/* Left: logo + store name + divider + location */}
             <div className="flex items-center gap-4 flex-shrink-0">
               <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-                {store.logo && (
-                  <img src={store.logo} alt={store.name} className="w-8 h-8 rounded-xl object-cover" />
-                )}
                 <span className="text-[30px] font-normal leading-none tracking-normal text-violet-600" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
                   {store.name}
                 </span>

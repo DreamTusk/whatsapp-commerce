@@ -11,12 +11,13 @@ import { Label } from '@/components/ui/label'
 import { DateTimePicker } from '@/components/ui/date-time-picker'
 import api from '@/lib/api'
 import { useFileUpload } from '@/hooks/useFileUpload'
-import type { Product, Collection, Banner } from '@/types'
+import type { Product, Collection, Category, Banner } from '@/types'
 import AppSwitch from '@/components/ui/app-switch'
 import { AppCombobox } from '@/components/ui/app-combobox'
+import { AppSelect } from '@/components/ui/app-select'
 import { apiErrorMessage } from '@/lib/utils'
 
-type BannerType = 'product' | 'collection' | 'url'
+type BannerType = 'product' | 'collection' | 'url' | 'category'
 
 export default function EditBannerPage() {
   const router = useRouter()
@@ -24,12 +25,14 @@ export default function EditBannerPage() {
 
   const [products, setProducts]         = useState<Product[]>([])
   const [collections, setCollections]   = useState<Collection[]>([])
+  const [categories, setCategories]     = useState<Category[]>([])
   const [loading, setLoading]           = useState(true)
 
   const [name, setName]                 = useState('')
   const [type, setType]                 = useState<BannerType>('collection')
   const [productId, setProductId]       = useState('')
   const [collectionId, setCollectionId] = useState('')
+  const [categoryId, setCategoryId]     = useState('')
   const [url, setUrl]                   = useState('')
   const [imageFile, setImageFile]       = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -56,6 +59,7 @@ export default function EditBannerPage() {
         setType(banner.type as BannerType)
         setProductId(banner.product_id ?? '')
         setCollectionId(banner.collection_id ?? '')
+        setCategoryId(banner.category_id ?? '')
         setUrl(banner.url ?? '')
         setImageUrl(banner.image_url ?? '')
         setIsActive(banner.status !== 'inactive')
@@ -64,6 +68,7 @@ export default function EditBannerPage() {
       }),
       api.get('/api/products').then(r => setProducts(r.data.products)),
       api.get('/api/collections').then(r => setCollections(r.data.collections)),
+      api.get('/api/categories').then(r => setCategories(r.data.categories)),
     ])
       .catch(() => toast.error('Failed to load data'))
       .finally(() => setLoading(false))
@@ -80,6 +85,7 @@ export default function EditBannerPage() {
     if (!name.trim()) { toast.error('Banner name is required'); return }
     if (type === 'product' && !productId) { toast.error('Select a product'); return }
     if (type === 'collection' && !collectionId) { toast.error('Select a collection'); return }
+    if (type === 'category' && !categoryId) { toast.error('Select a category'); return }
     if (type === 'url' && !url.trim()) { toast.error('URL is required'); return }
 
     setIsSaving(true)
@@ -91,9 +97,11 @@ export default function EditBannerPage() {
 
       await api.put(`/api/banners/${id}`, {
         name: name.trim(),
+        type,
         is_active: String(isActive),
         product_id: type === 'product' ? productId : '',
         collection_id: type === 'collection' ? collectionId : '',
+        category_id: type === 'category' ? categoryId : '',
         url: type === 'url' ? url.trim() : '',
         ...(mediaId ? { media_id: mediaId } : { image_url: imageUrl.trim() }),
         starts_at: startsAt ? new Date(startsAt).toISOString() : '',
@@ -143,22 +151,16 @@ export default function EditBannerPage() {
             {/* Type */}
             <div className="space-y-1.5">
               <Label className="text-base">Links to <span className="text-destructive">*</span></Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['collection', 'product', 'url'] as BannerType[]).map(t => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setType(t)}
-                    className={`h-11 rounded-lg text-base font-medium border transition-colors capitalize ${
-                      type === t
-                        ? 'bg-[#6366f1]/10 text-[#6366f1] border-[#6366f1]/30'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <AppSelect
+                value={type}
+                onValueChange={v => setType(v as BannerType)}
+                options={[
+                  { value: 'collection', label: 'Collection' },
+                  { value: 'product',    label: 'Product' },
+                  { value: 'category',   label: 'Category' },
+                  { value: 'url',        label: 'URL' },
+                ]}
+              />
             </div>
 
             {/* Conditional link target */}
@@ -188,6 +190,19 @@ export default function EditBannerPage() {
               </div>
             )}
 
+            {type === 'category' && (
+              <div className="space-y-1.5">
+                <Label className="text-base">Category <span className="text-destructive">*</span></Label>
+                <AppCombobox
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                  placeholder="Select category"
+                  searchPlaceholder="Search categories..."
+                  options={categories.map(c => ({ value: c.id, label: c.name }))}
+                />
+              </div>
+            )}
+
             {type === 'url' && (
               <div className="space-y-1.5">
                 <Label className="text-base">URL <span className="text-destructive">*</span></Label>
@@ -203,6 +218,7 @@ export default function EditBannerPage() {
             {/* Image */}
             <div className="space-y-2">
               <Label className="text-base">Banner image <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
+              <p className="text-xs text-gray-400">Recommended size: <span className="font-medium text-gray-500">1200 × 300 px</span> (4:1 ratio). Images of other sizes will be cropped.</p>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-3 cursor-pointer group w-fit">
                   <div className="w-24 h-14 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
@@ -232,7 +248,7 @@ export default function EditBannerPage() {
                   <p className="text-sm text-gray-400">or paste an image URL</p>
                   <Input
                     className="text-sm h-9"
-                    placeholder="https://picsum.photos/seed/banner/800/400"
+                    placeholder="https://picsum.photos/seed/banner/1200/300"
                     value={imageUrl}
                     onChange={e => setImageUrl(e.target.value)}
                   />

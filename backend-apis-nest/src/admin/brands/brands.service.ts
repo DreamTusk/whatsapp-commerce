@@ -22,14 +22,14 @@ export class BrandsService {
     const brands = await this.prisma.brand.findMany({
       where: { storeId },
       orderBy: { name: 'asc' },
-      include: { _count: { select: { products: true } } },
+      include: { _count: { select: { Product: true } } },
     });
 
     return {
       brands: brands.map((b) => ({
         id: b.id,
         name: b.name,
-        product_count: b._count.products,
+        product_count: b._count.Product,
         created_at: b.createdAt,
       })),
     };
@@ -63,9 +63,9 @@ export class BrandsService {
       const brand = await this.prisma.brand.update({
         where: { id: brandId },
         data: { name: name.trim() },
-        include: { _count: { select: { products: true } } },
+        include: { _count: { select: { Product: true } } },
       });
-      return { brand: { id: brand.id, name: brand.name, product_count: brand._count.products, created_at: brand.createdAt } };
+      return { brand: { id: brand.id, name: brand.name, product_count: brand._count.Product, created_at: brand.createdAt } };
     } catch (err: any) {
       if (err?.code === 'P2002') throw new ConflictException('A brand with this name already exists');
       throw err;

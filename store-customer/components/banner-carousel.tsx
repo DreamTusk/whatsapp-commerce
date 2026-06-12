@@ -10,6 +10,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 function getBannerHref(banner: Banner): string {
   if (banner.type === 'product' && banner.product_id) return `/products/${banner.product_id}`
   if (banner.type === 'collection' && banner.collection_id) return `/collection/${banner.collection_id}`
+  if (banner.type === 'category' && banner.category_id) return `/products?category=${banner.category_id}`
   if (banner.type === 'url' && banner.url) return banner.url
   return '#'
 }
@@ -82,7 +83,7 @@ export default function BannerCarousel({ banners }: { banners: Banner[] }) {
       <div className="page-x pt-4">
         <Link
           href={getBannerHref(banners[0])}
-          className="block w-full h-44 sm:h-60 lg:h-80 rounded-2xl overflow-hidden bg-gray-100"
+          className="block w-full aspect-[3/1] sm:aspect-[4/1] rounded-2xl overflow-hidden bg-gray-100"
         >
           <BannerImage banner={banners[0]} />
         </Link>
@@ -93,7 +94,7 @@ export default function BannerCarousel({ banners }: { banners: Banner[] }) {
   return (
     <div className="page-x pt-4">
       <div
-        className="relative w-full h-44 sm:h-60 lg:h-80 rounded-2xl overflow-hidden bg-gray-100 select-none"
+        className="relative w-full aspect-[3/1] sm:aspect-[4/1] rounded-2xl overflow-hidden bg-gray-100 select-none"
         onTouchStart={e => handleDragStart(e.touches[0].clientX)}
         onTouchMove={e => handleDragMove(e.touches[0].clientX)}
         onTouchEnd={e => handleDragEnd(e.changedTouches[0].clientX)}

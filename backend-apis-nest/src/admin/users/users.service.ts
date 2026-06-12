@@ -15,8 +15,8 @@ export class UsersService {
     return {
       id: m.id,
       user_id: m.userId,
-      name: m.user.name,
-      email: m.user.email,
+      name: m.User.name,
+      email: m.User.email,
       role: m.role,
       is_active: m.isActive,
       joined_at: m.createdAt,
@@ -28,7 +28,7 @@ export class UsersService {
 
     const members = await this.prisma.userStore.findMany({
       where: { storeId },
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { User: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -47,7 +47,7 @@ export class UsersService {
     const updated = await this.prisma.userStore.update({
       where: { id: userStoreId },
       data: { isActive: is_active },
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { User: { select: { id: true, name: true, email: true } } },
     });
 
     return { member: this.format(updated) };

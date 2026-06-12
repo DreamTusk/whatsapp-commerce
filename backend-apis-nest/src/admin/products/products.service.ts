@@ -8,12 +8,12 @@ import { FileService } from '../../shared/file.service';
 import { MediaEntity, BucketType } from '@prisma/client';
 
 const productInclude = {
-  brand: { select: { id: true, name: true } },
-  category: { select: { id: true, name: true } },
-  productMedia: {
+  Brand: { select: { id: true, name: true } },
+  Category: { select: { id: true, name: true } },
+  ProductMedia: {
     orderBy: { sortOrder: 'asc' as const },
     include: {
-      media: {
+      Media: {
         select: { id: true, url: true, thumbnailUrl: true, originalName: true },
       },
     },
@@ -33,11 +33,11 @@ export class ProductsService {
         ? Math.round((1 - p.sellingPrice / p.originalPrice) * 100)
         : null;
 
-    const images = (p.productMedia ?? []).map((pm: any) => ({
+    const images = (p.ProductMedia ?? []).map((pm: any) => ({
       id: pm.id,
       media_id: pm.mediaId,
-      url: pm.media.url,
-      thumbnail_url: pm.media.thumbnailUrl,
+      url: pm.Media.url,
+      thumbnail_url: pm.Media.thumbnailUrl,
       is_primary: pm.isPrimary,
       sort_order: pm.sortOrder,
     }));
@@ -56,8 +56,8 @@ export class ProductsService {
       unit: p.unit,
       in_stock: p.inStock,
       discount_percent: discount,
-      brand: p.brand ? { id: p.brand.id, name: p.brand.name } : null,
-      category: { id: p.category.id, name: p.category.name },
+      brand: p.Brand ? { id: p.Brand.id, name: p.Brand.name } : null,
+      category: { id: p.Category.id, name: p.Category.name },
       store_id: p.storeId,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
@@ -260,10 +260,10 @@ export class ProductsService {
 
     const pm = await this.prisma.productMedia.findFirst({
       where: { id: productMediaId, productId },
-      include: { media: true },
+      include: { Media: true },
     });
     if (!pm) throw new NotFoundException('Product media not found');
-    if (pm.media.storeId !== storeId) throw new NotFoundException('Product media not found');
+    if (pm.Media.storeId !== storeId) throw new NotFoundException('Product media not found');
 
     await this.prisma.productMedia.delete({ where: { id: productMediaId } });
     await this.fileService.deleteMedia(pm.mediaId, storeId);
@@ -306,12 +306,12 @@ export class ProductsService {
 
     const existing = await this.prisma.product.findFirst({
       where: { id: productId, storeId },
-      include: { productMedia: true },
+      include: { ProductMedia: true },
     });
     if (!existing) throw new NotFoundException('Product not found');
 
-    if (existing.productMedia.length > 0) {
-      const mediaIds = existing.productMedia.map((pm) => pm.mediaId);
+    if (existing.ProductMedia.length > 0) {
+      const mediaIds = existing.ProductMedia.map((pm) => pm.mediaId);
       await this.fileService.deleteMany(mediaIds, storeId);
     }
 

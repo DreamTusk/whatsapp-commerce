@@ -2,17 +2,17 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 
 const productInclude = {
-  brand: { select: { id: true, name: true } },
-  category: {
+  Brand: { select: { id: true, name: true } },
+  Category: {
     select: {
       id: true, name: true,
-      parent: { select: { id: true, name: true } },
+      Category: { select: { id: true, name: true } },
     },
   },
-  productMedia: {
+  ProductMedia: {
     orderBy: { sortOrder: 'asc' as const },
     include: {
-      media: { select: { url: true, thumbnailUrl: true } },
+      Media: { select: { url: true, thumbnailUrl: true } },
     },
   },
 };
@@ -22,9 +22,9 @@ export class StorefrontProductsService {
   constructor(private prisma: PrismaService) {}
 
   private formatProduct(p: any) {
-    const images = (p.productMedia ?? []).map((pm: any) => ({
-      url: pm.media.url,
-      thumbnail_url: pm.media.thumbnailUrl,
+    const images = (p.ProductMedia ?? []).map((pm: any) => ({
+      url: pm.Media.url,
+      thumbnail_url: pm.Media.thumbnailUrl,
       is_primary: pm.isPrimary,
     }));
     const primaryImage = images.find((i: any) => i.is_primary) ?? images[0] ?? null;
@@ -37,11 +37,11 @@ export class StorefrontProductsService {
       images,
       category_id: p.categoryId,
       category: {
-        id: p.category.id,
-        name: p.category.name,
-        parent: p.category.parent,
+        id: p.Category.id,
+        name: p.Category.name,
+        parent: p.Category.Category,
       },
-      brand: p.brand,
+      brand: p.Brand,
       selling_price: p.sellingPrice,
       original_price: p.originalPrice,
       unit: p.unit,

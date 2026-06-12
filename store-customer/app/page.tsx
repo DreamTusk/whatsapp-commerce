@@ -89,7 +89,7 @@ export default async function HomePage() {
             <div className="flex flex-nowrap justify-around gap-5 overflow-x-auto overflow-y-hidden pb-5 scrollbar-hide">
               {categories.map(cat => (
                 <Link key={cat.id} href={`/products?category=${cat.id}`} className="flex flex-col items-center gap-[10px] lg:gap-[15px] flex-shrink-0 w-[80px] sm:w-[110px] lg:w-[150px] group">
-                  <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full overflow-hidden bg-gray-100 border-2 border-white flex-shrink-0 transition-all duration-300 group-hover:border-indigo-400 group-hover:shadow-[0_4px_16px_rgba(99,102,241,0.25)]" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+                  <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full overflow-hidden bg-gray-100 border-2 border-white flex-shrink-0 shadow-md transition-all duration-300 group-hover:border-indigo-400 group-hover:shadow-[0_4px_16px_rgba(99,102,241,0.25)]">
                     {cat.image_url ? (
                       <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                     ) : (

@@ -42,12 +42,12 @@ export class StoreService {
   }
 
   private formatProductPublic(p: any) {
-    const media = (p.productMedia ?? []);
+    const media = (p.ProductMedia ?? []);
     const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: p.id,
       name: p.name,
-      image_url: primary?.media?.url ?? null,
+      image_url: primary?.Media?.url ?? null,
       selling_price: p.sellingPrice,
       original_price: p.originalPrice,
       unit: p.unit,
@@ -57,9 +57,9 @@ export class StoreService {
   }
 
   private readonly productMediaInclude = {
-    productMedia: {
+    ProductMedia: {
       orderBy: { sortOrder: 'asc' as const },
-      include: { media: { select: { url: true } } },
+      include: { Media: { select: { url: true } } },
     },
   };
 
@@ -96,9 +96,9 @@ export class StoreService {
           const cp = await this.prisma.collectionProduct.findMany({
             where: { collectionId: c.id },
             orderBy: { position: 'asc' },
-            include: { product: { include: this.productMediaInclude } },
+            include: { Product: { include: this.productMediaInclude } },
           });
-          products = cp.map(({ product }) => this.formatProductPublic(product));
+          products = cp.map(({ Product }) => this.formatProductPublic(Product));
         } else {
           const ps = await this.prisma.product.findMany({
             where: buildCriteriaWhere(c.criteria, store.id),
@@ -124,6 +124,7 @@ export class StoreService {
       image_url: b.imageUrl,
       product_id: b.productId,
       collection_id: b.collectionId,
+      category_id: b.categoryId,
       url: b.url,
     }));
 
@@ -205,11 +206,11 @@ export class StoreService {
   async getStore(userId: string) {
     const userStore = await this.prisma.userStore.findFirst({
       where: { userId },
-      include: { store: true },
+      include: { Store: true },
     });
     if (!userStore) throw new NotFoundException('No store found');
 
-    return { store: this.formatStore(userStore.store) };
+    return { store: this.formatStore(userStore.Store) };
   }
 
   async updateStore(

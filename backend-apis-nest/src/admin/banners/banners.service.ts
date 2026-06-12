@@ -36,6 +36,7 @@ export class BannersService {
       status: this.computeStatus(b),
       product_id: b.productId,
       collection_id: b.collectionId,
+      category_id: b.categoryId,
       url: b.url,
       starts_at: b.startsAt,
       expires_at: b.expiresAt,
@@ -57,7 +58,7 @@ export class BannersService {
     userId: string,
     body: {
       name: string; type: string; display_order?: string;
-      product_id?: string; collection_id?: string; url?: string;
+      product_id?: string; collection_id?: string; category_id?: string; url?: string;
       is_active?: string; starts_at?: string; expires_at?: string;
       image_url?: string; media_id?: string;
     },
@@ -68,12 +69,13 @@ export class BannersService {
     if (!body.type) throw new BadRequestException('type is required');
 
     const type = body.type.toUpperCase() as BannerType;
-    if (!['PRODUCT', 'COLLECTION', 'URL'].includes(type)) {
-      throw new BadRequestException('type must be PRODUCT, COLLECTION or URL');
+    if (!['PRODUCT', 'COLLECTION', 'URL', 'CATEGORY'].includes(type)) {
+      throw new BadRequestException('type must be PRODUCT, COLLECTION, URL or CATEGORY');
     }
     if (type === 'PRODUCT' && !body.product_id) throw new BadRequestException('product_id is required for PRODUCT type');
     if (type === 'COLLECTION' && !body.collection_id) throw new BadRequestException('collection_id is required for COLLECTION type');
     if (type === 'URL' && !body.url) throw new BadRequestException('url is required for URL type');
+    if (type === 'CATEGORY' && !body.category_id) throw new BadRequestException('category_id is required for CATEGORY type');
 
     let imageUrl: string | null = null;
     if (body.media_id) {
@@ -98,6 +100,7 @@ export class BannersService {
         displayOrder: body.display_order !== undefined ? parseInt(body.display_order) : count,
         productId: body.product_id || null,
         collectionId: body.collection_id || null,
+        categoryId: body.category_id || null,
         url: body.url || null,
         startsAt: body.starts_at ? new Date(body.starts_at) : null,
         expiresAt: body.expires_at ? new Date(body.expires_at) : null,
@@ -111,8 +114,8 @@ export class BannersService {
     userId: string,
     bannerId: string,
     body: {
-      name?: string; display_order?: string;
-      product_id?: string; collection_id?: string; url?: string;
+      name?: string; type?: string; display_order?: string;
+      product_id?: string; collection_id?: string; category_id?: string; url?: string;
       is_active?: string; starts_at?: string; expires_at?: string;
       image_url?: string; media_id?: string;
     },
@@ -137,11 +140,13 @@ export class BannersService {
       where: { id: bannerId },
       data: {
         ...(body.name && { name: body.name.trim() }),
+        ...(body.type && { type: body.type.toUpperCase() as BannerType }),
         ...(imageUrl !== undefined && { imageUrl }),
         ...(body.is_active !== undefined && { isActive: body.is_active === 'true' }),
         ...(body.display_order !== undefined && { displayOrder: parseInt(body.display_order) }),
         ...(body.product_id !== undefined && { productId: body.product_id || null }),
         ...(body.collection_id !== undefined && { collectionId: body.collection_id || null }),
+        ...(body.category_id !== undefined && { categoryId: body.category_id || null }),
         ...(body.url !== undefined && { url: body.url || null }),
         ...(body.starts_at !== undefined && { startsAt: body.starts_at ? new Date(body.starts_at) : null }),
         ...(body.expires_at !== undefined && { expiresAt: body.expires_at ? new Date(body.expires_at) : null }),

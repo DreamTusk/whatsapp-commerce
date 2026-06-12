@@ -3,9 +3,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { buildCriteriaWhere } from '../../utils/collection-criteria';
 
 const productMediaInclude = {
-  productMedia: {
+  ProductMedia: {
     orderBy: { sortOrder: 'asc' as const },
-    include: { media: { select: { url: true } } },
+    include: { Media: { select: { url: true } } },
   },
 };
 
@@ -14,12 +14,12 @@ export class StorefrontCollectionsService {
   constructor(private prisma: PrismaService) {}
 
   private formatProduct(p: any) {
-    const media = (p.productMedia ?? []);
+    const media = (p.ProductMedia ?? []);
     const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: p.id,
       name: p.name,
-      image_url: primary?.media?.url ?? null,
+      image_url: primary?.Media?.url ?? null,
       selling_price: p.sellingPrice,
       original_price: p.originalPrice,
       unit: p.unit,
@@ -46,9 +46,9 @@ export class StorefrontCollectionsService {
       const cp = await this.prisma.collectionProduct.findMany({
         where: { collectionId: collection.id },
         orderBy: { position: 'asc' },
-        include: { product: { include: productMediaInclude } },
+        include: { Product: { include: productMediaInclude } },
       });
-      products = cp.map(({ product }) => this.formatProduct(product));
+      products = cp.map(({ Product }) => this.formatProduct(Product));
     } else {
       const ps = await this.prisma.product.findMany({
         where: buildCriteriaWhere(collection.criteria, store.id),

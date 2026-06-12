@@ -54,7 +54,7 @@ export class DashboardService {
           totalAmount: true,
           status: true,
           createdAt: true,
-          customer: { select: { name: true, phone: true } },
+          Customer: { select: { name: true, phone: true } },
         },
       }),
 
@@ -63,7 +63,7 @@ export class DashboardService {
         take: 5,
         select: {
           id: true, name: true, sellingPrice: true,
-          category: { select: { name: true } },
+          Category: { select: { name: true } },
         },
       }),
     ]);
@@ -91,14 +91,14 @@ export class DashboardService {
         total_amount: o.totalAmount,
         status: o.status,
         created_at: o.createdAt,
-        customer_name: o.customer.name ?? o.customer.phone,
+        customer_name: o.Customer.name ?? o.Customer.phone,
       })),
       out_of_stock_products: outOfStockProducts.map((p) => ({
         id: p.id,
         name: p.name,
         image_url: null,
         selling_price: p.sellingPrice,
-        category: p.category.name,
+        category: p.Category.name,
       })),
     };
   }

@@ -21,15 +21,15 @@ export class StorefrontSearchService {
           isActive: true,
           OR: [
             { name: { contains: term, mode: 'insensitive' } },
-            { brand: { name: { contains: term, mode: 'insensitive' } } },
+            { Brand: { name: { contains: term, mode: 'insensitive' } } },
           ],
         },
         include: {
-          category: { select: { id: true, name: true } },
-          brand: { select: { id: true, name: true } },
-          productMedia: {
+          Category: { select: { id: true, name: true } },
+          Brand: { select: { id: true, name: true } },
+          ProductMedia: {
             orderBy: { sortOrder: 'asc' as const },
-            include: { media: { select: { url: true } } },
+            include: { Media: { select: { url: true } } },
           },
         },
         take: 6,
@@ -49,17 +49,17 @@ export class StorefrontSearchService {
 
     return {
       products: products.map((p) => {
-        const media = (p as any).productMedia ?? [];
+        const media = p.ProductMedia ?? [];
         const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
         return {
           id: p.id,
           name: p.name,
-          image_url: primary?.media?.url ?? null,
+          image_url: primary?.Media?.url ?? null,
           selling_price: p.sellingPrice,
           original_price: p.originalPrice,
           in_stock: p.inStock,
-          category: p.category ? { id: p.category.id, name: p.category.name } : null,
-          brand: p.brand ? { id: p.brand.id, name: p.brand.name } : null,
+          category: p.Category ? { id: p.Category.id, name: p.Category.name } : null,
+          brand: p.Brand ? { id: p.Brand.id, name: p.Brand.name } : null,
         };
       }),
       categories: categories.map((c) => ({

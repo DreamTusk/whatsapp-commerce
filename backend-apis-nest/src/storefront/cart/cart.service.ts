@@ -2,9 +2,9 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 
 const productMediaInclude = {
-  productMedia: {
+  ProductMedia: {
     orderBy: { sortOrder: 'asc' as const },
-    include: { media: { select: { url: true } } },
+    include: { Media: { select: { url: true } } },
   },
 };
 
@@ -13,7 +13,7 @@ export class CartService {
   constructor(private prisma: PrismaService) {}
 
   private formatItem(item: any) {
-    const media = item.product.productMedia ?? [];
+    const media = item.Product.ProductMedia ?? [];
     const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: item.id,
@@ -21,13 +21,13 @@ export class CartService {
       created_at: item.createdAt,
       updated_at: item.updatedAt,
       product: {
-        id: item.product.id,
-        name: item.product.name,
-        image_url: primary?.media?.url ?? null,
-        selling_price: item.product.sellingPrice,
-        original_price: item.product.originalPrice,
-        unit: item.product.unit,
-        in_stock: item.product.inStock,
+        id: item.Product.id,
+        name: item.Product.name,
+        image_url: primary?.Media?.url ?? null,
+        selling_price: item.Product.sellingPrice,
+        original_price: item.Product.originalPrice,
+        unit: item.Product.unit,
+        in_stock: item.Product.inStock,
       },
     };
   }
@@ -35,11 +35,11 @@ export class CartService {
   async getCart(customerId: string, storeId: string) {
     const items = await this.prisma.cartItem.findMany({
       where: { customerId, storeId },
-      include: { product: { include: productMediaInclude } },
+      include: { Product: { include: productMediaInclude } },
       orderBy: { createdAt: 'asc' },
     });
 
-    const total = items.reduce((sum, i) => sum + i.product.sellingPrice * i.quantity, 0);
+    const total = items.reduce((sum, i) => sum + i.Product.sellingPrice * i.quantity, 0);
     return { items: items.map((i) => this.formatItem(i)), total };
   }
 
@@ -62,11 +62,11 @@ export class CartService {
       ? await this.prisma.cartItem.update({
           where: { customerId_productId: { customerId, productId: product_id } },
           data: { quantity: existing.quantity + quantity },
-          include: { product: { include: productMediaInclude } },
+          include: { Product: { include: productMediaInclude } },
         })
       : await this.prisma.cartItem.create({
           data: { customerId, productId: product_id, storeId, quantity },
-          include: { product: { include: productMediaInclude } },
+          include: { Product: { include: productMediaInclude } },
         });
 
     return { item: this.formatItem(item) };
@@ -83,7 +83,7 @@ export class CartService {
     const item = await this.prisma.cartItem.update({
       where: { customerId_productId: { customerId, productId } },
       data: { quantity },
-      include: { product: { include: productMediaInclude } },
+      include: { Product: { include: productMediaInclude } },
     });
 
     return { item: this.formatItem(item) };

@@ -50,13 +50,13 @@ export class CollectionsService {
     const collections = await this.prisma.collection.findMany({
       where: { storeId },
       orderBy: { displayOrder: 'asc' },
-      include: { _count: { select: { products: true } } },
+      include: { _count: { select: { CollectionProduct: true } } },
     });
 
     return {
       collections: collections.map((c) => ({
         ...this.formatCollection(c),
-        product_count: c._count.products,
+        product_count: c._count.CollectionProduct,
       })),
     };
   }
@@ -120,9 +120,9 @@ export class CollectionsService {
       const cp = await this.prisma.collectionProduct.findMany({
         where: { collectionId: collection.id },
         orderBy: { position: 'asc' },
-        include: { product: true },
+        include: { Product: true },
       });
-      products = cp.map(({ product }) => this.formatProduct(product));
+      products = cp.map(({ Product }) => this.formatProduct(Product));
     } else {
       const ps = await this.prisma.product.findMany({
         where: buildCriteriaWhere(collection.criteria, storeId),

@@ -22,6 +22,7 @@ const STATUS_STYLES: Record<string, string> = {
 const TYPE_LABELS: Record<string, string> = {
   product:    'Product',
   collection: 'Collection',
+  category:   'Category',
   url:        'URL',
 }
 

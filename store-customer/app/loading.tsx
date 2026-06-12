@@ -3,7 +3,7 @@ export default function HomeLoading() {
     <main className="min-h-screen pb-24 animate-pulse">
       {/* Banner */}
       <div className="page-x pt-4">
-        <div className="w-full h-44 sm:h-60 lg:h-80 rounded-2xl bg-gray-200" />
+        <div className="w-full aspect-[3/1] sm:aspect-[4/1] rounded-2xl bg-gray-200" />
       </div>
 
       {/* Categories */}
@@ -16,7 +16,7 @@ export default function HomeLoading() {
           <div className="flex flex-nowrap gap-5 overflow-hidden pb-5">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-2.5 flex-shrink-0 w-[80px] sm:w-[110px] lg:w-[150px]">
-                <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full bg-gray-200" />
+                <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full bg-gray-200 shadow-md" />
                 <div className="h-3 w-14 bg-gray-200 rounded" />
               </div>
             ))}

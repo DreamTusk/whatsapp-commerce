@@ -46,13 +46,13 @@ export class InviteService {
 
     const invite = await this.prisma.storeInvite.create({
       data: { storeId: userStore.storeId, email, role: role as Role, token, expiresAt },
-      include: { store: true },
+      include: { Store: true },
     });
 
     const inviteLink = `${process.env.ADMIN_APP_URL || 'http://localhost:3001'}/accept-invite?token=${token}`;
 
     console.log(`\n--- STAFF INVITE ---`);
-    console.log(`Store  : ${invite.store.name}`);
+    console.log(`Store  : ${invite.Store.name}`);
     console.log(`Email  : ${email}`);
     console.log(`Role   : ${role}`);
     console.log(`Link   : ${inviteLink}`);

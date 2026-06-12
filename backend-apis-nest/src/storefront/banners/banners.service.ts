@@ -33,6 +33,7 @@ export class StorefrontBannersService {
         image_url: b.imageUrl,
         product_id: b.productId,
         collection_id: b.collectionId,
+        category_id: b.categoryId,
         url: b.url,
       })),
     };
