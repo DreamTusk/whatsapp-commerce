@@ -12,8 +12,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { BannersModule } from './banners/banners.module';
 import { UsersModule } from './users/users.module';
 import { FilesModule } from './files/files.module';
+import { PaymentProvidersModule } from './payment-providers/payment-providers.module';
 
 @Module({
-  imports: [StoreModule, InviteModule, CategoriesModule, BrandsModule, ProductsModule, InventoryModule, CollectionsModule, OrdersModule, CustomersModule, DashboardModule, BannersModule, UsersModule, FilesModule],
+  imports: [StoreModule, InviteModule, CategoriesModule, BrandsModule, ProductsModule, InventoryModule, CollectionsModule, OrdersModule, CustomersModule, DashboardModule, BannersModule, UsersModule, FilesModule, PaymentProvidersModule],
 })
 export class AdminModule {}

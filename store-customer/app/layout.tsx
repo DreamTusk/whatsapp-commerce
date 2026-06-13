@@ -38,6 +38,30 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headersList = await headers()
   const domain = headersList.get('x-store-domain') ?? ''
 
+  let storeActive = true
+  try {
+    const data = await apiFetch<{ store: Store }>('/api/store/info', domain)
+    storeActive = data.store.is_active
+  } catch {
+    storeActive = false
+  }
+
+  if (!storeActive) {
+    return (
+      <html lang="en" className={`${geist.className} ${instrumentSans.variable}`}>
+        <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+          <main className="flex min-h-screen items-center justify-center">
+            <div className="text-center px-6">
+              <p className="text-5xl mb-4">🔒</p>
+              <p className="font-semibold text-gray-700 text-lg">Store is temporarily unavailable</p>
+              <p className="text-sm text-gray-400 mt-1">Please check back later</p>
+            </div>
+          </main>
+        </body>
+      </html>
+    )
+  }
+
   return (
     <html lang="en" className={`${geist.className} ${instrumentSans.variable}`}>
       <body className="min-h-screen bg-white text-gray-900 antialiased pb-16 lg:pb-0">

@@ -1,0 +1,51 @@
+meta {
+  name: Verify Payment
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url_local}}/storefront/orders/:order_id/verify-payment
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customer_access_token}}
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+body:json {
+  {
+    "razorpay_order_id": "order_xxxxxxxxxxxx",
+    "razorpay_payment_id": "pay_xxxxxxxxxxxx",
+    "razorpay_signature": "<hmac_sha256_signature>"
+  }
+}
+
+docs {
+  Called by the frontend after customer completes payment in the Razorpay modal.
+  Verifies the HMAC-SHA256 signature before updating payment status.
+
+  Signature verification:
+    HMAC-SHA256(razorpay_order_id + "|" + razorpay_payment_id, keySecret) == razorpay_signature
+
+  Idempotent — safe to call multiple times (skips if Payment.status already PAID).
+
+  On success:
+  - Payment.status = PAID, Payment.paidAt = now(), Payment.razorpayPaymentId = razorpay_payment_id
+  - Order.status = CONFIRMED
+  - Returns { message: "Payment verified successfully" }
+
+  On failure:
+  - 400 if signature mismatch
+  - 404 if order not found
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -58,6 +58,9 @@ export interface Store {
   min_order_amount: number
   delivery_radius: number | null
   is_active: boolean
+  is_pickup_enabled: boolean
+  is_home_delivery_enabled: boolean
+  active_payment_providers: string[]
 }
 
 export interface CartItem {
@@ -129,6 +132,9 @@ export interface Order {
   order_number: string
   total_amount: number
   status: 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
+  delivery_type: 'PICKUP' | 'HOME_DELIVERY'
+  expected_pickup_time: string | null
+  delivery_notes: string | null
   address: string | null
   notes: string | null
   cancellation_reason: string | null

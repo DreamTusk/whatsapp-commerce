@@ -19,6 +19,7 @@ export class StoreService {
     id: string; name: string; phone: string; domain: string | null;
     catalogId: string | null; address: string | null; logo: string | null;
     minOrderAmount: number; deliveryRadius: number | null; isActive: boolean;
+    isPickupEnabled: boolean; isHomeDeliveryEnabled: boolean;
     whatsappPhoneNumberId: string | null; whatsappBusinessAccountId: string | null;
     whatsappAccessToken: string | null; createdAt: Date; updatedAt: Date;
   }) {
@@ -33,6 +34,8 @@ export class StoreService {
       min_order_amount: store.minOrderAmount,
       delivery_radius: store.deliveryRadius,
       is_active: store.isActive,
+      is_pickup_enabled: store.isPickupEnabled,
+      is_home_delivery_enabled: store.isHomeDeliveryEnabled,
       whatsapp_phone_number_id: store.whatsappPhoneNumberId,
       whatsapp_business_account_id: store.whatsappBusinessAccountId,
       whatsapp_access_token: store.whatsappAccessToken,
@@ -218,6 +221,7 @@ export class StoreService {
     body: {
       name?: string; phone?: string; domain?: string; address?: string;
       min_order_amount?: string; delivery_radius?: string; is_active?: string;
+      is_pickup_enabled?: string; is_home_delivery_enabled?: string;
       whatsapp_phone_number_id?: string; whatsapp_business_account_id?: string;
       whatsapp_access_token?: string; logo_media_id?: string;
     },
@@ -241,7 +245,9 @@ export class StoreService {
         ...(logoUrl !== undefined && { logo: logoUrl }),
         ...(body.min_order_amount !== undefined && { minOrderAmount: parseFloat(body.min_order_amount) }),
         ...(body.delivery_radius !== undefined && { deliveryRadius: parseFloat(body.delivery_radius) }),
-        ...(body.is_active !== undefined && { isActive: body.is_active === 'true' || body.is_active === 'true' }),
+        ...(body.is_active !== undefined && { isActive: body.is_active === 'true' }),
+        ...(body.is_pickup_enabled !== undefined && { isPickupEnabled: body.is_pickup_enabled === 'true' }),
+        ...(body.is_home_delivery_enabled !== undefined && { isHomeDeliveryEnabled: body.is_home_delivery_enabled === 'true' }),
         ...(body.whatsapp_phone_number_id !== undefined && { whatsappPhoneNumberId: body.whatsapp_phone_number_id }),
         ...(body.whatsapp_business_account_id !== undefined && { whatsappBusinessAccountId: body.whatsapp_business_account_id }),
         ...(body.whatsapp_access_token !== undefined && { whatsappAccessToken: body.whatsapp_access_token }),

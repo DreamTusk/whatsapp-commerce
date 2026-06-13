@@ -1,0 +1,27 @@
+meta {
+  name: Delete
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url_local}}/payment-providers/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  OWNER only. Permanently removes the payment provider configuration.
+  Customers will no longer be able to pay online until a new provider is added.
+
+  Response: { message: "Payment provider deleted" }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,27 @@
+meta {
+  name: List
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_local}}/payment-providers
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  Returns all payment providers configured for the store.
+  keySecret is never returned — only keyId and isActive.
+
+  Response: { payment_providers: [{ id, provider, key_id, is_active, created_at, updated_at }] }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

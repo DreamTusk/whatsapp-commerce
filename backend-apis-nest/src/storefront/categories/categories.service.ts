@@ -10,6 +10,7 @@ export class StorefrontCategoriesService {
 
     const store = await this.prisma.store.findUnique({ where: { domain } });
     if (!store) throw new NotFoundException('Store not found');
+    if (!store.isActive) throw new BadRequestException('Store is not active');
 
     const all = await this.prisma.category.findMany({
       where: { storeId: store.id, isActive: true },

@@ -11,6 +11,7 @@ export class StorefrontSearchService {
 
     const store = await this.prisma.store.findUnique({ where: { domain } });
     if (!store) throw new NotFoundException('Store not found');
+    if (!store.isActive) throw new BadRequestException('Store is not active');
 
     const term = q.trim();
 

@@ -24,6 +24,7 @@ export class StorefrontAuthService {
     if (!domain) throw new BadRequestException('x-store-domain header required');
     const store = await this.prisma.store.findUnique({ where: { domain } });
     if (!store) throw new NotFoundException('Store not found');
+    if (!store.isActive) throw new BadRequestException('Store is not active');
     return store;
   }
 

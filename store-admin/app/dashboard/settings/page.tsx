@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Globe, Clock } from '@deemlol/next-icons'
+import { Globe, Clock, CreditCard, Truck } from '@deemlol/next-icons'
 import { Store, UserRound, HeartHandshake, ScrollText } from 'lucide-react'
 import GeneralPanel       from './panels/general'
 import UsersPanel         from './panels/users'
@@ -9,11 +9,15 @@ import DomainPanel        from './panels/domain'
 import SupportSocialPanel from './panels/support-social'
 import PoliciesPanel      from './panels/policies'
 import StoreTimingsPanel  from './panels/store-timings'
+import PaymentsPanel      from './panels/payments'
+import DeliveryPanel      from './panels/delivery'
 
 const SETTINGS_TABS = [
   { key: 'general',        label: 'General',          icon: Store,          component: GeneralPanel       },
   { key: 'users',          label: 'Staffs',           icon: UserRound,      component: UsersPanel         },
   { key: 'domain',         label: 'Domain',           icon: Globe,          component: DomainPanel        },
+  { key: 'payments',       label: 'Payments',         icon: CreditCard,     component: PaymentsPanel      },
+  { key: 'delivery',       label: 'Delivery',         icon: Truck,          component: DeliveryPanel      },
   { key: 'support-social', label: 'Support & Social', icon: HeartHandshake, component: SupportSocialPanel },
   { key: 'policies',       label: 'Policies',         icon: ScrollText,     component: PoliciesPanel      },
   { key: 'store-timings',  label: 'Store timings',    icon: Clock,          component: StoreTimingsPanel  },

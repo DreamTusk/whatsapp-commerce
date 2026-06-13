@@ -222,6 +222,9 @@ model Order {
   pincode            String?
   latitude           Float?
   longitude          Float?
+  deliveryType       String    @default("HOME_DELIVERY")
+  expectedPickupTime DateTime?
+  deliveryNotes      String?
   notes              String?
   altPhone           String?
   cancellationReason String?
@@ -335,6 +338,8 @@ model Store {
   minOrderAmount            Float             @default(0)
   deliveryRadius            Float?
   isActive                  Boolean           @default(true)
+  isPickupEnabled           Boolean           @default(false)
+  isHomeDeliveryEnabled     Boolean           @default(true)
   customerAuthMethods       String[]          @default(["PHONE_OTP"])
   createdAt                 DateTime          @default(now())
   updatedAt                 DateTime          @updatedAt
@@ -350,8 +355,23 @@ model Store {
   Order                     Order[]
   Product                   Product[]
   StoreInvite               StoreInvite[]
+  StorePaymentProvider      StorePaymentProvider[]
   UserStore                 UserStore[]
   WishlistItem              WishlistItem[]
+}
+
+model StorePaymentProvider {
+  id        String   @id @default(cuid())
+  storeId   String
+  provider  String
+  keyId     String
+  keySecret String
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Store     Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, provider])
 }
 
 model StoreInvite {

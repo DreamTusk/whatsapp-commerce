@@ -25,6 +25,8 @@ export default function GeneralPanel() {
   const [minOrder, setMinOrder] = useState('')
   const [radius, setRadius]     = useState('')
   const [isActive, setIsActive] = useState(true)
+  const [isPickupEnabled, setIsPickupEnabled] = useState(false)
+  const [isHomeDeliveryEnabled, setIsHomeDeliveryEnabled] = useState(true)
   const [deactivateConfirm, setDeactivateConfirm] = useState(false)
   const [isDeactivating, setIsDeactivating] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)

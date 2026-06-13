@@ -1,0 +1,37 @@
+meta {
+  name: Get Storefront Store
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url_local}}/storefront/store
+  body: none
+  auth: none
+}
+
+headers {
+  x-store-domain: freshmart.localhost
+}
+
+docs {
+  Public — no auth required.
+  Returns store info including which payment providers are active.
+
+  Response:
+  {
+    store: {
+      id, name, phone, domain, logo, address,
+      min_order_amount, delivery_radius, is_active,
+      active_payment_providers: ["RAZORPAY"]   // only active providers
+    }
+  }
+
+  Frontend uses active_payment_providers to decide which payment options to show at checkout.
+  If empty, only COD is shown.
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

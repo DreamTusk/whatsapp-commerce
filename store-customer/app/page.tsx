@@ -8,7 +8,6 @@ import type { Store, Category, Product, StoreCollection, Banner } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
-const scrollRow = 'flex gap-4 overflow-x-auto overflow-y-hidden pb-2 scrollbar-hide'
 
 export default async function HomePage() {
   const headersList = await headers()
@@ -34,18 +33,6 @@ export default async function HomePage() {
           <p className="text-5xl mb-4">🏪</p>
           <p className="font-semibold text-gray-700 text-lg">Store not found</p>
           <p className="text-sm text-gray-400 mt-1">Check the URL and try again</p>
-        </div>
-      </main>
-    )
-  }
-
-  if (!store.is_active) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center px-6">
-          <p className="text-5xl mb-4">🔒</p>
-          <p className="font-semibold text-gray-700 text-lg">Store is temporarily unavailable</p>
-          <p className="text-sm text-gray-400 mt-1">Please check back later</p>
         </div>
       </main>
     )
@@ -114,9 +101,9 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="page-x">
-            <div className={scrollRow}>
-              {col.products.slice(0, 12).map(p => (
-                <ProductCard key={p.id} product={p} source={{ type: 'all' }} width={160} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {col.products.slice(0, 6).map(p => (
+                <ProductCard key={p.id} product={p} scrollable={false} source={{ type: 'collection', id: col.id, name: col.name }} />
               ))}
             </div>
           </div>

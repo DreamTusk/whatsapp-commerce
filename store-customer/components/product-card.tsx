@@ -15,6 +15,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 export type ProductCardSource =
   | { type: 'all' }
   | { type: 'category'; id: string; name: string }
+  | { type: 'collection'; id: string; name: string }
   | { type: 'products' }
 
 interface Props {
@@ -31,6 +32,8 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
       ? `/products/${p.id}?from=all`
       : source.type === 'category'
       ? `/products/${p.id}?catId=${source.id}&catName=${encodeURIComponent(source.name)}`
+      : source.type === 'collection'
+      ? `/products/${p.id}?colId=${source.id}&colName=${encodeURIComponent(source.name)}`
       : `/products/${p.id}?from=products`
     : `/products/${p.id}`
   const { isAuthenticated, requireAuth } = useAuth()

@@ -35,6 +35,17 @@ export class StorefrontOrdersController {
     return this.ordersService.placeOrder(customer.customerId, customer.storeId, domain, body);
   }
 
+  // POST /api/storefront/orders/:id/verify-payment
+  @Post(':id/verify-payment')
+  @HttpCode(HttpStatus.OK)
+  verifyPayment(
+    @CurrentCustomer() customer: { customerId: string },
+    @Param('id') id: string,
+    @Body() body: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string },
+  ) {
+    return this.ordersService.verifyPayment(customer.customerId, id, body);
+  }
+
   // PATCH /api/storefront/orders/:id/cancel
   @Patch(':id/cancel')
   @HttpCode(HttpStatus.OK)

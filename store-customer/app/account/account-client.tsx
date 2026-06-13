@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
-import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, X } from "@deemlol/next-icons"
+import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check } from "@deemlol/next-icons"
 
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
@@ -672,17 +672,33 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
 
     // Vertical tracker — used in the right-side card on desktop, and below details on mobile
     const verticalTracker = isCancelled ? (
-      <div className="p-3 bg-red-50 rounded-xl">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-            <X className="w-4 h-4 text-red-500" />
+      <div className="flex flex-col">
+        {TRACKING_STEPS.map((step, idx) => {
+          const isLast = idx === TRACKING_STEPS.length - 1
+          return (
+            <div key={step.status} className={`flex gap-3 ${!isLast ? 'flex-1' : ''}`}>
+              <div className="flex flex-col items-center">
+                <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 bg-white border-gray-200" />
+                {!isLast && <div className="w-0.5 flex-1 my-1 rounded-full bg-gray-100" />}
+              </div>
+              <div className="pt-0.5">
+                <p className="text-sm font-medium leading-tight text-gray-300">{step.label}</p>
+              </div>
+            </div>
+          )
+        })}
+        <div className="flex gap-3 mt-1">
+          <div className="flex flex-col items-center">
+            <div className="w-7 h-7 rounded-full border-2 border-red-200 bg-red-50 flex items-center justify-center flex-shrink-0">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-red-600 text-sm">Order cancelled</p>
-            <p className="text-xs text-red-400 mt-0.5">{o.cancelled_by === 'CUSTOMER' ? 'Cancelled by you' : o.cancelled_by === 'STORE' ? 'Cancelled by store' : 'This order has been cancelled'}</p>
+          <div className="pt-0.5">
+            <p className="text-sm font-semibold leading-tight text-red-500">Cancelled</p>
+            {o.cancelled_by && <p className="text-xs text-red-400 mt-0.5">{o.cancelled_by === 'CUSTOMER' ? 'By you' : o.cancelled_by === 'STORE' ? 'By store' : ''}</p>}
+            {o.cancellation_reason && <p className="text-xs text-gray-400 mt-1">{o.cancellation_reason}</p>}
           </div>
         </div>
-        {o.cancellation_reason && <p className="mt-2 text-xs text-red-500 bg-red-100 rounded-lg px-3 py-2"><span className="font-semibold">Reason: </span>{o.cancellation_reason}</p>}
       </div>
     ) : (
       <div className="flex flex-col h-full">

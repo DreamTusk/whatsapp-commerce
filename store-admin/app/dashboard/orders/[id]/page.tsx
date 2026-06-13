@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User } from '@deemlol/next-icons'
+import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User, Truck } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -263,6 +263,33 @@ export default function OrderDetailPage() {
                     <div className="flex items-center justify-between gap-4 py-3">
                       <span className="text-sm text-gray-400">Created by</span>
                       <span className="text-base text-gray-700">{order.created_by}</span>
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
+
+              {/* Delivery mode */}
+              <SectionCard>
+                <SectionLabel>
+                  <span className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5 inline" /> Delivery</span>
+                </SectionLabel>
+                <div className="divide-y divide-gray-50">
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <span className="text-sm text-gray-400">Mode</span>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${order.delivery_type === 'PICKUP' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                      {order.delivery_type === 'PICKUP' ? '🏪 Store pickup' : '🚚 Home delivery'}
+                    </span>
+                  </div>
+                  {order.delivery_type === 'PICKUP' && order.expected_pickup_time && (
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-sm text-gray-400">Pickup time</span>
+                      <span className="text-sm text-gray-700">{formatDate(order.expected_pickup_time)}</span>
+                    </div>
+                  )}
+                  {order.delivery_notes && (
+                    <div className="py-3">
+                      <span className="text-sm text-gray-400 block mb-1">Delivery notes</span>
+                      <span className="text-sm text-gray-700 italic">"{order.delivery_notes}"</span>
                     </div>
                   )}
                 </div>

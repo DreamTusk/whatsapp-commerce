@@ -6,10 +6,23 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
-import type { Cart, Order } from '@/types'
-import { Check, X, MapPin, CreditCard } from "@deemlol/next-icons"
+import type { Cart, Order, Store } from '@/types'
+import { Check, X, MapPin, CreditCard, Smartphone, Truck, House } from "@deemlol/next-icons"
 
 type LocationState = 'idle' | 'requesting' | 'granted' | 'denied'
+type PaymentMethod = 'COD' | 'ONLINE'
+type DeliveryType = 'PICKUP' | 'HOME_DELIVERY'
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) { resolve(true); return }
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
 
 function buildAddress(doorNo: string, street: string, city: string, state: string, country: string, pincode: string): string {
   const line1 = [doorNo, street].filter(Boolean).join(', ')
@@ -27,15 +40,20 @@ export default function CheckoutClient() {
   const router = useRouter()
 
   const [cart, setCart] = useState<Cart | null>(null)
+  const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
   const [placing, setPlacing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [error, setError] = useState('')
 
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD')
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>('HOME_DELIVERY')
+  const [expectedPickupTime, setExpectedPickupTime] = useState('')
+  const [deliveryNotes, setDeliveryNotes] = useState('')
+
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [altPhone, setAltPhone] = useState('')
-  const [notes, setNotes] = useState('')
 
   const [doorNo, setDoorNo] = useState('')
   const [street, setStreet] = useState('')
@@ -48,11 +66,15 @@ export default function CheckoutClient() {
   const [longitude, setLongitude] = useState<number | null>(null)
   const [locationState, setLocationState] = useState<LocationState>('idle')
 
-  const fetchCart = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!isAuthenticated) { setLoading(false); return }
     try {
-      const data = await clientFetch<Cart>('/api/storefront/cart')
-      setCart(data)
+      const [cartData, storeData] = await Promise.all([
+        clientFetch<Cart>('/api/storefront/cart'),
+        clientFetch<{ store: Store }>('/api/storefront/store'),
+      ])
+      setCart(cartData)
+      setStore(storeData.store)
     } catch {
       setCart(null)
     } finally {
@@ -60,7 +82,16 @@ export default function CheckoutClient() {
     }
   }, [isAuthenticated])
 
-  useEffect(() => { fetchCart() }, [fetchCart])
+  useEffect(() => { fetchData() }, [fetchData])
+
+  useEffect(() => {
+    if (!store) return
+    if (!store.is_home_delivery_enabled && store.is_pickup_enabled) {
+      setDeliveryType('PICKUP')
+    } else {
+      setDeliveryType('HOME_DELIVERY')
+    }
+  }, [store])
 
   useEffect(() => {
     if (customer) {
@@ -120,8 +151,10 @@ export default function CheckoutClient() {
 
   function handlePlaceOrderClick() {
     if (!cart || cart.items.length === 0) return
-    const combined = buildAddress(doorNo, street, city, addrState, country, pincode)
-    if (!combined.trim()) { setError('Delivery address is required'); return }
+    if (deliveryType === 'HOME_DELIVERY') {
+      const combined = buildAddress(doorNo, street, city, addrState, country, pincode)
+      if (!combined.trim()) { setError('Delivery address is required'); return }
+    }
     setError('')
     setConfirmOpen(true)
   }
@@ -133,35 +166,105 @@ export default function CheckoutClient() {
       const items = cart!.items.map(i => ({ product_id: i.product.id, quantity: i.quantity }))
       const body: Record<string, unknown> = {
         items,
-        address: combined,
+        delivery_type: deliveryType,
+        delivery_notes: deliveryNotes.trim() || undefined,
         name: name.trim() || undefined,
-        door_no: doorNo.trim() || undefined,
-        street: street.trim() || undefined,
-        city: city.trim() || undefined,
-        state: addrState.trim() || undefined,
-        country: country.trim() || undefined,
-        pincode: pincode.trim() || undefined,
-        notes: notes.trim() || undefined,
         alt_phone: altPhone.trim() || undefined,
-        payment_method: 'COD',
+        payment_method: paymentMethod,
       }
-      if (latitude !== null && longitude !== null) {
-        body.latitude = latitude
-        body.longitude = longitude
+      if (deliveryType === 'PICKUP') {
+        if (expectedPickupTime) body.expected_pickup_time = new Date(expectedPickupTime).toISOString()
+      } else {
+        body.address = combined
+        body.door_no = doorNo.trim() || undefined
+        body.street = street.trim() || undefined
+        body.city = city.trim() || undefined
+        body.state = addrState.trim() || undefined
+        body.country = country.trim() || undefined
+        body.pincode = pincode.trim() || undefined
+        if (latitude !== null && longitude !== null) {
+          body.latitude = latitude
+          body.longitude = longitude
+        }
       }
-      const data = await clientFetch<{ order: Order }>('/api/storefront/orders', {
+
+      const data = await clientFetch<{
+        order: Order
+        razorpay_order_id?: string
+        razorpay_key_id?: string
+        amount_paise?: number
+      }>('/api/storefront/orders', {
         method: 'POST',
         body: JSON.stringify(body),
       })
+
+      setConfirmOpen(false)
+
+      if (paymentMethod === 'ONLINE' && data.razorpay_order_id && data.razorpay_key_id) {
+        // Load script and open Razorpay modal — setPlacing stays true until handled
+        const loaded = await loadRazorpayScript()
+        if (!loaded) {
+          setError('Failed to load payment gateway. Please try again.')
+          setPlacing(false)
+          return
+        }
+
+        const rzp = new (window as any).Razorpay({
+          key: data.razorpay_key_id,
+          amount: data.amount_paise,
+          currency: 'INR',
+          order_id: data.razorpay_order_id,
+          name: store?.name ?? 'Store',
+          description: 'Order payment',
+          image: store?.logo ?? undefined,
+          prefill: {
+            name: name.trim() || undefined,
+            contact: phone || undefined,
+          },
+          theme: { color: '#6366f1' },
+          handler: async (response: {
+            razorpay_order_id: string
+            razorpay_payment_id: string
+            razorpay_signature: string
+          }) => {
+            try {
+              await clientFetch(`/api/storefront/orders/${data.order.id}/verify-payment`, {
+                method: 'POST',
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              })
+              updateCustomer({ name: name.trim() || undefined })
+              refreshCount()
+              router.push(`/orders/${data.order.id}`)
+            } catch {
+              setError('Payment verification failed. Please contact support with your order ID.')
+              setPlacing(false)
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setError('Payment was cancelled. Your order is saved — you can retry from the orders page.')
+              setPlacing(false)
+            },
+          },
+        })
+
+        rzp.open()
+        return
+      }
+
+      // COD flow
       updateCustomer({ name: name.trim() || undefined, address: combined })
       refreshCount()
-      setConfirmOpen(false)
       router.push(`/orders/${data.order.id}`)
     } catch (e: unknown) {
       setConfirmOpen(false)
       setError((e as { error?: string })?.error ?? 'Failed to place order')
     } finally {
-      setPlacing(false)
+      if (paymentMethod === 'COD') setPlacing(false)
     }
   }
 
@@ -206,6 +309,12 @@ export default function CheckoutClient() {
   }
 
   const addressPreview = buildAddress(doorNo, street, city, addrState, country, pincode)
+  const hasOnlinePayment = store?.active_payment_providers?.includes('RAZORPAY') ?? false
+  const hasPickup = store?.is_pickup_enabled ?? false
+  const hasHouseDelivery = store?.is_home_delivery_enabled ?? true
+  const showSelector = hasPickup && hasHouseDelivery
+  const isPickup = deliveryType === 'PICKUP'
+  const minPickupTime = new Date(Date.now() + 60000).toISOString().slice(0, 16)
 
   // ── Reusable form sections ──────────────────────────────────────────────────
 
@@ -240,7 +349,7 @@ export default function CheckoutClient() {
       {selectedAddress && (
         <div className="flex items-center gap-2.5 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5">
           <span className="text-base flex-shrink-0">
-            {selectedAddress.label === 'Home' ? '🏠' : selectedAddress.label === 'Work' ? '💼' : '📍'}
+            {selectedAddress.label === 'House' ? '🏠' : selectedAddress.label === 'Work' ? '💼' : '📍'}
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-indigo-700">{selectedAddress.label ?? 'Saved address'}</p>
@@ -314,12 +423,65 @@ export default function CheckoutClient() {
     </div>
   )
 
+  const deliveryTypeSelector = showSelector ? (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery method</p>
+      <div className="grid grid-cols-2 gap-2.5">
+        <button type="button" onClick={() => setDeliveryType('HOME_DELIVERY')}
+          className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-colors ${!isPickup ? 'border-indigo-400 bg-indigo-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
+        >
+          <House className={`w-5 h-5 ${!isPickup ? 'text-indigo-600' : 'text-gray-400'}`} />
+          <span className={`text-sm font-semibold ${!isPickup ? 'text-indigo-700' : 'text-gray-500'}`}>House Delivery</span>
+        </button>
+        <button type="button" onClick={() => setDeliveryType('PICKUP')}
+          className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-colors ${isPickup ? 'border-indigo-400 bg-indigo-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
+        >
+          <Truck className={`w-5 h-5 ${isPickup ? 'text-indigo-600' : 'text-gray-400'}`} />
+          <span className={`text-sm font-semibold ${isPickup ? 'text-indigo-700' : 'text-gray-500'}`}>Store Pickup</span>
+        </button>
+      </div>
+    </div>
+  ) : null
+
+  const pickupSection = (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pickup location</p>
+      <div className="flex items-start gap-3 bg-indigo-50 rounded-xl px-3 py-3">
+        <MapPin className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-indigo-800 leading-relaxed">
+          {store?.address ?? 'Store address not available — contact the store for directions.'}
+        </p>
+      </div>
+      <div>
+        <label className="text-xs font-medium text-gray-500 block mb-1.5">
+          Expected pickup time <span className="text-gray-300 font-normal">(optional)</span>
+        </label>
+        <input
+          type="datetime-local"
+          min={minPickupTime}
+          value={expectedPickupTime}
+          onChange={e => setExpectedPickupTime(e.target.value)}
+          className={inputSmCls}
+        />
+        <p className="text-[11px] text-gray-400 mt-1">Only future times allowed.</p>
+      </div>
+      <div>
+        <label className="text-xs font-medium text-gray-500 block mb-1.5">
+          Pickup notes <span className="text-gray-300 font-normal">(optional)</span>
+        </label>
+        <input type="text" value={deliveryNotes} onChange={e => setDeliveryNotes(e.target.value)}
+          placeholder="e.g. Call when ready, I'll be at gate 2"
+          className={inputSmCls} />
+      </div>
+    </div>
+  )
+
   const notesSection = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-3">
         Delivery notes <span className="text-gray-300 font-normal normal-case">(optional)</span>
       </label>
-      <input type="text" value={notes} onChange={e => setNotes(e.target.value)}
+      <input type="text" value={deliveryNotes} onChange={e => setDeliveryNotes(e.target.value)}
         placeholder="Any special instructions for delivery?"
         className={inputSmCls} />
     </div>
@@ -357,19 +519,50 @@ export default function CheckoutClient() {
   const paymentSection = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Payment</p>
-      <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-        <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <CreditCard className="w-4 h-4 text-indigo-600" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-gray-900">Cash on delivery</p>
-          <p className="text-xs text-gray-400 mt-0.5">Pay when your order arrives</p>
-        </div>
-        <div className="ml-auto flex-shrink-0">
-          <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
-            <Check className="w-2.5 h-2.5 text-white" />
-          </span>
-        </div>
+      <div className="space-y-2.5">
+
+        {/* COD */}
+        <button
+          type="button"
+          onClick={() => setPaymentMethod('COD')}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+            paymentMethod === 'COD' ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-100 hover:border-gray-200'
+          }`}
+        >
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+            <CreditCard className={`w-4 h-4 ${paymentMethod === 'COD' ? 'text-indigo-600' : 'text-gray-400'}`} />
+          </div>
+          <div className="flex-1 text-left">
+            <p className={`text-sm font-semibold ${paymentMethod === 'COD' ? 'text-gray-900' : 'text-gray-600'}`}>Cash on delivery</p>
+            <p className="text-xs text-gray-400 mt-0.5">Pay when your order arrives</p>
+          </div>
+          <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'bg-indigo-500' : 'border-2 border-gray-300'}`}>
+            {paymentMethod === 'COD' && <Check className="w-2.5 h-2.5 text-white" />}
+          </div>
+        </button>
+
+        {/* Pay online — only if Razorpay is configured and active */}
+        {hasOnlinePayment && (
+          <button
+            type="button"
+            onClick={() => setPaymentMethod('ONLINE')}
+            className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+              paymentMethod === 'ONLINE' ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-100 hover:border-gray-200'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${paymentMethod === 'ONLINE' ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+              <Smartphone className={`w-4 h-4 ${paymentMethod === 'ONLINE' ? 'text-indigo-600' : 'text-gray-400'}`} />
+            </div>
+            <div className="flex-1 text-left">
+              <p className={`text-sm font-semibold ${paymentMethod === 'ONLINE' ? 'text-gray-900' : 'text-gray-600'}`}>Pay online</p>
+              <p className="text-xs text-gray-400 mt-0.5">UPI, cards, netbanking & wallets</p>
+            </div>
+            <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${paymentMethod === 'ONLINE' ? 'bg-indigo-500' : 'border-2 border-gray-300'}`}>
+              {paymentMethod === 'ONLINE' && <Check className="w-2.5 h-2.5 text-white" />}
+            </div>
+          </button>
+        )}
+
       </div>
     </div>
   )
@@ -380,8 +573,9 @@ export default function CheckoutClient() {
       <div className="page-x py-5 pb-28 lg:pb-8 space-y-4 lg:max-w-[900px] lg:mx-auto">
         {orderSummarySection}
         {contactSection}
-        {addressSection}
-        {notesSection}
+        {deliveryTypeSelector}
+        {isPickup ? pickupSection : addressSection}
+        {!isPickup && notesSection}
         {paymentSection}
         {error && (
           <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3">
@@ -390,7 +584,7 @@ export default function CheckoutClient() {
         )}
         <button onClick={handlePlaceOrderClick}
           className="hidden lg:block w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-4 rounded-xl text-sm transition-colors shadow-sm">
-          Place order · ₹{cart?.total ?? 0}
+          {paymentMethod === 'ONLINE' ? `Pay ₹${cart?.total ?? 0} online` : `Place order · ₹${cart?.total ?? 0}`}
         </button>
       </div>
 
@@ -403,7 +597,7 @@ export default function CheckoutClient() {
           </div>
           <button onClick={handlePlaceOrderClick}
             className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors">
-            Place order
+            {paymentMethod === 'ONLINE' ? 'Pay online' : 'Place order'}
           </button>
         </div>
       </div>
@@ -427,19 +621,48 @@ export default function CheckoutClient() {
               </div>
               <div className="flex justify-between px-4 py-3 text-sm">
                 <span className="text-gray-500">Payment</span>
-                <span className="text-gray-700">Cash on delivery</span>
+                <span className="text-gray-700">{paymentMethod === 'ONLINE' ? 'Online (Razorpay)' : 'Cash on delivery'}</span>
               </div>
-              {locationState === 'granted' && (
-                <div className="flex justify-between px-4 py-3 text-sm">
-                  <span className="text-gray-500">Location</span>
-                  <span className="text-green-600 font-semibold text-xs">Shared ✓</span>
-                </div>
-              )}
-              {addressPreview && (
-                <div className="px-4 py-3">
-                  <p className="text-xs text-gray-400 mb-1">Deliver to</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{addressPreview}</p>
-                </div>
+              <div className="flex justify-between px-4 py-3 text-sm">
+                <span className="text-gray-500">Delivery</span>
+                <span className="text-gray-700 font-medium">{isPickup ? '🏪 Store pickup' : '🚚 House delivery'}</span>
+              </div>
+              {isPickup ? (
+                <>
+                  {expectedPickupTime && (
+                    <div className="flex justify-between px-4 py-3 text-sm">
+                      <span className="text-gray-500">Pickup time</span>
+                      <span className="text-gray-700">{new Date(expectedPickupTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    </div>
+                  )}
+                  {deliveryNotes && (
+                    <div className="px-4 py-3">
+                      <p className="text-xs text-gray-400 mb-1">Pickup notes</p>
+                      <p className="text-sm text-gray-700">{deliveryNotes}</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {locationState === 'granted' && (
+                    <div className="flex justify-between px-4 py-3 text-sm">
+                      <span className="text-gray-500">Location</span>
+                      <span className="text-green-600 font-semibold text-xs">Shared ✓</span>
+                    </div>
+                  )}
+                  {addressPreview && (
+                    <div className="px-4 py-3">
+                      <p className="text-xs text-gray-400 mb-1">Deliver to</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">{addressPreview}</p>
+                    </div>
+                  )}
+                  {deliveryNotes && (
+                    <div className="px-4 py-3">
+                      <p className="text-xs text-gray-400 mb-1">Delivery notes</p>
+                      <p className="text-sm text-gray-700">{deliveryNotes}</p>
+                    </div>
+                  )}
+                </>
               )}
               {altPhone && (
                 <div className="flex justify-between px-4 py-3 text-sm">
@@ -456,7 +679,9 @@ export default function CheckoutClient() {
               </button>
               <button onClick={confirmOrder} disabled={placing}
                 className="flex-1 h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors">
-                {placing ? 'Placing…' : 'Confirm & place'}
+                {placing
+                  ? (paymentMethod === 'ONLINE' ? 'Opening payment…' : 'Placing…')
+                  : (paymentMethod === 'ONLINE' ? 'Proceed to pay' : 'Confirm & place')}
               </button>
             </div>
           </div>

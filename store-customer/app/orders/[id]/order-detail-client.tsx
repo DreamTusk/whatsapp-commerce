@@ -103,23 +103,43 @@ export default function OrderDetailClient() {
     <div className="flex flex-col flex-1 p-6">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-6">Order tracking</p>
       {isCancelled ? (
-        <div className="p-4 bg-red-50 rounded-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-              <X className="w-5 h-5 text-red-500" />
+        <div className="flex flex-col">
+          {/* Show completed steps before cancellation */}
+          {STEPS.map((step, idx) => {
+            const done = currentStep >= idx
+            return (
+              <div key={step.status} className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${done ? 'bg-indigo-500 border-indigo-500' : 'bg-white border-gray-200'}`}>
+                    {done && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+                  </div>
+                  <div className="w-0.5 flex-1 my-1 min-h-[28px] rounded-full" style={{ backgroundColor: done ? '#6366f1' : '#e5e7eb' }} />
+                </div>
+                <div className="pb-5">
+                  <p className={`text-sm font-semibold leading-tight mt-1 ${done ? 'text-gray-900' : 'text-gray-400'}`}>{step.label}</p>
+                </div>
+              </div>
+            )
+          })}
+          {/* Cancelled terminal step */}
+          <div className="flex gap-4">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full border-2 border-red-400 bg-red-50 flex items-center justify-center flex-shrink-0">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+              </div>
             </div>
-            <div>
-              <p className="font-semibold text-red-600 text-sm">Order cancelled</p>
-              <p className="text-xs text-red-400 mt-0.5">
-                {order.cancelled_by === 'CUSTOMER' ? 'Cancelled by you' : order.cancelled_by === 'STORE' ? 'Cancelled by store' : 'This order has been cancelled'}
+            <div className="pb-2">
+              <p className="text-sm font-semibold text-red-500 leading-tight mt-1">Cancelled</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {order.cancelled_by === 'CUSTOMER' ? 'By you' : order.cancelled_by === 'STORE' ? 'By store' : '—'}
               </p>
+              {order.cancellation_reason && (
+                <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                  <span className="font-medium text-gray-500">Reason: </span>{order.cancellation_reason}
+                </p>
+              )}
             </div>
           </div>
-          {order.cancellation_reason && (
-            <p className="mt-2.5 text-xs text-red-500 bg-red-100 rounded-lg px-3 py-2 leading-relaxed">
-              <span className="font-semibold">Reason: </span>{order.cancellation_reason}
-            </p>
-          )}
         </div>
       ) : (
         <div className="flex flex-col">

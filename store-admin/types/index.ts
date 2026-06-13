@@ -14,6 +14,8 @@ export interface Store {
   min_order_amount: number
   delivery_radius: number | null
   is_active: boolean
+  is_pickup_enabled: boolean
+  is_home_delivery_enabled: boolean
   whatsapp_phone_number_id: string | null
   whatsapp_business_account_id: string | null
 }
@@ -110,8 +112,12 @@ export interface Order {
   latitude: number | null
   longitude: number | null
   notes: string | null
+  delivery_type: 'PICKUP' | 'HOME_DELIVERY'
+  expected_pickup_time: string | null
+  delivery_notes: string | null
   alt_phone: string | null
   cancellation_reason: string | null
+  cancelled_by: string | null
   created_at: string
   updated_at: string
   customer: { name: string | null; phone: string | null }
@@ -176,6 +182,15 @@ export interface StoreInvite {
   role: string
   expires_at: string
   created_at: string
+}
+
+export interface PaymentProvider {
+  id: string
+  provider: string
+  key_id: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface ApiError {
