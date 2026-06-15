@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Loader, Trash, Eye, EyeOff, Check } from '@deemlol/next-icons'
+import { Loader, Trash, Eye, EyeOff, Check, Copy } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,13 +16,6 @@ import Image from 'next/image'
 
 function RazorpayLogo({ size = 32 }: { size?: number }) {
   return (
-    // <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    //   <rect width="40" height="40" rx="8" fill="#3395FF" />
-    //   <path
-    //     d="M11 10h11.5c3.2 0 5.5 2 5.5 5 0 2.2-1.2 4-3.2 4.8l4.2 8.2h-4.8l-3.6-7.5H15.2V28H11V10zm4.2 7.2h6.8c1.2 0 2.2-.8 2.2-2.2 0-1.3-1-2-2.2-2h-6.8v4.2z"
-    //     fill="white"
-    //   />
-    // </svg>
     <Image src={r_logo} width={size} height={size} alt='r_pay_logo'></Image>
   )
 }
@@ -30,19 +23,24 @@ function RazorpayLogo({ size = 32 }: { size?: number }) {
 export default function PaymentsPanel() {
   const [providers, setProviders] = useState<PaymentProvider[]>([])
   const [loading, setLoading] = useState(true)
+  const [storeId, setStoreId] = useState<string | null>(null)
 
   // Add modal
   const [addOpen, setAddOpen] = useState(false)
   const [addKeyId, setAddKeyId] = useState('')
   const [addKeySecret, setAddKeySecret] = useState('')
+  const [addWebhookSecret, setAddWebhookSecret] = useState('')
   const [showAddSecret, setShowAddSecret] = useState(false)
+  const [showAddWebhookSecret, setShowAddWebhookSecret] = useState(false)
   const [adding, setAdding] = useState(false)
 
   // Edit modal
   const [editTarget, setEditTarget] = useState<PaymentProvider | null>(null)
   const [editKeyId, setEditKeyId] = useState('')
   const [editKeySecret, setEditKeySecret] = useState('')
+  const [editWebhookSecret, setEditWebhookSecret] = useState('')
   const [showEditSecret, setShowEditSecret] = useState(false)
+  const [showEditWebhookSecret, setShowEditWebhookSecret] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Delete confirm
@@ -50,21 +48,30 @@ export default function PaymentsPanel() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    api.get('/api/payment-providers')
-      .then(res => setProviders(res.data.payment_providers))
+    Promise.all([
+      api.get('/api/payment-providers'),
+      api.get('/api/auth/me'),
+    ])
+      .then(([providersRes, meRes]) => {
+        setProviders(providersRes.data.payment_providers)
+        setStoreId(meRes.data.store?.id ?? null)
+      })
       .catch(() => toast.error('Failed to load payment providers'))
       .finally(() => setLoading(false))
   }, [])
 
   const razorpay = providers.find(p => p.provider === 'RAZORPAY') ?? null
   const isConfigured = !!razorpay
+  const webhookUrl = storeId ? `${process.env.NEXT_PUBLIC_API_URL ?? ''}/api/payments/razorpay-webhook/${storeId}` : ''
 
   function openEdit() {
     if (!razorpay) return
     setEditTarget(razorpay)
     setEditKeyId(razorpay.key_id)
     setEditKeySecret('')
+    setEditWebhookSecret('')
     setShowEditSecret(false)
+    setShowEditWebhookSecret(false)
   }
 
   async function handleAdd() {
@@ -72,14 +79,16 @@ export default function PaymentsPanel() {
     if (!addKeySecret.trim()) { toast.error('Key Secret is required'); return }
     setAdding(true)
     try {
-      const res = await api.post('/api/payment-providers', {
+      const body: Record<string, unknown> = {
         provider: 'RAZORPAY',
         key_id: addKeyId.trim(),
         key_secret: addKeySecret.trim(),
-      })
+      }
+      if (addWebhookSecret.trim()) body.webhook_secret = addWebhookSecret.trim()
+      const res = await api.post('/api/payment-providers', body)
       setProviders(prev => [...prev, res.data.payment_provider])
       setAddOpen(false)
-      setAddKeyId(''); setAddKeySecret('')
+      setAddKeyId(''); setAddKeySecret(''); setAddWebhookSecret('')
       toast.success('Razorpay configured successfully')
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Failed to configure Razorpay'))
@@ -95,6 +104,7 @@ export default function PaymentsPanel() {
     try {
       const body: Record<string, unknown> = { key_id: editKeyId.trim() }
       if (editKeySecret.trim()) body.key_secret = editKeySecret.trim()
+      if (editWebhookSecret.trim()) body.webhook_secret = editWebhookSecret.trim()
       const res = await api.put(`/api/payment-providers/${editTarget.id}`, body)
       setProviders(prev => prev.map(p => p.id === editTarget.id ? res.data.payment_provider : p))
       setEditTarget(null)
@@ -130,6 +140,12 @@ export default function PaymentsPanel() {
     } finally {
       setDeleting(false)
     }
+  }
+
+  function copyWebhookUrl() {
+    if (!webhookUrl) return
+    navigator.clipboard.writeText(webhookUrl)
+    toast.success('Webhook URL copied')
   }
 
   if (loading) {
@@ -204,6 +220,33 @@ export default function PaymentsPanel() {
               </Button>
             )}
           </div>
+
+          {/* Webhook URL section — shown only when configured */}
+          {isConfigured && webhookUrl && (
+            <div className="mt-4 pt-4 border-t border-blue-100">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs font-medium text-gray-600">Webhook URL</p>
+                {razorpay?.has_webhook_secret ? (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
+                    <Check className="w-2.5 h-2.5" /> Secret saved
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+                    No webhook secret
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                <p className="text-xs font-mono text-gray-500 flex-1 truncate">{webhookUrl}</p>
+                <button onClick={copyWebhookUrl} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">
+                Add this URL in Razorpay Dashboard → Settings → Webhooks. Select the <span className="font-mono">payment.captured</span> event.
+              </p>
+            </div>
+          )}
         </div>
 
       </div>
@@ -212,7 +255,6 @@ export default function PaymentsPanel() {
       <Dialog open={addOpen} onOpenChange={open => { if (!adding) setAddOpen(open) }} disablePointerDismissal>
         <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
 
-          {/* Modal header with Razorpay branding */}
           <div className="flex items-center gap-3 mb-5">
             <RazorpayLogo size={36} />
             <div>
@@ -252,6 +294,26 @@ export default function PaymentsPanel() {
               </div>
               <p className="text-xs text-gray-400">Stored encrypted — never shown again after saving</p>
             </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">Webhook Secret <span className="text-gray-400 font-normal">(optional)</span></Label>
+              <div className="relative">
+                <Input
+                  className="h-10 font-mono text-sm pr-10"
+                  type={showAddWebhookSecret ? 'text' : 'password'}
+                  value={addWebhookSecret}
+                  onChange={e => setAddWebhookSecret(e.target.value)}
+                  placeholder="Enter webhook secret"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAddWebhookSecret(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showAddWebhookSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400">Found in Razorpay Dashboard → Settings → Webhooks. Required for automatic payment confirmation on network failure.</p>
+            </div>
           </div>
 
           <div className="flex gap-3 mt-5">
@@ -276,7 +338,7 @@ export default function PaymentsPanel() {
             <RazorpayLogo size={36} />
             <div>
               <h3 className="font-bold text-gray-900">Edit Razorpay keys</h3>
-              <p className="text-xs text-gray-400">Leave Key Secret blank to keep existing</p>
+              <p className="text-xs text-gray-400">Leave secret fields blank to keep existing values</p>
             </div>
           </div>
 
@@ -305,6 +367,30 @@ export default function PaymentsPanel() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showEditSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">
+                Webhook Secret
+                {editTarget?.has_webhook_secret && (
+                  <span className="ml-2 text-[10px] font-semibold text-green-600 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded-full">Saved</span>
+                )}
+              </Label>
+              <div className="relative">
+                <Input
+                  className="h-10 font-mono text-sm pr-10"
+                  type={showEditWebhookSecret ? 'text' : 'password'}
+                  value={editWebhookSecret}
+                  onChange={e => setEditWebhookSecret(e.target.value)}
+                  placeholder={editTarget?.has_webhook_secret ? 'Enter to update' : 'Enter webhook secret'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEditWebhookSecret(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showEditWebhookSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>

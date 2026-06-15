@@ -25,6 +25,7 @@ export class PaymentProvidersService {
       provider: p.provider,
       key_id: p.keyId,
       is_active: p.isActive,
+      has_webhook_secret: !!p.webhookSecret,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
     };
@@ -39,8 +40,8 @@ export class PaymentProvidersService {
     return { payment_providers: providers.map((p) => this.format(p)) };
   }
 
-  async create(userId: string, body: { provider: string; key_id: string; key_secret: string }) {
-    const { provider, key_id, key_secret } = body;
+  async create(userId: string, body: { provider: string; key_id: string; key_secret: string; webhook_secret?: string }) {
+    const { provider, key_id, key_secret, webhook_secret } = body;
 
     if (!provider?.trim()) throw new BadRequestException('provider is required');
     if (!key_id?.trim()) throw new BadRequestException('key_id is required');
@@ -60,6 +61,7 @@ export class PaymentProvidersService {
           provider: normalised,
           keyId: key_id.trim(),
           keySecret: encrypt(key_secret.trim()),
+          webhookSecret: webhook_secret?.trim() ? encrypt(webhook_secret.trim()) : null,
           isActive: false,
         },
       });
@@ -73,7 +75,7 @@ export class PaymentProvidersService {
   async update(
     userId: string,
     providerId: string,
-    body: { key_id?: string; key_secret?: string; is_active?: boolean },
+    body: { key_id?: string; key_secret?: string; webhook_secret?: string; is_active?: boolean },
   ) {
     const storeId = await this.getStoreId(userId);
 
@@ -86,6 +88,9 @@ export class PaymentProvidersService {
     if (body.key_id !== undefined) data.keyId = body.key_id.trim();
     if (body.key_secret !== undefined && body.key_secret.trim()) {
       data.keySecret = encrypt(body.key_secret.trim());
+    }
+    if (body.webhook_secret !== undefined && body.webhook_secret.trim()) {
+      data.webhookSecret = encrypt(body.webhook_secret.trim());
     }
     if (body.is_active !== undefined) data.isActive = body.is_active;
 
@@ -118,5 +123,14 @@ export class PaymentProvidersService {
       keyId: record.keyId,
       keySecret: decrypt(record.keySecret),
     };
+  }
+
+  // Used internally by webhook handler
+  async getWebhookSecret(storeId: string, provider: string): Promise<string | null> {
+    const record = await this.prisma.storePaymentProvider.findFirst({
+      where: { storeId, provider: provider.toUpperCase(), isActive: true },
+    });
+    if (!record?.webhookSecret) return null;
+    return decrypt(record.webhookSecret);
   }
 }

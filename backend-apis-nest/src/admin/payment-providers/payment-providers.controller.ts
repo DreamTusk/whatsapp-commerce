@@ -32,7 +32,7 @@ export class PaymentProvidersController {
   @Roles('OWNER')
   create(
     @CurrentUser() user: { userId: string },
-    @Body() body: { provider: string; key_id: string; key_secret: string },
+    @Body() body: { provider: string; key_id: string; key_secret: string; webhook_secret?: string },
   ) {
     return this.paymentProvidersService.create(user.userId, body);
   }
@@ -43,7 +43,7 @@ export class PaymentProvidersController {
   update(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
-    @Body() body: { key_id?: string; key_secret?: string; is_active?: boolean },
+    @Body() body: { key_id?: string; key_secret?: string; webhook_secret?: string; is_active?: boolean },
   ) {
     return this.paymentProvidersService.update(user.userId, id, body);
   }

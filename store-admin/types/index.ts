@@ -189,6 +189,7 @@ export interface PaymentProvider {
   provider: string
   key_id: string
   is_active: boolean
+  has_webhook_secret: boolean
   created_at: string
   updated_at: string
 }

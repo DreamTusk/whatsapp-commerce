@@ -6,6 +6,7 @@ import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { StorefrontModule } from './storefront/storefront.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { StorefrontModule } from './storefront/storefront.module';
     AuthModule,
     AdminModule,
     StorefrontModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

@@ -15,7 +15,7 @@ const ngrokPattern = /^https:\/\/[a-z0-9-]+\.ngrok-free\.(app|dev)$/;
 const devtunnelsPattern = /^https:\/\/[a-z0-9]+-\d+\.[a-z0-9]+\.devtunnels\.ms$/;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.enableCors({
     origin: (origin, callback) => {
