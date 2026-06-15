@@ -466,7 +466,7 @@ export default function OrderDetailPage() {
       <Dialog
         open={showCancelForm}
         onOpenChange={(open) => { if (!open) { setShowCancelForm(false); setCancelReason('') } }}
-        dismissible={false}
+        disablePointerDismissal={true}
       >
         <DialogContent showCloseButton={false}>
           <DialogHeader>

@@ -160,7 +160,7 @@ export default function BrandsPage() {
       </div>
 
       {/* Add Brand Dialog */}
-      <Dialog open={addOpen} dismissible={false} onOpenChange={() => {}}>
+      <Dialog open={addOpen} disablePointerDismissal={true} onOpenChange={() => {}}>
         <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -192,7 +192,7 @@ export default function BrandsPage() {
       </Dialog>
 
       {/* Edit Brand Dialog */}
-      <Dialog open={!!editTarget} dismissible={false} onOpenChange={() => {}}>
+      <Dialog open={!!editTarget} disablePointerDismissal={true} onOpenChange={() => {}}>
         <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
