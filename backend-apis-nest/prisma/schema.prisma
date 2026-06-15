@@ -268,7 +268,7 @@ model Payment {
   orderId           String        @unique
   method            PaymentMethod
   status            PaymentStatus @default(PENDING)
-  razorpayLinkId    String?
+  razorpayOrderId   String?
   razorpayPaymentId String?
   paidAt            DateTime?
   createdAt         DateTime      @default(now())

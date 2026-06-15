@@ -523,7 +523,7 @@ One-to-one with `Order`. Created alongside the order with `status: PENDING`.
 | `orderId` | `String` | Unique FK → Order |
 | `method` | `PaymentMethod` | `COD` or `ONLINE` |
 | `status` | `PaymentStatus` | Default `PENDING` |
-| `razorpayLinkId` | `String?` | Razorpay `order_id` — set when Razorpay order is created |
+| `razorpayOrderId` | `String?` | Razorpay `order_id` — set when Razorpay order is created |
 | `razorpayPaymentId` | `String?` | Razorpay `payment_id` — set after successful capture |
 | `paidAt` | `DateTime?` | Timestamp of payment capture |
 | `createdAt` | `DateTime` | |

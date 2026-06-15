@@ -86,7 +86,7 @@ export interface Payment {
   id: string
   method: 'COD' | 'ONLINE'
   status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
-  razorpay_link_id: string | null
+  razorpay_order_id: string | null
   razorpay_payment_id: string | null
   paid_at: string | null
   created_at: string

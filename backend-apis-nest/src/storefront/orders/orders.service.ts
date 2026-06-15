@@ -221,7 +221,7 @@ export class StorefrontOrdersService {
 
     await this.prisma.payment.update({
       where: { orderId: order.id },
-      data: { razorpayLinkId: rzpOrder.id },
+      data: { razorpayOrderId: rzpOrder.id },
     });
 
     return {

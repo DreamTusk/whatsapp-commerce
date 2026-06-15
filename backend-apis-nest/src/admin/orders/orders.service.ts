@@ -37,7 +37,7 @@ export class OrdersService {
       id: p.id,
       method: p.method,
       status: p.status,
-      razorpay_link_id: p.razorpayLinkId,
+      razorpay_order_id: p.razorpayOrderId,
       razorpay_payment_id: p.razorpayPaymentId,
       paid_at: p.paidAt,
       created_at: p.createdAt,

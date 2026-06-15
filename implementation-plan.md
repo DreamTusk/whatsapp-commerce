@@ -197,7 +197,7 @@ Reset   → POST /api/auth/reset-password (email + otp + new_password) → /logi
 **Order refactor** — replace JSON `items` field with proper relational tables:
 - `Order` — keeps fulfilment fields only (`status`, `address`, `notes`). Payment fields removed into separate table.
 - `OrderItem` — one row per line item. Stores `productName` + `price` as **snapshots** (product can change after order). Keeps FK to `Product` for analytics.
-- `Payment` — 1-to-1 with `Order`. Owns `method`, `status`, `razorpayLinkId`, `razorpayPaymentId`, `paidAt`.
+- `Payment` — 1-to-1 with `Order`. Owns `method`, `status`, `razorpayOrderId`, `razorpayPaymentId`, `paidAt`.
 
 **New tables:**
 - `CartItem` — server-side cart. `@@unique([customerId, productId])`. Requires customer JWT.

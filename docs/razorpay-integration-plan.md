@@ -23,7 +23,7 @@ Backend:
   3. Decrypt keySecret
   4. Create DB Order (status: NEW) + Payment (status: PENDING)
   5. Call Razorpay Orders API → get razorpay_order_id
-  6. Save razorpay_order_id to Payment.razorpayLinkId
+  6. Save razorpay_order_id to Payment.razorpayOrderId
   7. Return { order_id, razorpay_order_id, razorpay_key_id, amount_paise }
         │
         ▼
@@ -119,7 +119,7 @@ model Store {
 
 ### No changes to Payment model
 Existing fields cover everything:
-- `razorpayLinkId`    → Razorpay order ID
+- `razorpayOrderId`    → Razorpay order ID
 - `razorpayPaymentId` → Razorpay payment ID (set after capture)
 - `status`            → PENDING → PAID / FAILED
 - `paidAt`            → set when PAID
@@ -160,7 +160,7 @@ ENCRYPTION_KEY=<32-byte-hex-string>   # AES-256-GCM encryption for keySecret
   - Fetch active Razorpay provider for store, else `400 Online payments not configured`
   - Decrypt keySecret
   - Create Razorpay order via SDK
-  - Save `razorpay_order_id` to `Payment.razorpayLinkId`
+  - Save `razorpay_order_id` to `Payment.razorpayOrderId`
   - Return `{ order, razorpay_order_id, razorpay_key_id, amount_paise }`
 - `POST /api/storefront/orders/:id/verify-payment`:
   - Accept `{ razorpay_order_id, razorpay_payment_id, razorpay_signature }`

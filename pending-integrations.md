@@ -81,13 +81,13 @@ sendOtp(phone: string, otp: string): Promise<void>
 
 ## 4. Payments — COD only → Razorpay Online
 
-**Status:** COD only. `Payment.razorpayLinkId` and `razorpayPaymentId` fields exist but unused.
+**Status:** COD only. `Payment.razorpayOrderId` and `razorpayPaymentId` fields exist but unused.
 **File:** `backend-apis/src/routes/storefront/orders.ts` *(to be created)*
 
 **To integrate:**
 - On `POST /api/storefront/orders` with `payment_method: "ONLINE"`:
   - Create Razorpay payment link via Razorpay SDK
-  - Save `razorpayLinkId` to `Payment` table
+  - Save `razorpayOrderId` to `Payment` table
   - Return `payment_url` in response — frontend redirects customer
 - Add `POST /api/razorpay/webhook` route:
   - Verify Razorpay webhook signature
