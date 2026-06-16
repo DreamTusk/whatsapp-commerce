@@ -1,0 +1,31 @@
+meta {
+  name: Update Customization
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{base_url}}/api/store/customization
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "primary_color": "#6366f1",
+    "header_color": "#F4F4FE",
+    "instagram_url": "https://instagram.com/yourstore",
+    "facebook_url": null,
+    "whatsapp_number": "919876543210",
+    "whatsapp_message": "Hi! I'd like to know more about your products.",
+    "youtube_url": null,
+    "x_url": null,
+    "refund_policy": null,
+    "privacy_policy": null,
+    "terms": null
+  }
+}

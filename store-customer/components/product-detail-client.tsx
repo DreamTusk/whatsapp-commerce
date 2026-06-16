@@ -10,7 +10,8 @@ import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
 import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
 import { ChevronLeft, ChevronRight, ShoppingCart, Check, Trash, Heart } from "@deemlol/next-icons"
-import type { ProductImage } from '@/types'
+import type { Product, ProductImage } from '@/types'
+import ProductCard, { type ProductCardSource } from '@/components/product-card'
 
 const BlockNotePreview = dynamic(
   () => import('@/components/blocknote-editor/BlockNotePreview'),
@@ -33,6 +34,8 @@ interface Props {
   description: string | null
   categoryName: string | null
   breadcrumbs: Crumb[]
+  relatedProducts?: Product[]
+  relatedSource?: ProductCardSource
 }
 
 function toDisplay(url: string | null): string | null {
@@ -44,6 +47,7 @@ export default function ProductDetailClient({
   productId, productName, productImage, images,
   sellingPrice, originalPrice, inStock,
   unit, description, categoryName, breadcrumbs,
+  relatedProducts = [], relatedSource,
 }: Props) {
   const router = useRouter()
   const { isAuthenticated, requireAuth } = useAuth()
@@ -155,17 +159,17 @@ export default function ProductDetailClient({
   }
 
   const CartStepper = ({ className }: { className?: string }) => (
-    <div className={`flex items-center justify-between rounded-xl border border-indigo-400 overflow-hidden [font-family:var(--font-instrument-sans)] ${className}`}>
+    <div className={`flex items-center justify-between rounded-xl border-primary border overflow-hidden [font-family:var(--font-instrument-sans)] ${className}`}>
       <button onClick={handleDecrease} disabled={cartLoading}
-        className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40 text-xl font-bold"
+        className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40 text-xl font-bold"
       >
-        {cartLoading ? <div className="w-4 h-4 border border-indigo-400 border-t-transparent rounded-full animate-spin" /> : '−'}
+        {cartLoading ? <div className="w-4 h-4 border border-t-transparent rounded-full animate-spin spinner-primary" /> : '−'}
       </button>
       <span className="text-base font-bold text-gray-900">{cartQty}</span>
       <button onClick={handleIncrease} disabled={cartLoading || !inStock}
-        className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40 text-xl font-bold"
+        className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40 text-xl font-bold"
       >
-        {cartLoading ? <div className="w-4 h-4 border border-indigo-400 border-t-transparent rounded-full animate-spin" /> : '+'}
+        {cartLoading ? <div className="w-4 h-4 border border-t-transparent rounded-full animate-spin spinner-primary" /> : '+'}
       </button>
     </div>
   )
@@ -180,7 +184,7 @@ export default function ProductDetailClient({
       <button
         onClick={addToCart}
         disabled={adding || !inStock}
-        className={`flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors ${className}`}
+        className={`flex items-center justify-center gap-2 btn-primary-filled font-semibold rounded-xl text-sm ${className}`}
       >
         {adding ? (
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -201,7 +205,7 @@ export default function ProductDetailClient({
         </div>
         <button
           onClick={() => setExpanded(v => !v)}
-          className="mt-1 text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors"
+          className="mt-1 text-xs font-semibold c-primary hover:opacity-70 transition-opacity"
         >
           {expanded ? 'Show less ↑' : 'Read more ↓'}
         </button>
@@ -244,9 +248,9 @@ export default function ProductDetailClient({
       {/* ══════════════════════════════════════
           MOBILE layout  (< lg)
       ══════════════════════════════════════ */}
-      <div className="lg:hidden min-h-screen bg-gray-100 pb-36">
-        {/* Sticky top bar */}
-        <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+      <div className="lg:hidden bg-gray-100 pb-4">
+        {/* Sticky top bar — docks below the store header using its measured height */}
+        <div className="sticky top-[var(--store-header-h)] z-20 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
           <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -369,7 +373,7 @@ export default function ProductDetailClient({
             className={`w-full py-3 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
               wishlisted
                 ? 'wishlist-saved'
-                : 'border-gray-200 text-gray-600 hover:border-violet-200 hover:text-violet-500'
+                : 'border-gray-200 text-gray-600 hover:opacity-70'
             }`}
           >
             <Heart className="w-4 h-4" fill={wishlisted ? 'currentColor' : 'none'} />
@@ -381,7 +385,7 @@ export default function ProductDetailClient({
       {/* ══════════════════════════════════════
           DESKTOP layout  (lg+)
       ══════════════════════════════════════ */}
-      <div className="hidden lg:block min-h-screen bg-gray-50 pb-16">
+      <div className="hidden lg:block bg-gray-50 pb-6">
         <div className="page-x pt-6 max-w-[1360px] mx-auto">
 
           {/* Breadcrumb */}
@@ -390,7 +394,7 @@ export default function ProductDetailClient({
               <span key={i} className="flex items-center gap-2">
                 {i > 0 && <span className="text-gray-400 text-xs">&gt;</span>}
                 {crumb.href ? (
-                  <Link href={crumb.href} className="text-gray-500 hover:text-indigo-500 transition-colors">
+                  <Link href={crumb.href} className="text-gray-500 hover:opacity-70 transition-opacity">
                     {crumb.label}
                   </Link>
                 ) : (
@@ -400,7 +404,7 @@ export default function ProductDetailClient({
             ))}
           </nav>
 
-          <div className="grid grid-cols-[55%_45%] gap-10">
+          <div className="grid grid-cols-[55%_45%] gap-10 items-start">
             {/* Left: image + thumbnails */}
             <div className="space-y-3">
               {/* Main image */}
@@ -465,7 +469,7 @@ export default function ProductDetailClient({
               )}
 
               {/* Buttons */}
-              <div className="flex flex-col gap-3 mt-auto">
+              <div className="flex flex-col gap-3">
                 {cartQty > 0 ? (
                   <>
                     <CartStepper className="w-full h-[56px]" />
@@ -489,7 +493,7 @@ export default function ProductDetailClient({
                   className={`w-full py-4 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
                     wishlisted
                       ? 'wishlist-saved'
-                      : 'border-gray-200 text-gray-600 hover:border-violet-200 hover:text-violet-500'
+                      : 'border-gray-200 text-gray-600 hover:opacity-70'
                   }`}
                 >
                   <svg className="w-4 h-4" fill={wishlisted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -502,6 +506,42 @@ export default function ProductDetailClient({
           </div>
         </div>
       </div>
+
+      {/* Related products */}
+      {relatedProducts.length > 0 && (() => {
+        const seeAllHref = relatedSource?.type === 'collection'
+          ? `/collection/${relatedSource.id}`
+          : relatedSource?.type === 'category'
+          ? `/products?category=${relatedSource.id}`
+          : '/products'
+        return (
+          <div className="pt-5 pb-24 bg-white border-t border-gray-100">
+            <div className="page-x mb-3 flex items-center justify-between">
+              <p className="text-base font-bold text-gray-900 [font-family:var(--font-instrument-sans)]">
+                {relatedSource?.type === 'collection' ? `More from ${relatedSource.name}` : 'More like this'}
+                
+              </p>
+              {relatedProducts.length >= 6 && (
+                <Link href={seeAllHref} className="text-xs font-semibold c-primary hover:opacity-70 transition-opacity">
+                  See all →
+                </Link>
+              )}
+            </div>
+            {/* Mobile: 2-column grid */}
+            <div className="lg:hidden page-x grid grid-cols-2 gap-3">
+              {relatedProducts.map(p => (
+                <ProductCard key={p.id} product={p} scrollable={false} source={relatedSource} />
+              ))}
+            </div>
+            {/* Desktop: horizontal scroll */}
+            <div className="hidden lg:flex page-x overflow-x-auto gap-3 no-scrollbar pb-1">
+              {relatedProducts.map(p => (
+                <ProductCard key={p.id} product={p} scrollable source={relatedSource} width={160} />
+              ))}
+            </div>
+          </div>
+        )
+      })()}
     </>
   )
 }

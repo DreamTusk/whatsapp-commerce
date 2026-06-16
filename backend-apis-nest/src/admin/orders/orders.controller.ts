@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Patch,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -59,5 +60,16 @@ export class OrdersController {
     @Body() body: { status: string; cancellation_reason?: string },
   ) {
     return this.ordersService.updateOrderStatus(user.userId, id, body.status, body.cancellation_reason);
+  }
+
+  // POST /api/orders/:id/shipment
+  @Post(':id/shipment')
+  @HttpCode(HttpStatus.CREATED)
+  addShipment(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Body() body: { carrier_name: string; tracking_id: string; tracking_url?: string },
+  ) {
+    return this.ordersService.addShipment(user.userId, id, body);
   }
 }

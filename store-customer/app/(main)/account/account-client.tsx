@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
-import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check } from "@deemlol/next-icons"
+import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink } from "@deemlol/next-icons"
 
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
@@ -112,9 +112,19 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteAddrConfirmId, setDeleteAddrConfirmId] = useState<string | null>(null)
 
+  const [savedProfileName, setSavedProfileName] = useState('')
+  const [savedProfileEmail, setSavedProfileEmail] = useState('')
+
   useEffect(() => {
-    if (customer) { setProfileName(customer.name ?? ''); setProfileEmail(customer.email ?? '') }
+    if (customer) {
+      setProfileName(customer.name ?? '')
+      setProfileEmail(customer.email ?? '')
+      setSavedProfileName(customer.name ?? '')
+      setSavedProfileEmail(customer.email ?? '')
+    }
   }, [customer])
+
+  const isProfileDirty = profileName !== savedProfileName || profileEmail !== savedProfileEmail
 
   useEffect(() => {
     if (initialized && !isAuthenticated) requireAuth(() => {})
@@ -146,7 +156,15 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   useEffect(() => { if (tab === 'addresses' && isAuthenticated) fetchAddresses() }, [tab, isAuthenticated, fetchAddresses])
   useEffect(() => { if (tab === 'wishlist' && isAuthenticated) fetchWishlist() }, [tab, isAuthenticated, fetchWishlist])
 
-  function openTab(t: Tab) { setTab(t); setMobilePanelOpen(true); setShowAddrForm(false); setEditingAddress(null); setSelectedOrderId(null); setSelectedOrder(null) }
+  function openTab(t: Tab) {
+    setTab(t)
+    setMobilePanelOpen(true)
+    setShowAddrForm(false)
+    setEditingAddress(null)
+    setSelectedOrderId(null)
+    setSelectedOrder(null)
+    router.replace(`/account?tab=${t}`, { scroll: false })
+  }
 
   async function selectOrder(id: string) {
     setSelectedOrderId(id)
@@ -175,6 +193,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   }
 
   async function saveProfile() {
+    if (!isProfileDirty) return
     setProfileSaving(true); setProfileError('')
     try {
       const d = await clientFetch<{ customer: { id: string; name: string | null; email: string | null; phone: string; address: string | null } }>(
@@ -182,6 +201,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         { method: 'PUT', body: JSON.stringify({ name: profileName.trim() || null, email: profileEmail.trim() || null }) }
       )
       updateCustomer({ name: d.customer.name, email: d.customer.email })
+      setSavedProfileName(profileName); setSavedProfileEmail(profileEmail)
       setProfileSaved(true); setTimeout(() => setProfileSaved(false), 2000)
     } catch { setProfileError('Failed to save') } finally { setProfileSaving(false) }
   }
@@ -269,7 +289,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   const initial = customer ? (customer.name ?? customer.phone).charAt(0).toUpperCase() : '?'
 
   if (!initialized) {
-    return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+    return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
   }
 
   if (!isAuthenticated) {
@@ -278,7 +298,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         <div className="text-center">
           <p className="text-4xl mb-3">👤</p>
           <p className="font-bold text-gray-900 mb-2">Sign in to view your account</p>
-          <button onClick={() => requireAuth(() => {})} className="mt-2 bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">Sign in</button>
+          <button onClick={() => requireAuth(() => {})} className="mt-2 btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">Sign in</button>
         </div>
       </div>
     )
@@ -288,36 +308,36 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   const addrFormEl = (
     <div className="space-y-4">
       <button onClick={useCurrentLocation} disabled={locating}
-        className="w-full flex items-center gap-3 p-3 rounded-xl border-2 border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-60"
+        className="w-full flex items-center gap-3 p-3 rounded-xl border-2 border-primary bg-gray-50 hover:opacity-90 transition-opacity disabled:opacity-60"
       >
-        {locating ? <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" /> : <MapPin className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
-        <span className="text-sm font-semibold text-indigo-700">{locating ? 'Detecting…' : 'Use current location'}</span>
+        {locating ? <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin spinner-primary flex-shrink-0" /> : <MapPin className="w-4 h-4 c-primary flex-shrink-0" />}
+        <span className="text-sm font-semibold c-primary">{locating ? 'Detecting…' : 'Use current location'}</span>
       </button>
       <div>
         <p className="text-xs font-medium text-gray-500 mb-2">Label</p>
         <div className="flex gap-2">
           {LABEL_OPTIONS.map(opt => (
             <button key={opt} onClick={() => setAddrForm(f => ({ ...f, label: opt }))}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-colors ${addrForm.label === opt ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-colors ${addrForm.label === opt ? 'border-primary bg-gray-50 c-primary' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
             >{opt === 'Home' ? '🏠' : opt === 'Work' ? '💼' : '📍'} {opt}</button>
           ))}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Door No <span className="text-red-500">*</span></label><input type="text" value={addrForm.door_no} onChange={e => setAddrForm(f => ({ ...f, door_no: e.target.value }))} placeholder="12A" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Street <span className="text-red-500">*</span></label><input type="text" value={addrForm.street} onChange={e => setAddrForm(f => ({ ...f, street: e.target.value }))} placeholder="MG Road" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Door No <span className="text-red-500">*</span></label><input type="text" value={addrForm.door_no} onChange={e => setAddrForm(f => ({ ...f, door_no: e.target.value }))} placeholder="12A" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Street <span className="text-red-500">*</span></label><input type="text" value={addrForm.street} onChange={e => setAddrForm(f => ({ ...f, street: e.target.value }))} placeholder="MG Road" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" /></div>
       </div>
-      <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Area / Landmark <span className="text-red-500">*</span></label><input type="text" value={addrForm.address} onChange={e => setAddrForm(f => ({ ...f, address: e.target.value }))} placeholder="Near City Mall…" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+      <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Area / Landmark <span className="text-red-500">*</span></label><input type="text" value={addrForm.address} onChange={e => setAddrForm(f => ({ ...f, address: e.target.value }))} placeholder="Near City Mall…" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" /></div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">City <span className="text-red-500">*</span></label><input type="text" value={addrForm.city} onChange={e => setAddrForm(f => ({ ...f, city: e.target.value }))} placeholder="Bengaluru" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Pincode <span className="text-red-500">*</span></label><input type="text" inputMode="numeric" maxLength={6} value={addrForm.pincode} onChange={e => setAddrForm(f => ({ ...f, pincode: e.target.value.replace(/\D/g, '') }))} placeholder="560001" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">City <span className="text-red-500">*</span></label><input type="text" value={addrForm.city} onChange={e => setAddrForm(f => ({ ...f, city: e.target.value }))} placeholder="Bengaluru" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Pincode <span className="text-red-500">*</span></label><input type="text" inputMode="numeric" maxLength={6} value={addrForm.pincode} onChange={e => setAddrForm(f => ({ ...f, pincode: e.target.value.replace(/\D/g, '') }))} placeholder="560001" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" /></div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">State <span className="text-red-500">*</span></label><input type="text" value={addrForm.state} onChange={e => setAddrForm(f => ({ ...f, state: e.target.value }))} placeholder="Karnataka" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
-        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Country <span className="text-red-500">*</span></label><input type="text" value={addrForm.country} onChange={e => setAddrForm(f => ({ ...f, country: e.target.value }))} placeholder="India" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">State <span className="text-red-500">*</span></label><input type="text" value={addrForm.state} onChange={e => setAddrForm(f => ({ ...f, state: e.target.value }))} placeholder="Karnataka" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" /></div>
+        <div><label className="text-xs font-medium text-gray-500 block mb-1.5">Country <span className="text-red-500">*</span></label><input type="text" value={addrForm.country} onChange={e => setAddrForm(f => ({ ...f, country: e.target.value }))} placeholder="India" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" /></div>
       </div>
       <label className="flex items-center gap-3 select-none">
-        <div onClick={() => setAddrForm(f => ({ ...f, is_default: !f.is_default }))} className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${addrForm.is_default ? 'bg-indigo-500' : 'bg-gray-200'}`}>
+        <div onClick={() => setAddrForm(f => ({ ...f, is_default: !f.is_default }))} className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${addrForm.is_default ? 'bg-primary' : 'bg-gray-200'}`}>
           <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${addrForm.is_default ? 'translate-x-4' : ''}`} />
         </div>
         <span className="text-sm text-gray-700">Set as default address</span>
@@ -325,7 +345,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       {addrFormError && <p className="text-xs text-red-500 font-medium">{addrFormError}</p>}
       <div className="flex gap-3">
         <button onClick={() => { setShowAddrForm(false); setEditingAddress(null); setAddrForm(EMPTY_FORM); setAddrFormError('') }} className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-        <button onClick={saveAddress} disabled={addrSaving} className="flex-1 h-11 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold transition-colors disabled:opacity-60">{addrSaving ? 'Saving…' : editingAddress ? 'Update' : 'Save address'}</button>
+        <button onClick={saveAddress} disabled={addrSaving} className="flex-1 h-11 rounded-xl btn-primary-filled text-sm font-semibold">{addrSaving ? 'Saving…' : editingAddress ? 'Update' : 'Save address'}</button>
       </div>
     </div>
   )
@@ -341,7 +361,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   // ── MOBILE SIDEBAR ───────────────────────────────────────────────────────────
   const mobileSidebar = (
     <>
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
+      <header className="sticky top-[var(--store-header-h)] z-20 bg-white border-b border-gray-100 shadow-sm">
         <div className="px-4 h-14 flex items-center gap-2">
           <Link href="/" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -352,7 +372,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       <div className="bg-white min-h-screen pb-24">
         {/* Profile row */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
-          <div className="w-11 h-11 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+          <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
             <span className="text-base font-bold text-white leading-none">{initial}</span>
           </div>
           <div className="min-w-0">
@@ -385,9 +405,9 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
 
   // ── MOBILE CONTENT SCREENS ───────────────────────────────────────────────────
   const mobileBackHeader = (title: string) => (
-    <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
+    <header className="sticky top-[var(--store-header-h)] z-20 bg-white border-b border-gray-100 shadow-sm">
       <div className="px-4 h-14 flex items-center gap-2">
-        <button onClick={() => { setMobilePanelOpen(false); setShowAddrForm(false) }} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
+        <button onClick={() => { setMobilePanelOpen(false); setShowAddrForm(false); router.replace('/account', { scroll: false }) }} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
           <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
         <h1 className="font-bold text-gray-900 flex-1 text-base">{title}</h1>
@@ -403,7 +423,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1.5">Name <span className="text-red-500">*</span></label>
           <input type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="Your name"
-            className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors bg-white" />
+            className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors bg-white" />
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1.5">Mobile Number <span className="text-red-500">*</span></label>
@@ -413,11 +433,11 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1.5">Email Address <span className="text-red-500">*</span></label>
           <input type="email" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} placeholder="you@example.com"
-            className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors bg-white" />
+            className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors bg-white" />
         </div>
         {profileError && <p className="text-xs text-red-500">{profileError}</p>}
-        <button onClick={saveProfile} disabled={profileSaving || profileSaved}
-          className={`w-full h-12 rounded-xl text-sm font-semibold transition-colors mt-2 ${profileSaved ? 'bg-green-500 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white disabled:opacity-60'}`}
+        <button onClick={saveProfile} disabled={profileSaving || profileSaved || !isProfileDirty}
+          className={`w-full h-12 rounded-xl text-sm font-semibold transition-colors mt-2 ${profileSaved ? 'bg-green-500 text-white' : 'btn-primary-filled'}`}
         >{profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save'}</button>
       </div>
     </>
@@ -430,7 +450,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         selectedOrderLoading ? (
           <>
             {mobileBackHeader('Order Detail')}
-            <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+            <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
           </>
         ) : (
           <div className="pb-24 overflow-auto">{orderDetailPanel}</div>
@@ -440,12 +460,12 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
           {mobileBackHeader('Orders')}
           <div className="pb-24">
             {ordersLoading ? (
-              <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+              <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
             ) : orders.length === 0 ? (
               <div className="text-center py-16 px-6 text-gray-400">
                 <p className="text-4xl mb-3">📦</p>
                 <p className="font-semibold text-gray-600">No orders yet</p>
-                <Link href="/products" className="mt-5 inline-block bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">Browse products</Link>
+                <Link href="/products" className="mt-5 inline-block btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">Browse products</Link>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -470,9 +490,9 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                         <ChevronRight className="w-3 h-3" />
                       </span>
                       <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
-                        className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl bg-violet-100 text-violet-700 hover:bg-violet-200 disabled:opacity-50 transition-colors"
+                        className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl btn-primary-outline disabled:opacity-50"
                       >
-                        {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-violet-400 border-t-transparent rounded-full animate-spin inline-block" /> Adding…</span> : 'Order Again'}
+                        {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
                       </button>
                     </div>
                   </div>
@@ -498,7 +518,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         ) : (
           <>
             {addressesLoading ? (
-              <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+              <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
             ) : (
               <>
                 <div className="page-x pt-4 pb-2">
@@ -514,7 +534,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-semibold text-gray-800">{addr.label ?? 'Address'}</p>
-                            {addr.is_default && <span className="text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">Default</span>}
+                            {addr.is_default && <span className="text-[10px] font-bold bg-gray-100 c-primary px-1.5 py-0.5 rounded-full">Default</span>}
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
                             {[addr.door_no, addr.street, addr.address, addr.city, addr.pincode].filter(Boolean).join(', ')}
@@ -534,7 +554,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                 </div>
                 <div className="px-4 py-4">
                   <button onClick={() => { setShowAddrForm(true); setEditingAddress(null); setAddrForm(EMPTY_FORM); setAddrFormError('') }}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-indigo-500 hover:text-indigo-700 transition-colors"
+                    className="flex items-center gap-1.5 text-sm font-semibold c-primary hover:opacity-70 transition-opacity"
                   >
                     <Plus className="w-4 h-4" />
                     Add New Address
@@ -554,13 +574,13 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       {mobileBackHeader('Wishlist')}
       <div className="pb-24">
         {wishlistLoading ? (
-          <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
         ) : wishlist.length === 0 ? (
           <div className="text-center py-16 px-6 text-gray-400">
             <p className="text-4xl mb-3">♡</p>
             <p className="font-semibold text-gray-600">Your wishlist is empty</p>
             <p className="text-sm mt-1">Save products you love</p>
-            <Link href="/products" className="mt-5 inline-block bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">Browse products</Link>
+            <Link href="/products" className="mt-5 inline-block btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">Browse products</Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -592,7 +612,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   const desktopSidebar = (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 py-5">
-        <div className="w-11 h-11 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
           <span className="text-base font-bold text-white leading-none">{initial}</span>
         </div>
         <div className="min-w-0">
@@ -607,9 +627,9 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
           const active = tab === item.id
           return (
             <button key={item.id} onClick={() => openTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors mb-0.5 ${active ? 'bg-white text-indigo-600' : 'text-gray-600 hover:bg-white/60'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors mb-0.5 ${active ? 'bg-white c-primary' : 'text-gray-600 hover:bg-white/60'}`}
             >
-              <span className={`flex-shrink-0 ${active ? 'text-indigo-500' : 'text-gray-400'}`}>{item.icon}</span>
+              <span className={`flex-shrink-0 ${active ? 'c-primary' : 'text-gray-400'}`}>{item.icon}</span>
               <span className="text-sm font-medium">{item.id === 'orders' ? 'Orders' : item.label}</span>
             </button>
           )
@@ -641,7 +661,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1.5">Name <span className="text-red-500">*</span></label>
           <input type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder={customer?.name ?? 'Your name'}
-            className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" />
+            className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" />
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1.5">Mobile Number</label>
@@ -651,12 +671,12 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1.5">Email Address <span className="text-red-500">*</span></label>
           <input type="email" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} placeholder={customer?.email ?? '–'}
-            className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors" />
+            className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" />
         </div>
         {profileError && <p className="text-xs text-red-500">{profileError}</p>}
         <div className="flex justify-end pt-2">
-          <button onClick={saveProfile} disabled={profileSaving || profileSaved}
-            className={`px-6 h-10 rounded-xl text-sm font-semibold transition-colors ${profileSaved ? 'bg-green-500 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white disabled:opacity-60'}`}
+          <button onClick={saveProfile} disabled={profileSaving || profileSaved || !isProfileDirty}
+            className={`px-6 h-10 rounded-xl text-sm font-semibold ${profileSaved ? 'bg-green-500 text-white' : 'btn-primary-filled'}`}
           >{profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save'}</button>
         </div>
       </div>
@@ -709,13 +729,13 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
           return (
             <div key={step.status} className={`flex gap-3 ${!isLast ? 'flex-1' : ''}`}>
               <div className="flex flex-col items-center">
-                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-indigo-500 border-indigo-500' : 'bg-white border-gray-200'} ${active ? 'ring-4 ring-indigo-100' : ''}`}>
+                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-primary border-primary' : 'bg-white border-gray-200'} ${active ? 'ring-4 ring-[var(--color-primary)]' : ''}`}>
                   {done && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
                 </div>
-                {!isLast && <div className={`w-0.5 flex-1 my-1 rounded-full ${currentStep > idx ? 'bg-indigo-400' : 'bg-gray-100'}`} />}
+                {!isLast && <div className={`w-0.5 flex-1 my-1 rounded-full ${currentStep > idx ? 'bg-primary' : 'bg-gray-100'}`} />}
               </div>
               <div className="pt-0.5">
-                <p className={`text-sm font-medium leading-tight ${done ? 'text-indigo-600' : 'text-gray-400'}`}>{step.label}</p>
+                <p className={`text-sm font-medium leading-tight ${done ? 'c-primary' : 'text-gray-400'}`}>{step.label}</p>
               </div>
             </div>
           )
@@ -727,7 +747,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       <div className="flex flex-col h-full">
         {/* Back */}
         <div className="flex-shrink-0 px-5 pt-4 pb-3 border-b border-gray-100">
-          <button onClick={backToOrders} className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+          <button onClick={backToOrders} className="flex items-center gap-1.5 text-sm font-medium c-primary hover:opacity-70 transition-opacity">
             <ChevronLeft className="w-4 h-4" />
             Back to orders
           </button>
@@ -747,7 +767,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                     <p className="font-bold text-gray-900 text-lg leading-tight">{o.order_number}</p>
                     <p className="text-xs text-gray-400 mt-1">{formatDateTime(o.created_at)}</p>
                   </div>
-                  <span className={`mt-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex-shrink-0 ${isCancelled ? 'bg-red-50 text-red-500' : o.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <span className={`mt-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex-shrink-0 ${isCancelled ? 'bg-red-50 text-red-500' : o.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : 'bg-gray-50 c-primary'}`}>
                     {STATUS_LABEL[o.status] ?? o.status}
                   </span>
                 </div>
@@ -760,7 +780,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                   {o.items.map(item => (
                     <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                       <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
-                        {item.image_url ? <img src={item.image_url} alt={item.product_name} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-gray-400">{item.product_name.charAt(0).toUpperCase()}</span>}
+                        {item.image_url ? <img src={item.image_url.startsWith('http') ? item.image_url : `${API_URL}${item.image_url}`} alt={item.product_name} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-gray-400">{item.product_name.charAt(0).toUpperCase()}</span>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">{item.product_name}</p>
@@ -796,6 +816,36 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                     <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${o.payment.status === 'PAID' ? 'bg-green-50 text-green-600' : o.payment.status === 'FAILED' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'}`}>
                       {o.payment.status === 'PENDING' ? 'Pay on delivery' : o.payment.status}
                     </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Shipment */}
+              {o.shipments && o.shipments.length > 0 && (
+                <div className="bg-white rounded-xl p-4 border border-gray-100">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Shipment tracking</p>
+                  <div className="space-y-3">
+                    {o.shipments.map((s, i) => (
+                      <div key={s.id} className={`flex items-start gap-3 ${i > 0 ? 'pt-3 border-t border-gray-100' : ''}`}>
+                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                          <Truck className="w-4 h-4 c-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800">{s.carrier_name}</p>
+                          <p className="text-xs text-gray-400 font-mono mt-0.5">{s.tracking_id}</p>
+                          {s.tracking_url && (
+                            <a
+                              href={s.tracking_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs c-primary hover:underline font-medium mt-1"
+                            >
+                              <ExternalLink className="w-3 h-3" /> Track package
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -858,7 +908,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   const desktopOrdersPanel = selectedOrderId ? (
     <div className="flex flex-col h-full">
       {selectedOrderLoading ? (
-        <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
       ) : (
         orderDetailPanel
       )}
@@ -867,11 +917,11 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
     <div className="flex flex-col h-full p-4 gap-3">
       <div className="bg-white rounded-xl p-4 flex-1 overflow-auto">
         {ordersLoading ? (
-          <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
         ) : orders.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-3">📦</p><p className="font-semibold text-gray-600">No orders yet</p>
-            <Link href="/products" className="mt-5 inline-block bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">Browse products</Link>
+            <Link href="/products" className="mt-5 inline-block btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">Browse products</Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -884,7 +934,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                       {order.items.slice(0, 3).map((item, i) => (
                         <div key={item.id} className={`w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center ${item.image_url ? '' : BUBBLE_COLORS[i % BUBBLE_COLORS.length]}`}>
                           {item.image_url
-                            ? <img src={item.image_url} alt={item.product_name} className="w-full h-full object-cover" />
+                            ? <img src={item.image_url.startsWith('http') ? item.image_url : `${API_URL}${item.image_url}`} alt={item.product_name} className="w-full h-full object-cover" />
                             : <span className="text-sm font-bold">{item.product_name.charAt(0).toUpperCase()}</span>
                           }
                         </div>
@@ -900,9 +950,9 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                   <div className="relative z-10 flex flex-col items-end justify-center gap-3 flex-shrink-0">
                     <p className="font-bold text-gray-900 text-base">₹{order.total_amount}</p>
                     <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
-                      className="text-sm font-semibold px-5 py-2.5 rounded-xl bg-violet-100 text-violet-700 hover:bg-violet-200 disabled:opacity-50 transition-colors whitespace-nowrap"
+                      className="text-sm font-semibold px-5 py-2.5 rounded-xl btn-primary-outline disabled:opacity-50 whitespace-nowrap"
                     >
-                      {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin inline-block" /> Adding…</span> : 'Order Again'}
+                      {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
                     </button>
                   </div>
                 </div>
@@ -925,10 +975,10 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-gray-800">{addr.label ?? 'Address'}</p>
-                  {addr.is_default && <span className="text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">Default</span>}
+                  {addr.is_default && <span className="text-[10px] font-bold bg-gray-100 c-primary px-1.5 py-0.5 rounded-full">Default</span>}
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{[addr.door_no, addr.street, addr.address, addr.city, addr.pincode].filter(Boolean).join(', ')}</p>
-                {!addr.is_default && <button onClick={() => setDefaultAddress(addr.id)} className="text-[11px] font-medium text-indigo-500 hover:text-indigo-700 mt-1 transition-colors">Set as default</button>}
+                {!addr.is_default && <button onClick={() => setDefaultAddress(addr.id)} className="text-[11px] font-medium c-primary hover:opacity-70 mt-1 transition-opacity">Set as default</button>}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button onClick={() => openEditAddress(addr)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
@@ -956,13 +1006,13 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <p className="text-sm font-semibold text-gray-700">All Saved Addresses</p>
             <button onClick={() => { setShowAddrForm(true); setEditingAddress(null); setAddrForm(EMPTY_FORM); setAddrFormError('') }}
-              className="flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 btn-primary-filled text-xs font-semibold px-3 py-2 rounded-xl"
             >
               <Plus className="w-3.5 h-3.5" />
               Add New Address
             </button>
           </div>
-          {addressesLoading ? <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div> : addrList}
+          {addressesLoading ? <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div> : addrList}
         </div>
       )}
     </div>
@@ -973,13 +1023,13 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
     <div className="flex flex-col h-full p-4 gap-3">
       <div className="bg-white rounded-xl p-4 flex-1">
         {wishlistLoading ? (
-          <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
         ) : wishlist.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-3">♡</p>
             <p className="font-semibold text-gray-600">Your wishlist is empty</p>
             <p className="text-sm mt-1">Save products you love</p>
-            <Link href="/products" className="mt-5 inline-block bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">Browse products</Link>
+            <Link href="/products" className="mt-5 inline-block btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">Browse products</Link>
           </div>
         ) : (
           <div className="space-y-3">

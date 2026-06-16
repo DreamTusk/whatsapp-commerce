@@ -1,0 +1,15 @@
+meta {
+  name: Get Customization
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/store/customization
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -22,5 +22,14 @@ export class CustomersController {
   @Get()
   listCustomers(@CurrentUser() user: { userId: string }) {
     return this.customersService.listCustomers(user.userId);
+  }
+
+  // GET /api/customers/:id
+  @Get(':id')
+  getCustomer(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+  ) {
+    return this.customersService.getCustomer(user.userId, id);
   }
 }

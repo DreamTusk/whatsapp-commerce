@@ -48,6 +48,20 @@ export interface Product {
   original_price: number | null
 }
 
+export interface StoreCustomization {
+  primary_color: string
+  header_color: string
+  instagram_url: string | null
+  facebook_url: string | null
+  whatsapp_number: string | null
+  whatsapp_message: string | null
+  youtube_url: string | null
+  x_url: string | null
+  refund_policy: string | null
+  privacy_policy: string | null
+  terms: string | null
+}
+
 export interface Store {
   id: string
   name: string
@@ -61,6 +75,7 @@ export interface Store {
   is_pickup_enabled: boolean
   is_home_delivery_enabled: boolean
   active_payment_providers: string[]
+  customization?: StoreCustomization
 }
 
 export interface CartItem {
@@ -127,6 +142,14 @@ export interface Payment {
   paid_at: string | null
 }
 
+export interface OrderShipment {
+  id: string
+  carrier_name: string
+  tracking_id: string
+  tracking_url: string | null
+  created_at: string
+}
+
 export interface Order {
   id: string
   order_number: string
@@ -142,4 +165,5 @@ export interface Order {
   created_at: string
   items: OrderItem[]
   payment: Payment | null
+  shipments: OrderShipment[]
 }

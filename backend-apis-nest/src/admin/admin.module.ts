@@ -13,8 +13,9 @@ import { BannersModule } from './banners/banners.module';
 import { UsersModule } from './users/users.module';
 import { FilesModule } from './files/files.module';
 import { PaymentProvidersModule } from './payment-providers/payment-providers.module';
+import { ShipmentsModule } from './shipments/shipments.module';
 
 @Module({
-  imports: [StoreModule, InviteModule, CategoriesModule, BrandsModule, ProductsModule, InventoryModule, CollectionsModule, OrdersModule, CustomersModule, DashboardModule, BannersModule, UsersModule, FilesModule, PaymentProvidersModule],
+  imports: [StoreModule, InviteModule, CategoriesModule, BrandsModule, ProductsModule, InventoryModule, CollectionsModule, OrdersModule, CustomersModule, DashboardModule, BannersModule, UsersModule, FilesModule, PaymentProvidersModule, ShipmentsModule],
 })
 export class AdminModule {}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User, Truck } from '@deemlol/next-icons'
+import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User, Truck, ExternalLink } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
 import type { Order } from '@/types'
 import { apiErrorMessage } from '@/lib/utils'
@@ -27,7 +28,7 @@ const STATUS_NEXT: Partial<Record<OrderStatus, OrderStatus>> = {
 
 const STATUS_NEXT_LABEL: Partial<Record<OrderStatus, string>> = {
   NEW: 'Confirm order',
-  CONFIRMED: 'Out for delivery',
+  CONFIRMED: 'Add shipment',
   OUT_FOR_DELIVERY: 'Mark delivered',
 }
 
@@ -94,6 +95,10 @@ export default function OrderDetailPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
 
+  const [showShipmentModal, setShowShipmentModal] = useState(false)
+  const [shipmentForm, setShipmentForm] = useState({ carrier_name: '', tracking_id: '', tracking_url: '' })
+  const [isAddingShipment, setIsAddingShipment] = useState(false)
+
   const fetchOrder = useCallback(async () => {
     try {
       const res = await api.get(`/api/orders/${id}`)
@@ -115,6 +120,10 @@ export default function OrderDetailPage() {
 
   async function handleAdvance() {
     if (!order) return
+    if (order.status === 'CONFIRMED') {
+      setShowShipmentModal(true)
+      return
+    }
     const nextStatus = STATUS_NEXT[order.status as OrderStatus]
     if (!nextStatus) return
     setIsAdvancing(true)
@@ -127,6 +136,27 @@ export default function OrderDetailPage() {
       toast.error(msg)
     } finally {
       setIsAdvancing(false)
+    }
+  }
+
+  async function handleAddShipment() {
+    if (!shipmentForm.carrier_name.trim()) { toast.error('Carrier name is required'); return }
+    if (!shipmentForm.tracking_id.trim()) { toast.error('Tracking ID is required'); return }
+    setIsAddingShipment(true)
+    try {
+      const res = await api.post(`/api/orders/${id}/shipment`, {
+        carrier_name: shipmentForm.carrier_name.trim(),
+        tracking_id: shipmentForm.tracking_id.trim(),
+        tracking_url: shipmentForm.tracking_url.trim() || undefined,
+      })
+      setOrder(res.data.order)
+      setShowShipmentModal(false)
+      setShipmentForm({ carrier_name: '', tracking_id: '', tracking_url: '' })
+      toast.success('Shipment added — order is out for delivery')
+    } catch (err: unknown) {
+      toast.error(apiErrorMessage(err, 'Failed to add shipment'))
+    } finally {
+      setIsAddingShipment(false)
     }
   }
 
@@ -199,27 +229,37 @@ export default function OrderDetailPage() {
             </div>
             <p className="text-sm text-gray-400">{formatDate(order.created_at)}</p>
           </div>
-          {canAct && (
-            <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {order.shipments && order.shipments.length > 0 && (
               <Button
                 variant="outline"
-                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
-                onClick={() => setShowCancelForm(true)}
+                onClick={() => router.push(`/dashboard/shipments/${order.shipments[0].id}`)}
               >
-                Cancel order
+                View shipment
               </Button>
-              {nextLabel && (
+            )}
+            {canAct && (
+              <>
                 <Button
-                  className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
-                  onClick={handleAdvance}
-                  disabled={isAdvancing}
+                  variant="outline"
+                  className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+                  onClick={() => setShowCancelForm(true)}
                 >
-                  {isAdvancing && <Loader className="w-4 h-4 animate-spin mr-2" />}
-                  {isAdvancing ? 'Updating…' : nextLabel}
+                  Cancel order
                 </Button>
-              )}
-            </div>
-          )}
+                {nextLabel && (
+                  <Button
+                    className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+                    onClick={handleAdvance}
+                    disabled={isAdvancing}
+                  >
+                    {isAdvancing && <Loader className="w-4 h-4 animate-spin mr-2" />}
+                    {isAdvancing ? 'Updating…' : nextLabel}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -434,6 +474,47 @@ export default function OrderDetailPage() {
                   </div>
                 </SectionCard>
               )}
+
+              {/* Shipments */}
+              {order.shipments && order.shipments.length > 0 && (
+                <SectionCard>
+                  <SectionLabel>
+                    <span className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5 inline" /> Shipments</span>
+                  </SectionLabel>
+                  <div className="space-y-4">
+                    {order.shipments.map((shipment, i) => (
+                      <div key={shipment.id} className={i > 0 ? 'pt-4 border-t border-gray-100' : ''}>
+                        <div className="divide-y divide-gray-50">
+                          <div className="flex items-center justify-between gap-4 py-2">
+                            <span className="text-sm text-gray-400">Carrier</span>
+                            <span className="text-sm font-semibold text-gray-900">{shipment.carrier_name}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 py-2">
+                            <span className="text-sm text-gray-400">Tracking ID</span>
+                            <span className="text-sm font-mono text-gray-700">{shipment.tracking_id}</span>
+                          </div>
+                          {shipment.tracking_url && (
+                            <div className="py-2">
+                              <a
+                                href={shipment.tracking_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-sm text-[#6366f1] hover:underline font-medium"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" /> Track package
+                              </a>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between gap-4 py-2">
+                            <span className="text-sm text-gray-400">Added on</span>
+                            <span className="text-xs text-gray-400">{formatDate(shipment.created_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </SectionCard>
+              )}
             </div>
           </div>
 
@@ -461,6 +542,66 @@ export default function OrderDetailPage() {
           <div className="pb-4" />
         </div>
       </div>
+
+      {/* Add shipment dialog */}
+      <Dialog
+        open={showShipmentModal}
+        onOpenChange={(open) => {
+          if (!open) { setShowShipmentModal(false); setShipmentForm({ carrier_name: '', tracking_id: '', tracking_url: '' }) }
+        }}
+        disablePointerDismissal={true}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Add shipment</DialogTitle>
+            <DialogDescription>Enter tracking details. Order will move to out for delivery.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Carrier name *</label>
+              <Input
+                placeholder="e.g. Delhivery, Bluedart"
+                value={shipmentForm.carrier_name}
+                onChange={e => setShipmentForm(f => ({ ...f, carrier_name: e.target.value }))}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Tracking ID *</label>
+              <Input
+                placeholder="e.g. DL123456789"
+                value={shipmentForm.tracking_id}
+                onChange={e => setShipmentForm(f => ({ ...f, tracking_id: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Tracking URL <span className="text-gray-400 font-normal">(optional)</span></label>
+              <Input
+                placeholder="https://track.carrier.com/..."
+                value={shipmentForm.tracking_url}
+                onChange={e => setShipmentForm(f => ({ ...f, tracking_url: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setShowShipmentModal(false); setShipmentForm({ carrier_name: '', tracking_id: '', tracking_url: '' }) }}
+              disabled={isAddingShipment}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+              onClick={handleAddShipment}
+              disabled={isAddingShipment || !shipmentForm.carrier_name.trim() || !shipmentForm.tracking_id.trim()}
+            >
+              {isAddingShipment && <Loader className="w-4 h-4 animate-spin mr-2" />}
+              {isAddingShipment ? 'Adding…' : 'Add shipment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Cancel order dialog */}
       <Dialog

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader, Search } from '@deemlol/next-icons'
 import api from '@/lib/api'
@@ -10,7 +11,6 @@ interface Customer {
   name: string | null
   phone: string | null
   email: string | null
-  address: string | null
   order_count: number
   total_spent: number
   last_order_at: string | null
@@ -26,6 +26,7 @@ function formatDateTime(iso: string) {
 }
 
 export default function CustomersPage() {
+  const router = useRouter()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -42,8 +43,7 @@ export default function CustomersPage() {
     return (
       c.name?.toLowerCase().includes(q) ||
       c.phone?.includes(q) ||
-      c.email?.toLowerCase().includes(q) ||
-      c.address?.toLowerCase().includes(q)
+      c.email?.toLowerCase().includes(q)
     )
   })
 
@@ -88,7 +88,6 @@ export default function CustomersPage() {
             <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
               <tr>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Customer</th>
-                <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden md:table-cell">Address</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Orders</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Spent</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden lg:table-cell">Last order</th>
@@ -97,7 +96,7 @@ export default function CustomersPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map(c => (
-                <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={c.id} onClick={() => router.push(`/dashboard/customers/${c.id}`)} className="hover:bg-gray-50 transition-colors cursor-pointer">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
@@ -112,9 +111,6 @@ export default function CustomersPage() {
                         <p className="text-base text-gray-400">{c.phone ?? c.email ?? '—'}</p>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell max-w-[180px]">
-                    <p className="truncate">{c.address ?? <span className="text-gray-300">—</span>}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-base font-semibold px-2 py-1 rounded-full ${

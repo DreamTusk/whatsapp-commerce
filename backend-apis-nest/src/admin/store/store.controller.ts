@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Param,
 } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -61,5 +62,23 @@ export class StoreController {
   @HttpCode(HttpStatus.OK)
   deleteStore(@CurrentUser() user: { userId: string }) {
     return this.storeService.deleteStore(user.userId);
+  }
+
+  // GET /api/store/customization
+  @Get('customization')
+  @UseGuards(JwtAuthGuard)
+  getCustomization(@CurrentUser() user: { userId: string }) {
+    return this.storeService.getCustomization(user.userId);
+  }
+
+  // PUT /api/store/customization
+  @Put('customization')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
+  updateCustomization(
+    @CurrentUser() user: { userId: string },
+    @Body() body: any,
+  ) {
+    return this.storeService.updateCustomization(user.userId, body);
   }
 }

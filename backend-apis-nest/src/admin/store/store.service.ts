@@ -15,6 +15,29 @@ export class StoreService {
     private emailService: EmailService,
   ) {}
 
+  private formatCustomization(c: {
+    primaryColor: string; headerColor: string;
+    instagramUrl: string | null; facebookUrl: string | null;
+    whatsappNumber: string | null; whatsappMessage: string | null;
+    youtubeUrl: string | null; xUrl: string | null;
+    refundPolicy: string | null; privacyPolicy: string | null; terms: string | null;
+  } | null) {
+    if (!c) return { primary_color: '#6366f1', header_color: '#F4F4FE', instagram_url: null, facebook_url: null, whatsapp_number: null, whatsapp_message: null, youtube_url: null, x_url: null, refund_policy: null, privacy_policy: null, terms: null };
+    return {
+      primary_color: c.primaryColor,
+      header_color: c.headerColor,
+      instagram_url: c.instagramUrl,
+      facebook_url: c.facebookUrl,
+      whatsapp_number: c.whatsappNumber,
+      whatsapp_message: c.whatsappMessage,
+      youtube_url: c.youtubeUrl,
+      x_url: c.xUrl,
+      refund_policy: c.refundPolicy,
+      privacy_policy: c.privacyPolicy,
+      terms: c.terms,
+    };
+  }
+
   private formatStore(store: {
     id: string; name: string; phone: string; domain: string | null;
     catalogId: string | null; address: string | null; logo: string | null;
@@ -22,6 +45,7 @@ export class StoreService {
     isPickupEnabled: boolean; isHomeDeliveryEnabled: boolean;
     whatsappPhoneNumberId: string | null; whatsappBusinessAccountId: string | null;
     whatsappAccessToken: string | null; createdAt: Date; updatedAt: Date;
+    StoreCustomization?: any;
   }) {
     return {
       id: store.id,
@@ -41,6 +65,7 @@ export class StoreService {
       whatsapp_access_token: store.whatsappAccessToken,
       created_at: store.createdAt,
       updated_at: store.updatedAt,
+      customization: this.formatCustomization(store.StoreCustomization ?? null),
     };
   }
 
@@ -69,7 +94,10 @@ export class StoreService {
   async getStoreInfo(domain: string) {
     if (!domain) throw new BadRequestException('Missing x-store-domain header');
 
-    const store = await this.prisma.store.findUnique({ where: { domain } });
+    const store = await this.prisma.store.findUnique({
+      where: { domain },
+      include: { StoreCustomization: true },
+    });
     if (!store) throw new NotFoundException('Store not found');
 
     const now = new Date();
@@ -142,6 +170,7 @@ export class StoreService {
         min_order_amount: store.minOrderAmount,
         delivery_radius: store.deliveryRadius,
         is_active: store.isActive,
+        customization: this.formatCustomization((store as any).StoreCustomization ?? null),
       },
       banners,
       collections,
@@ -189,7 +218,9 @@ export class StoreService {
         whatsappPhoneNumberId: body.whatsapp_phone_number_id || null,
         whatsappBusinessAccountId: body.whatsapp_business_account_id || null,
         whatsappAccessToken: body.whatsapp_access_token || null,
+        StoreCustomization: { create: {} },
       },
+      include: { StoreCustomization: true },
     });
 
     await this.prisma.userStore.create({
@@ -209,11 +240,66 @@ export class StoreService {
   async getStore(userId: string) {
     const userStore = await this.prisma.userStore.findFirst({
       where: { userId },
-      include: { Store: true },
+      include: { Store: { include: { StoreCustomization: true } } },
     });
     if (!userStore) throw new NotFoundException('No store found');
 
     return { store: this.formatStore(userStore.Store) };
+  }
+
+  async getCustomization(userId: string) {
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const c = await this.prisma.storeCustomization.findUnique({ where: { storeId: userStore.storeId } });
+    return { customization: this.formatCustomization(c ?? null) };
+  }
+
+  async updateCustomization(
+    userId: string,
+    body: {
+      primary_color?: string; header_color?: string;
+      instagram_url?: string; facebook_url?: string;
+      whatsapp_number?: string; whatsapp_message?: string;
+      youtube_url?: string; x_url?: string;
+      refund_policy?: string; privacy_policy?: string; terms?: string;
+    },
+  ) {
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const c = await this.prisma.storeCustomization.upsert({
+      where: { storeId: userStore.storeId },
+      create: {
+        storeId: userStore.storeId,
+        ...(body.primary_color && { primaryColor: body.primary_color }),
+        ...(body.header_color && { headerColor: body.header_color }),
+        ...(body.instagram_url !== undefined && { instagramUrl: body.instagram_url || null }),
+        ...(body.facebook_url !== undefined && { facebookUrl: body.facebook_url || null }),
+        ...(body.whatsapp_number !== undefined && { whatsappNumber: body.whatsapp_number || null }),
+        ...(body.whatsapp_message !== undefined && { whatsappMessage: body.whatsapp_message || null }),
+        ...(body.youtube_url !== undefined && { youtubeUrl: body.youtube_url || null }),
+        ...(body.x_url !== undefined && { xUrl: body.x_url || null }),
+        ...(body.refund_policy !== undefined && { refundPolicy: body.refund_policy || null }),
+        ...(body.privacy_policy !== undefined && { privacyPolicy: body.privacy_policy || null }),
+        ...(body.terms !== undefined && { terms: body.terms || null }),
+      },
+      update: {
+        ...(body.primary_color && { primaryColor: body.primary_color }),
+        ...(body.header_color && { headerColor: body.header_color }),
+        ...(body.instagram_url !== undefined && { instagramUrl: body.instagram_url || null }),
+        ...(body.facebook_url !== undefined && { facebookUrl: body.facebook_url || null }),
+        ...(body.whatsapp_number !== undefined && { whatsappNumber: body.whatsapp_number || null }),
+        ...(body.whatsapp_message !== undefined && { whatsappMessage: body.whatsapp_message || null }),
+        ...(body.youtube_url !== undefined && { youtubeUrl: body.youtube_url || null }),
+        ...(body.x_url !== undefined && { xUrl: body.x_url || null }),
+        ...(body.refund_policy !== undefined && { refundPolicy: body.refund_policy || null }),
+        ...(body.privacy_policy !== undefined && { privacyPolicy: body.privacy_policy || null }),
+        ...(body.terms !== undefined && { terms: body.terms || null }),
+      },
+    });
+
+    return { customization: this.formatCustomization(c) };
   }
 
   async updateStore(

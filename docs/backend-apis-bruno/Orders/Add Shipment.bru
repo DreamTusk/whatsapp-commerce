@@ -1,0 +1,32 @@
+meta {
+  name: Add Shipment
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url_local}}/orders/:id/shipment
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:path {
+  id: <order_id>
+}
+
+body:json {
+  {
+    "carrier_name": "Delhivery",
+    "tracking_id": "DL123456789",
+    "tracking_url": "https://www.delhivery.com/track/package/DL123456789"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

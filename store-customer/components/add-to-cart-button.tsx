@@ -50,7 +50,7 @@ export default function AddToCartButton({ productId, price }: Props) {
         <button
           onClick={() => requireAuth(doAdd)}
           disabled={loading}
-          className="flex-[2] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+          className="flex-[2] btn-primary-filled font-semibold py-3 rounded-xl text-sm"
         >
           {loading ? 'Adding…' : 'Add to cart'}
         </button>

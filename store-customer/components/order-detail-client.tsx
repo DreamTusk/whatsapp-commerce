@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation'
 import { clientFetch } from '@/lib/client-api'
 import PageHeader from '@/components/page-header'
 import type { Order } from '@/types'
-import { X, Check, MapPin, CreditCard } from "@deemlol/next-icons"
+import { X, Check, MapPin, CreditCard, Truck, ExternalLink } from "@deemlol/next-icons"
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
@@ -236,6 +236,36 @@ export default function OrderDetailClient() {
           </div>
         )}
   
+        {/* Shipment */}
+        {order.shipments && order.shipments.length > 0 && (
+          <div className="px-6 py-4 border-b border-gray-100">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Shipment tracking</p>
+            <div className="space-y-3">
+              {order.shipments.map((s, i) => (
+                <div key={s.id} className={`flex items-start gap-3 ${i > 0 ? 'pt-3 border-t border-gray-100' : ''}`}>
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                    <Truck className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">{s.carrier_name}</p>
+                    <p className="text-xs text-gray-400 font-mono mt-0.5">{s.tracking_id}</p>
+                    {s.tracking_url && (
+                      <a
+                        href={s.tracking_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-indigo-500 hover:underline font-medium mt-1"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Track package
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Actions — pushed to bottom */}
         <div className="mt-auto px-6 py-5 flex flex-col gap-2.5">
           <Link

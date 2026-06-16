@@ -33,7 +33,7 @@ export default async function NotFound() {
       )}
 
       {/* 404 content */}
-      <p className="text-7xl font-black text-indigo-100 leading-none mb-4">404</p>
+      <p className="text-7xl font-black leading-none mb-4" style={{ color: 'color-mix(in srgb, var(--color-primary) 20%, transparent)' }}>404</p>
       <h1 className="text-xl font-bold text-gray-800 mb-2 text-center">Page not found</h1>
       <p className="text-sm text-gray-400 max-w-xs mb-8 text-center">
         The page you're looking for doesn't exist or may have been moved.
@@ -41,7 +41,7 @@ export default async function NotFound() {
 
       <Link
         href="/"
-        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold transition-colors"
+        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl btn-primary-filled text-sm font-semibold"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Home
@@ -62,7 +62,7 @@ export default async function NotFound() {
                 <Link
                   key={cat.id}
                   href={`/products?category=${cat.id}`}
-                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-gray-100 bg-white hover:border-indigo-200 hover:shadow-md transition-all group"
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-gray-100 bg-white hover:border-primary hover:shadow-md transition-all group"
                 >
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                     {imgSrc ? (

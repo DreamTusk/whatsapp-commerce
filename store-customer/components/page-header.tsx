@@ -16,7 +16,7 @@ export default function PageHeader({ title, backHref, actions }: Props) {
   const router = useRouter()
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
+    <header className="sticky top-[var(--store-header-h)] z-20 lg:top-0 lg:z-30 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-screen-lg mx-auto px-3 h-14 flex items-center gap-2">
         {/* Back */}
         <button

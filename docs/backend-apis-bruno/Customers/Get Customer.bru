@@ -1,0 +1,19 @@
+meta {
+  name: Get Customer
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/customers/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: CUSTOMER_ID
+}
+
+auth:bearer {
+  token: {{token}}
+}

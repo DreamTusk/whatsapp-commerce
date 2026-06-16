@@ -68,7 +68,7 @@ export default async function HomePage() {
         <section className="mt-4 sm:mt-6 lg:mt-8">
           <div className="flex items-center justify-between page-x mb-3">
             <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold text-gray-900 [font-family:var(--font-instrument-sans)]">Category</h2>
-            <Link href="/products" className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium text-indigo-500 [font-family:var(--font-instrument-sans)]">
+            <Link href="/products" className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium c-primary [font-family:var(--font-instrument-sans)]">
               <span>See All</span><ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -76,7 +76,7 @@ export default async function HomePage() {
             <div className="flex flex-nowrap justify-around gap-5 overflow-x-auto overflow-y-hidden pb-5 scrollbar-hide">
               {categories.map(cat => (
                 <Link key={cat.id} href={`/products?category=${cat.id}`} className="flex flex-col items-center gap-[10px] lg:gap-[15px] flex-shrink-0 w-[80px] sm:w-[110px] lg:w-[150px] group">
-                  <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full overflow-hidden bg-gray-100 border-2 border-white flex-shrink-0 shadow-md transition-all duration-300 group-hover:border-indigo-400 group-hover:shadow-[0_4px_16px_rgba(99,102,241,0.25)]">
+                  <div className="w-[80px] h-[80px] sm:w-[110px] sm:h-[110px] lg:w-[150px] lg:h-[150px] rounded-full overflow-hidden bg-gray-100 border-2 border-white flex-shrink-0 shadow-md transition-all duration-300 group-hover:border-primary group-hover:shadow-md">
                     {cat.image_url ? (
                       <img src={cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`} alt={cat.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                     ) : (
@@ -96,7 +96,7 @@ export default async function HomePage() {
         <section key={col.id} className="mt-6 sm:mt-8">
           <div className="flex items-center justify-between page-x mb-3">
             <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold text-gray-900 [font-family:var(--font-instrument-sans)]">{col.name}</h2>
-            <Link href={`/collection/${col.id}`} className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium text-indigo-500 [font-family:var(--font-instrument-sans)]">
+            <Link href={`/collection/${col.id}`} className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium c-primary [font-family:var(--font-instrument-sans)]">
               <span>See All</span><ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -115,7 +115,7 @@ export default async function HomePage() {
         <section key={cat.id} className="mt-6">
           <div className="flex items-center justify-between page-x mb-3">
             <h2 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold text-gray-900 [font-family:var(--font-instrument-sans)]">{cat.name}</h2>
-            <Link href={`/products?category=${cat.id}`} className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium text-indigo-500 [font-family:var(--font-instrument-sans)]">
+            <Link href={`/products?category=${cat.id}`} className="flex items-center gap-1 text-[13px] sm:text-[14px] lg:text-[16px] font-medium c-primary [font-family:var(--font-instrument-sans)]">
               <span>See All</span><ChevronRight className="w-4 h-4" />
             </Link>
           </div>

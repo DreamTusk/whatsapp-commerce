@@ -104,7 +104,7 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
 
   return (
     <div
-      className={`group relative bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col transition-all duration-300 hover:border-indigo-200 hover:shadow-[0_4px_16px_rgba(99,102,241,0.15)] ${scrollable ? 'flex-shrink-0' : 'w-full'}`}
+      className={`group relative bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col transition-all duration-300 hover:opacity-95 hover:shadow-md ${scrollable ? 'flex-shrink-0' : 'w-full'}`}
       style={{
         width: scrollable && width ? `${width}px` : undefined,
         boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
@@ -163,12 +163,12 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
         </div>
 
         {cartQty > 0 ? (
-          <div className="relative z-20 mt-auto w-full h-[40px] sm:h-[46px] flex items-center justify-between rounded-lg border border-indigo-400 overflow-hidden [font-family:var(--font-instrument-sans)]">
+          <div className="relative z-20 mt-auto w-full h-[40px] sm:h-[46px] flex items-center justify-between rounded-lg border-primary border overflow-hidden [font-family:var(--font-instrument-sans)]">
             <button onClick={cartQty === 1 ? handleRemove : handleDecrease} disabled={loading}
-              className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40"
+              className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40"
             >
               {loading
-                ? <div className="w-3.5 h-3.5 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                ? <div className="w-3.5 h-3.5 border border-t-transparent rounded-full animate-spin spinner-primary" />
                 : cartQty === 1
                 ? <Trash className="w-3.5 h-3.5 text-rose-400" />
                 : <span className="text-xl font-bold">−</span>
@@ -176,9 +176,9 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
             </button>
             <span className="text-[13px] sm:text-[14px] lg:text-[15px] font-bold text-gray-900">{cartQty}</span>
             <button onClick={handleIncrease} disabled={loading || !p.in_stock}
-              className="h-full w-[36%] flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition-colors disabled:opacity-40 text-xl font-bold"
+              className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40 text-xl font-bold"
             >
-              {loading ? <div className="w-3.5 h-3.5 border border-indigo-400 border-t-transparent rounded-full animate-spin" /> : '+'}
+              {loading ? <div className="w-3.5 h-3.5 border border-t-transparent rounded-full animate-spin spinner-primary" /> : '+'}
             </button>
           </div>
         ) : (
@@ -189,14 +189,14 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
               added
                 ? 'bg-green-500 border-green-500 text-white'
                 : loading
-                ? 'border-indigo-300 text-indigo-400'
+                ? 'border-primary opacity-50'
                 : !p.in_stock
                 ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-                : 'border-indigo-400 text-indigo-600 bg-transparent hover:bg-indigo-500 hover:border-indigo-500 hover:text-white active:bg-indigo-600'
+                : 'btn-primary-outline'
             }`}
           >
             {loading ? (
-              <div className="w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5 border border-t-transparent rounded-full animate-spin spinner-primary" />
             ) : added ? (
               <>
                 <Check className="w-4 h-4 lg:w-5 lg:h-5" />

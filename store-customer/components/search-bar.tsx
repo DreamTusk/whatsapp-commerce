@@ -122,7 +122,7 @@ export default function SearchBar() {
       <form onSubmit={handleSubmit}>
         <div className="h-[50px] flex items-center justify-between px-[14px] py-[8px] rounded-[8px] border border-gray-200 bg-white gap-3">
           {loading ? (
-            <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin flex-shrink-0 spinner-primary" />
           ) : (
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           )}
@@ -229,7 +229,7 @@ export default function SearchBar() {
               {/* See all results */}
               <button
                 onClick={handleSubmit as any}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-t border-gray-100 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-t border-gray-100 text-sm font-semibold transition-colors c-primary hover:opacity-80"
               >
                 See all results for &ldquo;{query}&rdquo;
                 <ChevronRight className="w-3.5 h-3.5" />

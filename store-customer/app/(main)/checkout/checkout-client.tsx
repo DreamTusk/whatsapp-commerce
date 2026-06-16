@@ -30,8 +30,8 @@ function buildAddress(doorNo: string, street: string, city: string, state: strin
   return [line1, line2, country].filter(Boolean).join(', ')
 }
 
-const inputCls = 'w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors bg-white'
-const inputSmCls = 'w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-colors bg-white'
+const inputCls = 'w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors bg-white'
+const inputSmCls = 'w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-[var(--color-primary)] transition-colors bg-white'
 
 export default function CheckoutClient() {
   const { isAuthenticated, customer, requireAuth, updateCustomer } = useAuth()
@@ -275,7 +275,7 @@ export default function CheckoutClient() {
           <p className="text-4xl mb-3">🔐</p>
           <p className="font-bold text-gray-900 mb-1">Sign in to checkout</p>
           <button onClick={() => requireAuth(() => {})}
-            className="mt-4 bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">
+            className="mt-4 btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">
             Sign in
           </button>
         </div>
@@ -286,7 +286,7 @@ export default function CheckoutClient() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" />
       </div>
     )
   }
@@ -300,7 +300,7 @@ export default function CheckoutClient() {
           <p className="text-4xl mb-3">🛒</p>
           <p className="font-bold text-gray-900 mb-1">Your cart is empty</p>
           <button onClick={() => router.push('/products')}
-            className="mt-4 bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors">
+            className="mt-4 btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">
             Browse products
           </button>
         </div>
@@ -347,17 +347,17 @@ export default function CheckoutClient() {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
       {/* Pre-filled badge */}
       {selectedAddress && (
-        <div className="flex items-center gap-2.5 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5">
+        <div className="flex items-center gap-2.5 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
           <span className="text-base flex-shrink-0">
             {selectedAddress.label === 'House' ? '🏠' : selectedAddress.label === 'Work' ? '💼' : '📍'}
           </span>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-indigo-700">{selectedAddress.label ?? 'Saved address'}</p>
+            <p className="text-xs font-semibold c-primary">{selectedAddress.label ?? 'Saved address'}</p>
             <p className="text-xs text-gray-500 truncate">
               {[selectedAddress.address, selectedAddress.city, selectedAddress.pincode].filter(Boolean).join(', ')}
             </p>
           </div>
-          <span className="text-[10px] font-semibold text-indigo-400 flex-shrink-0 bg-indigo-100 px-2 py-0.5 rounded-full">Pre-filled</span>
+          <span className="text-[10px] font-semibold c-primary flex-shrink-0 bg-gray-100 px-2 py-0.5 rounded-full">Pre-filled</span>
         </div>
       )}
 
@@ -371,7 +371,7 @@ export default function CheckoutClient() {
             locationState === 'granted'  ? 'bg-green-50 text-green-600 hover:bg-green-100'
             : locationState === 'denied'  ? 'bg-red-50 text-red-400 cursor-not-allowed'
             : locationState === 'requesting' ? 'bg-gray-100 text-gray-400 cursor-wait'
-            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+            : 'bg-gray-100 c-primary hover:opacity-80'
           }`}
         >
           {locationState === 'granted' ? (
@@ -428,16 +428,16 @@ export default function CheckoutClient() {
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery method</p>
       <div className="grid grid-cols-2 gap-2.5">
         <button type="button" onClick={() => setDeliveryType('HOME_DELIVERY')}
-          className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-colors ${!isPickup ? 'border-indigo-400 bg-indigo-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
+          className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-colors ${!isPickup ? 'border-primary bg-gray-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
         >
-          <House className={`w-5 h-5 ${!isPickup ? 'text-indigo-600' : 'text-gray-400'}`} />
-          <span className={`text-sm font-semibold ${!isPickup ? 'text-indigo-700' : 'text-gray-500'}`}>House Delivery</span>
+          <House className={`w-5 h-5 ${!isPickup ? 'c-primary' : 'text-gray-400'}`} />
+          <span className={`text-sm font-semibold ${!isPickup ? 'c-primary' : 'text-gray-500'}`}>House Delivery</span>
         </button>
         <button type="button" onClick={() => setDeliveryType('PICKUP')}
-          className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-colors ${isPickup ? 'border-indigo-400 bg-indigo-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
+          className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-colors ${isPickup ? 'border-primary bg-gray-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
         >
-          <Truck className={`w-5 h-5 ${isPickup ? 'text-indigo-600' : 'text-gray-400'}`} />
-          <span className={`text-sm font-semibold ${isPickup ? 'text-indigo-700' : 'text-gray-500'}`}>Store Pickup</span>
+          <Truck className={`w-5 h-5 ${isPickup ? 'c-primary' : 'text-gray-400'}`} />
+          <span className={`text-sm font-semibold ${isPickup ? 'c-primary' : 'text-gray-500'}`}>Store Pickup</span>
         </button>
       </div>
     </div>
@@ -446,9 +446,9 @@ export default function CheckoutClient() {
   const pickupSection = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pickup location</p>
-      <div className="flex items-start gap-3 bg-indigo-50 rounded-xl px-3 py-3">
-        <MapPin className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-indigo-800 leading-relaxed">
+      <div className="flex items-start gap-3 bg-gray-50 rounded-xl px-3 py-3">
+        <MapPin className="w-4 h-4 c-primary flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-gray-700 leading-relaxed">
           {store?.address ?? 'Store address not available — contact the store for directions.'}
         </p>
       </div>
@@ -526,17 +526,17 @@ export default function CheckoutClient() {
           type="button"
           onClick={() => setPaymentMethod('COD')}
           className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-            paymentMethod === 'COD' ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-100 hover:border-gray-200'
+            paymentMethod === 'COD' ? 'bg-gray-50 border-primary' : 'bg-gray-50 border-gray-100 hover:border-gray-200'
           }`}
         >
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'bg-indigo-100' : 'bg-gray-100'}`}>
-            <CreditCard className={`w-4 h-4 ${paymentMethod === 'COD' ? 'text-indigo-600' : 'text-gray-400'}`} />
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'bg-gray-100' : 'bg-gray-100'}`}>
+            <CreditCard className={`w-4 h-4 ${paymentMethod === 'COD' ? 'c-primary' : 'text-gray-400'}`} />
           </div>
           <div className="flex-1 text-left">
             <p className={`text-sm font-semibold ${paymentMethod === 'COD' ? 'text-gray-900' : 'text-gray-600'}`}>Cash on delivery</p>
             <p className="text-xs text-gray-400 mt-0.5">Pay when your order arrives</p>
           </div>
-          <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'bg-indigo-500' : 'border-2 border-gray-300'}`}>
+          <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${paymentMethod === 'COD' ? 'bg-primary' : 'border-2 border-gray-300'}`}>
             {paymentMethod === 'COD' && <Check className="w-2.5 h-2.5 text-white" />}
           </div>
         </button>
@@ -547,17 +547,17 @@ export default function CheckoutClient() {
             type="button"
             onClick={() => setPaymentMethod('ONLINE')}
             className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-              paymentMethod === 'ONLINE' ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-100 hover:border-gray-200'
+              paymentMethod === 'ONLINE' ? 'bg-gray-50 border-primary' : 'bg-gray-50 border-gray-100 hover:border-gray-200'
             }`}
           >
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${paymentMethod === 'ONLINE' ? 'bg-indigo-100' : 'bg-gray-100'}`}>
-              <Smartphone className={`w-4 h-4 ${paymentMethod === 'ONLINE' ? 'text-indigo-600' : 'text-gray-400'}`} />
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${paymentMethod === 'ONLINE' ? 'bg-gray-100' : 'bg-gray-100'}`}>
+              <Smartphone className={`w-4 h-4 ${paymentMethod === 'ONLINE' ? 'c-primary' : 'text-gray-400'}`} />
             </div>
             <div className="flex-1 text-left">
               <p className={`text-sm font-semibold ${paymentMethod === 'ONLINE' ? 'text-gray-900' : 'text-gray-600'}`}>Pay online</p>
               <p className="text-xs text-gray-400 mt-0.5">UPI, cards, netbanking & wallets</p>
             </div>
-            <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${paymentMethod === 'ONLINE' ? 'bg-indigo-500' : 'border-2 border-gray-300'}`}>
+            <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${paymentMethod === 'ONLINE' ? 'bg-primary' : 'border-2 border-gray-300'}`}>
               {paymentMethod === 'ONLINE' && <Check className="w-2.5 h-2.5 text-white" />}
             </div>
           </button>
@@ -583,7 +583,7 @@ export default function CheckoutClient() {
           </div>
         )}
         <button onClick={handlePlaceOrderClick}
-          className="hidden lg:block w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-4 rounded-xl text-sm transition-colors shadow-sm">
+          className="hidden lg:block w-full btn-primary-filled font-semibold py-4 rounded-xl text-sm shadow-sm">
           {paymentMethod === 'ONLINE' ? `Pay ₹${cart?.total ?? 0} online` : `Place order · ₹${cart?.total ?? 0}`}
         </button>
       </div>
@@ -596,7 +596,7 @@ export default function CheckoutClient() {
             <p className="text-lg font-bold text-gray-900">₹{cart?.total ?? 0}</p>
           </div>
           <button onClick={handlePlaceOrderClick}
-            className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors">
+            className="flex-1 btn-primary-filled font-semibold py-3.5 rounded-xl text-sm">
             {paymentMethod === 'ONLINE' ? 'Pay online' : 'Place order'}
           </button>
         </div>
@@ -678,7 +678,7 @@ export default function CheckoutClient() {
                 Go back
               </button>
               <button onClick={confirmOrder} disabled={placing}
-                className="flex-1 h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors">
+                className="flex-1 h-11 btn-primary-filled font-semibold rounded-xl text-sm">
                 {placing
                   ? (paymentMethod === 'ONLINE' ? 'Opening payment…' : 'Placing…')
                   : (paymentMethod === 'ONLINE' ? 'Proceed to pay' : 'Confirm & place')}

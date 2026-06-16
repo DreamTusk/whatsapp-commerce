@@ -114,12 +114,12 @@ export default function BottomNav() {
               <button
                 key={item.label}
                 onClick={openCart}
-                className={`flex flex-col items-center justify-center gap-1 transition-colors ${active ? 'text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`flex flex-col items-center justify-center gap-1 transition-colors ${active ? 'c-primary' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 <span className="relative inline-block">
                   {item.icon}
                   {count > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
                       {count > 99 ? '99+' : count}
                     </span>
                   )}
@@ -133,7 +133,7 @@ export default function BottomNav() {
             <Link
               key={item.label}
               href={dest}
-              className={`flex flex-col items-center justify-center gap-1 transition-colors ${active ? 'text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`flex flex-col items-center justify-center gap-1 transition-colors ${active ? 'c-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
               <span className="relative inline-block">{item.icon}</span>
               <span className="text-[10px] font-medium">{item.label}</span>

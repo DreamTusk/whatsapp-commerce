@@ -20,20 +20,30 @@ export class InventoryService {
 
     const products = await this.prisma.product.findMany({
       where: { storeId },
-      include: { Category: { select: { id: true, name: true } } },
+      include: {
+        Category: { select: { id: true, name: true } },
+        ProductMedia: {
+          orderBy: [{ isPrimary: 'desc' as const }, { sortOrder: 'asc' as const }],
+          take: 1,
+          include: { Media: { select: { url: true, thumbnailUrl: true } } },
+        },
+      },
     });
 
     return {
-      products: products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        image_url: null,
-        selling_price: p.sellingPrice,
-        unit: p.unit,
-        in_stock: p.inStock,
-        is_active: p.isActive,
-        category: p.Category,
-      })),
+      products: products.map((p) => {
+        const media = p.ProductMedia?.[0]?.Media ?? null;
+        return {
+          id: p.id,
+          name: p.name,
+          image_url: media?.thumbnailUrl ?? media?.url ?? null,
+          selling_price: p.sellingPrice,
+          unit: p.unit,
+          in_stock: p.inStock,
+          is_active: p.isActive,
+          category: p.Category,
+        };
+      }),
     };
   }
 

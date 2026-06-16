@@ -20,7 +20,7 @@ export default function ErrorPage({ reset }: Props) {
       <div className="flex items-center gap-3">
         <button
           onClick={reset}
-          className="px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold transition-colors"
+          className="px-6 py-3 rounded-xl btn-primary-filled text-sm font-semibold"
         >
           Try again
         </button>

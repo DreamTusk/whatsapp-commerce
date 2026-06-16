@@ -30,6 +30,48 @@ export class CustomersService {
     return { customers };
   }
 
+  async getCustomer(userId: string, customerId: string) {
+    const storeId = await this.getStoreId(userId);
+
+    const c = await this.prisma.customer.findFirst({
+      where: { id: customerId, storeId },
+      include: {
+        _count: { select: { Order: true } },
+        CustomerAddress: { orderBy: [{ isDefault: 'desc' as const }, { createdAt: 'asc' as const }] },
+      },
+    });
+    if (!c) throw new NotFoundException('Customer not found');
+
+    const [totals] = await this.prisma.order.groupBy({
+      by: ['customerId'],
+      where: { customerId, storeId },
+      _sum: { totalAmount: true },
+    });
+
+    return {
+      customer: {
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        order_count: c._count.Order,
+        total_spent: totals?._sum.totalAmount ?? 0,
+        joined_at: c.createdAt,
+        addresses: c.CustomerAddress.map((a) => ({
+          id: a.id,
+          label: a.label,
+          door_no: a.doorNo,
+          street: a.street,
+          city: a.city,
+          state: a.state,
+          country: a.country,
+          pincode: a.pincode,
+          is_default: a.isDefault,
+        })),
+      },
+    };
+  }
+
   async listCustomers(userId: string) {
     const storeId = await this.getStoreId(userId);
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Search, Plus, Minus, Trash2, UserPlus, X } from '@deemlol/next-icons'
+import { ArrowLeft, Search, Plus, Minus, Trash2, UserPlus, X, MapPin } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +17,11 @@ import { AppSelect } from '@/components/ui/app-select'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
 interface Customer { id: string; name: string | null; phone: string | null }
+interface SavedAddress {
+  id: string; label: string | null; is_default: boolean
+  door_no: string | null; street: string | null; city: string | null
+  state: string | null; country: string | null; pincode: string | null
+}
 interface Product {
   id: string; name: string; image_url: string | null
   selling_price: number; in_stock: boolean
@@ -63,6 +68,10 @@ export default function NewOrderPage() {
   const [productsLoading, setProductsLoading] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
 
+  // Saved addresses for selected customer
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
+
   // Details
   const [address, setAddress] = useState<AddressForm>(EMPTY_ADDR)
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'ONLINE'>('COD')
@@ -85,6 +94,14 @@ export default function NewOrderPage() {
       .catch(() => {})
       .finally(() => setProductsLoading(false))
   }, [])
+
+  // Fetch saved addresses when a customer is selected
+  useEffect(() => {
+    if (!selectedCustomer) { setSavedAddresses([]); setSelectedSavedId(null); return }
+    api.get(`/api/customers/${selectedCustomer.id}`)
+      .then(res => setSavedAddresses(res.data.customer?.addresses ?? []))
+      .catch(() => setSavedAddresses([]))
+  }, [selectedCustomer])
 
   // Customer search filter
   useEffect(() => {
@@ -117,7 +134,7 @@ export default function NewOrderPage() {
   }
 
   const total = cart.reduce((sum, i) => sum + i.product.selling_price * i.quantity, 0)
-  const addrValid = address.door_no.trim() && address.street.trim() && address.city.trim() && address.pincode.trim() && address.state.trim() && address.country.trim()
+  const addrValid = address.door_no.trim() && address.street.trim() && address.area.trim() && address.city.trim() && address.pincode.trim() && address.state.trim() && address.country.trim()
   const customerValid = isNewCustomer ? newPhone.trim().length >= 10 : !!selectedCustomer
   const canPlace = customerValid && cart.length > 0 && addrValid
 
@@ -157,7 +174,7 @@ export default function NewOrderPage() {
         <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-4">
           <ArrowLeft className="w-3.5 h-3.5" /> Orders
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Create Manual Order</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Create Order</h1>
       </div>
 
       {/* Content */}
@@ -173,13 +190,13 @@ export default function NewOrderPage() {
                 {/* Toggle */}
                 <div className="flex gap-2 mb-4">
                   <button
-                    onClick={() => { setIsNewCustomer(false); setSelectedCustomer(null); setCustomerSearch('') }}
+                    onClick={() => { setIsNewCustomer(false); setSelectedCustomer(null); setCustomerSearch(''); setSavedAddresses([]); setSelectedSavedId(null) }}
                     className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${!isNewCustomer ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
                   >
                     Existing
                   </button>
                   <button
-                    onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerSearch('') }}
+                    onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerSearch(''); setSavedAddresses([]); setSelectedSavedId(null) }}
                     className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${isNewCustomer ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
                   >
                     <UserPlus className="w-3 h-3 inline mr-1" />
@@ -207,7 +224,7 @@ export default function NewOrderPage() {
                       <p className="text-sm font-semibold text-gray-900">{selectedCustomer.name ?? '—'}</p>
                       <p className="text-xs text-gray-500">{selectedCustomer.phone}</p>
                     </div>
-                    <button onClick={() => { setSelectedCustomer(null); setCustomerSearch('') }} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                    <button onClick={() => { setSelectedCustomer(null); setCustomerSearch(''); setSavedAddresses([]); setSelectedSavedId(null) }} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -244,6 +261,49 @@ export default function NewOrderPage() {
               {/* Address */}
               <SectionCard title="Delivery Address">
                 <div className="space-y-3">
+
+                  {/* Saved addresses picker — visible only when an existing customer is selected */}
+                  {!isNewCustomer && savedAddresses.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium text-gray-500">Saved addresses</p>
+                      <div className="space-y-1.5">
+                        {savedAddresses.map(sa => {
+                          const line = [sa.door_no, sa.street, sa.city, sa.pincode].filter(Boolean).join(', ')
+                          const active = selectedSavedId === sa.id
+                          return (
+                            <button
+                              key={sa.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSavedId(sa.id)
+                                setAddress({
+                                  door_no: sa.door_no ?? '',
+                                  street:  sa.street  ?? '',
+                                  area:    '',
+                                  city:    sa.city    ?? '',
+                                  pincode: sa.pincode ?? '',
+                                  state:   sa.state   ?? '',
+                                  country: sa.country ?? 'India',
+                                })
+                              }}
+                              className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-colors ${active ? 'border-[#6366f1] bg-[#6366f1]/5' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                            >
+                              <MapPin className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${active ? 'text-[#6366f1]' : 'text-gray-400'}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  {sa.label && <span className={`text-xs font-semibold ${active ? 'text-[#6366f1]' : 'text-gray-700'}`}>{sa.label}</span>}
+                                  {sa.is_default && <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">Default</span>}
+                                </div>
+                                <p className="text-xs text-gray-500 truncate">{line}</p>
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <p className="text-[11px] text-gray-400">Selecting an address fills the fields below. You can still edit them.</p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">Door No <span className="text-destructive">*</span></Label>
@@ -255,7 +315,7 @@ export default function NewOrderPage() {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Area / Landmark</Label>
+                    <Label className="text-xs">Area / Landmark <span className="text-destructive">*</span></Label>
                     <Input placeholder="Near City Mall" value={address.area} onChange={e => setAddress(a => ({ ...a, area: e.target.value }))} className="h-9 text-sm" />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -285,7 +345,7 @@ export default function NewOrderPage() {
             {/* ── Right: Products + Cart + Summary ── */}
             <div className="col-span-7 space-y-4">
 
-              {/* Product picker */}
+              {/* Product picker — hides already-selected products */}
               <SectionCard title="Select Products" className="h-[380px]">
                 <div className="relative mb-3">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -293,13 +353,15 @@ export default function NewOrderPage() {
                 </div>
                 {productsLoading ? (
                   <p className="text-xs text-gray-400 text-center py-6">Loading…</p>
-                ) : (
-                  <div className="border border-gray-100 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
-                    {productResults.length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-6">No products found</p>
-                    ) : productResults.map(p => {
-                      const cartItem = cart.find(i => i.product.id === p.id)
-                      return (
+                ) : (() => {
+                  const cartIds = new Set(cart.map(i => i.product.id))
+                  const available = productResults.filter(p => !cartIds.has(p.id))
+                  if (available.length === 0) {
+                    return <p className="text-xs text-gray-400 text-center py-6">{productSearch ? 'No matching products' : 'All products added'}</p>
+                  }
+                  return (
+                    <div className="border border-gray-100 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+                      {available.map(p => (
                         <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-50 last:border-0">
                           <div className="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                             {p.image_url
@@ -310,46 +372,42 @@ export default function NewOrderPage() {
                             <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
                             <p className="text-xs text-gray-400">₹{p.selling_price} · {p.category?.name}</p>
                           </div>
-                          {cartItem ? (
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <button onClick={() => updateQty(p.id, -1)} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                                {cartItem.quantity === 1 ? <Trash2 className="w-3 h-3 text-red-400" /> : <Minus className="w-3 h-3 text-gray-600" />}
-                              </button>
-                              <span className="w-5 text-center text-sm font-semibold text-gray-900">{cartItem.quantity}</span>
-                              <button onClick={() => updateQty(p.id, 1)} className="w-7 h-7 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] flex items-center justify-center transition-colors">
-                                <Plus className="w-3 h-3 text-white" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => addToCart(p)}
-                              disabled={!p.in_stock}
-                              className="flex items-center gap-1 text-xs font-semibold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                            >
-                              <Plus className="w-3 h-3" /> Add
-                            </button>
-                          )}
+                          <button
+                            onClick={() => addToCart(p)}
+                            disabled={!p.in_stock}
+                            className="flex items-center gap-1 text-xs font-semibold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                          >
+                            <Plus className="w-3 h-3" /> Add
+                          </button>
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )
+                })()}
               </SectionCard>
 
-              {/* Cart items */}
+              {/* Picked items — growable, with qty controls */}
               <SectionCard title={`Picked Items${cart.length > 0 ? ` (${cart.length})` : ''}`}>
                 {cart.length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-6">No items added yet</p>
                 ) : (
-                  <div className="border border-gray-100 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
+                  <div className="border border-gray-100 rounded-xl overflow-hidden">
                     {cart.map(({ product, quantity }) => (
                       <div key={product.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-0">
-                        <span className="w-6 h-6 rounded-full bg-[#6366f1]/10 text-[#6366f1] text-xs font-bold flex items-center justify-center flex-shrink-0">{quantity}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
                           <p className="text-xs text-gray-400">₹{product.selling_price} × {quantity}</p>
                         </div>
-                        <span className="text-sm font-semibold text-gray-900 flex-shrink-0">₹{product.selling_price * quantity}</span>
+                        <span className="text-sm font-semibold text-gray-900 flex-shrink-0 mx-4">₹{product.selling_price * quantity}</span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button onClick={() => updateQty(product.id, -1)} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                            {quantity === 1 ? <Trash2 className="w-3 h-3 text-red-400" /> : <Minus className="w-3 h-3 text-gray-600" />}
+                          </button>
+                          <span className="w-5 text-center text-sm font-semibold text-gray-900">{quantity}</span>
+                          <button onClick={() => updateQty(product.id, 1)} className="w-7 h-7 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] flex items-center justify-center transition-colors">
+                            <Plus className="w-3 h-3 text-white" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -418,30 +476,29 @@ export default function NewOrderPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Order</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-sm">
-                <div className="bg-gray-50 rounded-xl p-3 space-y-1">
-                  <div className="font-medium text-gray-900">
-                    {isNewCustomer ? (newName || newPhone) : (selectedCustomer?.name ?? selectedCustomer?.phone)}
-                    {!isNewCustomer && selectedCustomer?.phone && <span className="text-gray-400 font-normal ml-1.5">· {selectedCustomer.phone}</span>}
-                  </div>
-                  <div className="text-gray-500 text-xs">{[address.door_no, address.street, address.city, address.pincode].filter(Boolean).join(', ')}</div>
-                </div>
-                <div className="space-y-1">
-                  {cart.map(({ product, quantity }) => (
-                    <div key={product.id} className="flex justify-between text-gray-600">
-                      <span>{product.name} × {quantity}</span>
-                      <span>₹{product.selling_price * quantity}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-100 mt-1">
-                    <span>Total</span><span>₹{total}</span>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-400">Payment: {paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online'}</div>
-              </div>
-            </AlertDialogDescription>
+            <AlertDialogDescription>Review your order before placing.</AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="bg-gray-50 rounded-xl p-3 space-y-1">
+              <div className="font-medium text-gray-900">
+                {isNewCustomer ? (newName || newPhone) : (selectedCustomer?.name ?? selectedCustomer?.phone)}
+                {!isNewCustomer && selectedCustomer?.phone && <span className="text-gray-400 font-normal ml-1.5">· {selectedCustomer.phone}</span>}
+              </div>
+              <div className="text-gray-500 text-xs">{[address.door_no, address.street, address.city, address.pincode].filter(Boolean).join(', ')}</div>
+            </div>
+            <div className="space-y-1">
+              {cart.map(({ product, quantity }) => (
+                <div key={product.id} className="flex justify-between text-gray-600">
+                  <span>{product.name} × {quantity}</span>
+                  <span>₹{product.selling_price * quantity}</span>
+                </div>
+              ))}
+              <div className="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-100 mt-1">
+                <span>Total</span><span>₹{total}</span>
+              </div>
+            </div>
+            <div className="text-xs text-gray-400">Payment: {paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online'}</div>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
             <AlertDialogAction

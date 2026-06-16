@@ -93,6 +93,14 @@ export interface Payment {
   updated_at: string
 }
 
+export interface OrderShipment {
+  id: string
+  carrier_name: string
+  tracking_id: string
+  tracking_url: string | null
+  created_at: string
+}
+
 export interface Order {
   id: string
   order_number: string
@@ -123,6 +131,7 @@ export interface Order {
   customer: { name: string | null; phone: string | null }
   items: OrderItem[]
   payment: Payment | null
+  shipments: OrderShipment[]
 }
 
 export interface CollectionFilter {

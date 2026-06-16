@@ -121,7 +121,7 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
 
         <div className="p-6">
         {storeName && (
-          <p className="text-center text-3xl font-normal text-violet-600 mb-5" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
+          <p className="text-center text-3xl font-normal c-primary mb-5" style={{ fontFamily: "'Qurova DEMO', sans-serif" }}>
             {storeName}
           </p>
         )}
@@ -149,14 +149,14 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
                 onChange={e => setPhone(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                 placeholder="+91 98765 43210"
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               onClick={handleSendOtp}
               disabled={loading}
-              className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
+              className="w-full h-11 btn-primary-filled font-semibold rounded-xl text-sm"
             >
               {loading ? 'Sending…' : 'Send OTP'}
             </button>
@@ -178,14 +178,14 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
                 onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
                 placeholder="● ● ● ● ● ●"
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               onClick={handleVerifyOtp}
               disabled={loading}
-              className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
+              className="w-full h-11 btn-primary-filled font-semibold rounded-xl text-sm"
             >
               {loading ? 'Verifying…' : 'Verify & continue'}
             </button>
@@ -210,13 +210,13 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
                 onChange={e => setName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSaveName()}
                 placeholder="e.g. Rahul"
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               />
             </div>
             <button
               onClick={handleSaveName}
               disabled={loading}
-              className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors"
+              className="w-full h-11 btn-primary-filled font-semibold rounded-xl text-sm"
             >
               {loading ? 'Saving…' : 'Continue'}
             </button>

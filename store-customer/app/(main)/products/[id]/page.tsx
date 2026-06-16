@@ -3,17 +3,18 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import ProductDetailClient from '@/components/product-detail-client'
 import type { Product } from '@/types'
+import type { ProductCardSource } from '@/components/product-card'
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ from?: string; catId?: string; catName?: string }>
+  searchParams: Promise<{ from?: string; catId?: string; catName?: string; colId?: string; colName?: string }>
 }
 
 export default async function ProductDetailPage({ params, searchParams }: Props) {
   const headersList = await headers()
   const domain = headersList.get('x-store-domain') ?? ''
   const { id } = await params
-  const { from, catId, catName } = await searchParams
+  const { from, catId, catName, colId, colName } = await searchParams
 
   let product: Product | null = null
 
@@ -41,7 +42,9 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
     { label: 'Home', href: '/' },
   ]
 
-  if (catId && catName) {
+  if (colId && colName) {
+    breadcrumbs.push({ label: decodeURIComponent(colName), href: `/collection/${colId}` })
+  } else if (catId && catName) {
     breadcrumbs.push({ label: decodeURIComponent(catName), href: `/products?category=${catId}` })
   } else if (from === 'all') {
     breadcrumbs.push({ label: 'All Products', href: '/products' })
@@ -54,6 +57,26 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
   }
 
   breadcrumbs.push({ label: product.name, href: null })
+
+  // Fetch related products
+  let relatedProducts: Product[] = []
+  let relatedSource: ProductCardSource | undefined
+
+  try {
+    if (colId) {
+      // From a collection — show other products in that collection
+      const data = await apiFetch<{ products: Product[] }>(`/api/storefront/collections/${colId}`, domain)
+      relatedProducts = (data.products ?? []).filter(p => p.id !== product!.id).slice(0, 10)
+      relatedSource = { type: 'collection', id: colId, name: colName ? decodeURIComponent(colName) : '' }
+    } else if (product.category_id) {
+      // No collection — show products from the same category
+      const data = await apiFetch<{ products: Product[] }>(`/api/storefront/products?category_id=${product.category_id}`, domain)
+      relatedProducts = (data.products ?? []).filter(p => p.id !== product!.id).slice(0, 10)
+      relatedSource = product.category
+        ? { type: 'category', id: product.category.id, name: product.category.name }
+        : { type: 'all' }
+    }
+  } catch { /* related products are optional */ }
 
   return (
     <main>
@@ -69,6 +92,8 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
         description={product.description ?? null}
         categoryName={product.category?.name ?? null}
         breadcrumbs={breadcrumbs}
+        relatedProducts={relatedProducts}
+        relatedSource={relatedSource}
       />
     </main>
   )

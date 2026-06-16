@@ -4,13 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { OrderStatus, OrderSource, PaymentMethod, PaymentStatus } from '@prisma/client';
+import { OrderStatus, OrderSource, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { generateOrderNumber } from '../../utils/order-number';
 
 const orderInclude = {
   Customer: { select: { name: true, phone: true } },
   OrderItem: true,
   Payment: true,
+  OrderShipment: { orderBy: { createdAt: 'desc' as const } },
 };
 
 @Injectable()
@@ -28,6 +29,16 @@ export class OrdersService {
       price: item.price,
       quantity: item.quantity,
       subtotal: item.subtotal,
+    };
+  }
+
+  private formatShipment(s: any) {
+    return {
+      id: s.id,
+      carrier_name: s.carrierName,
+      tracking_id: s.trackingId,
+      tracking_url: s.trackingUrl,
+      created_at: s.createdAt,
     };
   }
 
@@ -76,6 +87,7 @@ export class OrdersService {
       customer: { name: o.Customer.name, phone: o.Customer.phone },
       items: o.OrderItem.map((i: any) => this.formatOrderItem(i)),
       payment: this.formatPayment(o.Payment),
+      shipments: (o.OrderShipment ?? []).map((s: any) => this.formatShipment(s)),
     };
   }
 
@@ -309,6 +321,49 @@ export class OrdersService {
 
     // Fire-and-forget — never blocks the response
     this.notifyCustomer(storeId, order.Customer.phone, order.orderNumber, status as OrderStatus, updateData.cancellationReason).catch(() => {});
+
+    return { order: this.formatOrder(order) };
+  }
+
+  async addShipment(
+    userId: string,
+    orderId: string,
+    body: { carrier_name: string; tracking_id: string; tracking_url?: string },
+  ) {
+    if (!body.carrier_name?.trim()) throw new BadRequestException('carrier_name is required');
+    if (!body.tracking_id?.trim()) throw new BadRequestException('tracking_id is required');
+
+    const storeId = await this.getStoreId(userId);
+
+    const existing = await this.prisma.order.findFirst({ where: { id: orderId, storeId } });
+    if (!existing) throw new NotFoundException('Order not found');
+
+    if (existing.status === OrderStatus.DELIVERED || existing.status === OrderStatus.CANCELLED) {
+      throw new BadRequestException(`Cannot add shipment to a ${existing.status.toLowerCase()} order`);
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.orderShipment.create({
+        data: {
+          orderId,
+          storeId,
+          carrierName: body.carrier_name.trim(),
+          trackingId: body.tracking_id.trim(),
+          trackingUrl: body.tracking_url?.trim() || null,
+        },
+      }),
+      this.prisma.order.update({
+        where: { id: orderId },
+        data: { status: OrderStatus.OUT_FOR_DELIVERY },
+      }),
+    ]);
+
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId },
+      include: orderInclude,
+    });
+
+    this.notifyCustomer(storeId, order!.Customer.phone, order!.orderNumber, OrderStatus.OUT_FOR_DELIVERY).catch(() => {});
 
     return { order: this.formatOrder(order) };
   }

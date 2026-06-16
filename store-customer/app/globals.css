@@ -53,6 +53,46 @@ button, a, [role="button"], label[for], select {
   cursor: pointer;
 }
 
+/* ── Store theme utilities — use var(--color-primary) everywhere ── */
+.c-primary                { color: var(--color-primary); }
+.bg-primary               { background-color: var(--color-primary); }
+.border-primary           { border-color: var(--color-primary); }
+.hover-c-primary:hover    { color: var(--color-primary); }
+
+/* Outline button: primary border+text, fills on hover */
+.btn-primary-outline {
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  background-color: transparent;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-primary-outline:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+.btn-primary-outline:active:not(:disabled) {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  opacity: 0.85;
+}
+.btn-primary-outline:disabled { opacity: 0.4; }
+
+/* Filled button: always primary bg, white text */
+.btn-primary-filled {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  transition: opacity 0.15s;
+}
+.btn-primary-filled:hover:not(:disabled) { opacity: 0.9; }
+.btn-primary-filled:active:not(:disabled) { opacity: 0.8; }
+.btn-primary-filled:disabled { opacity: 0.6; }
+
+/* Spinner using primary color */
+.spinner-primary {
+  border-color: var(--color-primary);
+  border-top-color: transparent;
+}
+
 /* ── Utilities ── */
 .scrollbar-hide {
   -ms-overflow-style: none;

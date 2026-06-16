@@ -7,8 +7,21 @@ import { createHmac } from 'crypto';
 import Razorpay from 'razorpay';
 
 const orderInclude = {
-  OrderItem: true,
+  OrderItem: {
+    include: {
+      Product: {
+        select: {
+          ProductMedia: {
+            orderBy: [{ isPrimary: 'desc' as const }, { sortOrder: 'asc' as const }],
+            take: 1,
+            include: { Media: { select: { url: true, thumbnailUrl: true } } },
+          },
+        },
+      },
+    },
+  },
   Payment: true,
+  OrderShipment: { orderBy: { createdAt: 'desc' as const } },
 };
 
 @Injectable()
@@ -19,6 +32,7 @@ export class StorefrontOrdersService {
   ) {}
 
   private formatOrderItem(item: any) {
+    const media = item.Product?.ProductMedia?.[0]?.Media ?? null;
     return {
       id: item.id,
       product_id: item.productId,
@@ -26,7 +40,7 @@ export class StorefrontOrdersService {
       price: item.price,
       quantity: item.quantity,
       subtotal: item.subtotal,
-      image_url: null,
+      image_url: media?.thumbnailUrl ?? media?.url ?? null,
     };
   }
 
@@ -49,6 +63,13 @@ export class StorefrontOrdersService {
       payment: o.Payment
         ? { method: o.Payment.method, status: o.Payment.status, paid_at: o.Payment.paidAt }
         : null,
+      shipments: (o.OrderShipment ?? []).map((s: any) => ({
+        id: s.id,
+        carrier_name: s.carrierName,
+        tracking_id: s.trackingId,
+        tracking_url: s.trackingUrl,
+        created_at: s.createdAt,
+      })),
     };
   }
 

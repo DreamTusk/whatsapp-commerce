@@ -33,27 +33,25 @@ export default async function ProductsPage({ searchParams }: Props) {
   const activeCategory = categories.find(c => c.id === categoryId)
 
   return (
-    // Full viewport height, flex column so header + panels fit exactly
-    <main className="h-screen flex flex-col overflow-hidden">
-      {/* Panel row — fills remaining height, each column scrolls independently */}
-      <div className="page-x flex flex-1 min-h-0 bg-gray-50">
+    <main>
+      <div className="page-x flex items-start bg-gray-50">
 
-        {/* ── Category sidebar (scrolls on its own) ── */}
-        <aside className="w-[80px] sm:w-[100px] lg:w-[250px] flex-shrink-0 bg-white border-r border-gray-100 overflow-y-auto scrollbar-hide">
+        {/* ── Category sidebar — sticky, scrolls internally, sized by content ── */}
+        <aside className="sticky top-[var(--store-header-h)] max-h-[calc(100vh-var(--store-header-h))] w-[80px] sm:w-[100px] lg:w-[250px] flex-shrink-0 bg-white border-r border-gray-100 overflow-y-auto scrollbar-hide">
 
           {/* All */}
           <Link
             href="/products"
             className={`flex flex-col lg:flex-row items-center gap-1 lg:gap-3 px-1 lg:px-4 py-3 border-r-2 transition-colors ${
               !categoryId && !search
-                ? 'border-indigo-500 bg-indigo-50'
+                ? 'border-primary bg-gray-50'
                 : 'border-transparent hover:bg-gray-50'
             }`}
           >
             <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">
               🛍️
             </div>
-            <span className={`text-[10px] sm:text-[11px] lg:text-sm font-semibold text-center lg:text-left line-clamp-2 leading-tight ${!categoryId && !search ? 'text-indigo-600' : 'text-gray-600'}`}>
+            <span className={`text-[10px] sm:text-[11px] lg:text-sm font-semibold text-center lg:text-left line-clamp-2 leading-tight ${!categoryId && !search ? 'c-primary' : 'text-gray-600'}`}>
               All
             </span>
           </Link>
@@ -69,7 +67,7 @@ export default async function ProductsPage({ searchParams }: Props) {
                 href={`/products?category=${cat.id}`}
                 className={`flex flex-col lg:flex-row items-center gap-1 lg:gap-3 px-1 lg:px-4 py-3 border-r-2 transition-colors ${
                   active
-                    ? 'border-indigo-500 bg-indigo-50'
+                    ? 'border-primary bg-gray-50'
                     : 'border-transparent hover:bg-gray-50'
                 }`}
               >
@@ -80,7 +78,7 @@ export default async function ProductsPage({ searchParams }: Props) {
                     <div className="w-full h-full flex items-center justify-center text-lg">🛍️</div>
                   )}
                 </div>
-                <span className={`text-[10px] sm:text-[11px] lg:text-sm font-semibold text-center lg:text-left line-clamp-2 leading-tight ${active ? 'text-indigo-600' : 'text-gray-600'}`}>
+                <span className={`text-[10px] sm:text-[11px] lg:text-sm font-semibold text-center lg:text-left line-clamp-2 leading-tight ${active ? 'c-primary' : 'text-gray-600'}`}>
                   {cat.name}
                 </span>
               </Link>
@@ -88,8 +86,8 @@ export default async function ProductsPage({ searchParams }: Props) {
           })}
         </aside>
 
-        {/* ── Products area (scrolls on its own) ── */}
-        <div className="flex-1 min-w-0 overflow-y-auto px-3 lg:px-6 pt-4 pb-20 lg:pb-8">
+        {/* ── Products area — scrolls with the page ── */}
+        <div className="flex-1 min-w-0 px-3 lg:px-6 pt-4 pb-20 lg:pb-8">
 
           {/* Header row */}
           <div className="flex items-center justify-between mb-4">
@@ -106,7 +104,7 @@ export default async function ProductsPage({ searchParams }: Props) {
               </p>
             </div>
             {search && (
-              <Link href="/products" className="text-xs font-semibold text-indigo-500 hover:text-indigo-700">
+              <Link href="/products" className="text-xs font-semibold c-primary hover:opacity-70">
                 Clear
               </Link>
             )}

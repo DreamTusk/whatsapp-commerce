@@ -170,7 +170,7 @@ export default function CartDrawer() {
                 <p className="text-sm text-gray-400 mb-6">Browse products and add items to get started</p>
                 <button
                   onClick={() => { closeCart(); router.push('/products') }}
-                  className="bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors"
+                  className="btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm"
                 >
                   Browse products
                 </button>
@@ -195,10 +195,10 @@ export default function CartDrawer() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button onClick={() => guestUpdateQtyLocal(item.product_id, item.quantity - 1)}
-                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-indigo-400 hover:text-indigo-500 transition-colors text-base leading-none">−</button>
+                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors text-base leading-none">−</button>
                       <span className="w-5 text-center text-sm font-semibold text-gray-900">{item.quantity}</span>
                       <button onClick={() => guestUpdateQtyLocal(item.product_id, item.quantity + 1)}
-                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-indigo-400 hover:text-indigo-500 transition-colors text-base leading-none">+</button>
+                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors text-base leading-none">+</button>
                     </div>
                   </div>
                 ))}
@@ -212,7 +212,7 @@ export default function CartDrawer() {
             )
           ) : loading ? (
             <div className="flex items-center justify-center h-40">
-              <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" />
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full px-6 text-center">
@@ -221,7 +221,7 @@ export default function CartDrawer() {
               <p className="text-sm text-gray-400 mb-6">Browse products and add items to get started</p>
               <button
                 onClick={() => { closeCart(); router.push('/products') }}
-                className="bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-600 transition-colors"
+                className="btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm"
               >
                 Browse products
               </button>
@@ -258,7 +258,7 @@ export default function CartDrawer() {
                     <button
                       disabled={updating === item.product.id}
                       onClick={() => updateQty(item.product.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-indigo-400 hover:text-indigo-500 transition-colors disabled:opacity-40 text-base leading-none"
+                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 text-base leading-none"
                     >
                       −
                     </button>
@@ -268,7 +268,7 @@ export default function CartDrawer() {
                     <button
                       disabled={updating === item.product.id}
                       onClick={() => updateQty(item.product.id, item.quantity + 1)}
-                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-indigo-400 hover:text-indigo-500 transition-colors disabled:opacity-40 text-base leading-none"
+                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 text-base leading-none"
                     >
                       +
                     </button>
@@ -308,7 +308,7 @@ export default function CartDrawer() {
                   {addresses.length > 0 && (
                     <button
                       onClick={() => setShowAddressPicker(v => !v)}
-                      className="text-xs text-indigo-500 font-medium hover:text-indigo-700 transition-colors"
+                      className="text-xs c-primary font-medium hover:opacity-70 transition-opacity"
                     >
                       {showAddressPicker ? 'Cancel' : 'Change'}
                     </button>
@@ -317,7 +317,7 @@ export default function CartDrawer() {
 
                 {loadingAddresses ? (
                   <div className="h-10 flex items-center">
-                    <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin spinner-primary" />
                   </div>
                 ) : showAddressPicker ? (
                   <div className="space-y-2">
@@ -325,7 +325,7 @@ export default function CartDrawer() {
                       <button
                         key={addr.id}
                         onClick={() => pickAddress(addr)}
-                        className={`w-full text-left p-3 rounded-xl border transition-colors ${selectedAddress?.id === addr.id ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-indigo-200 hover:bg-gray-50'}`}
+                        className={`w-full text-left p-3 rounded-xl border transition-colors ${selectedAddress?.id === addr.id ? 'border-primary bg-gray-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50'}`}
                       >
                         {addr.label && (
                           <p className="text-xs font-semibold text-gray-700 mb-0.5">{addr.label}</p>
@@ -337,7 +337,7 @@ export default function CartDrawer() {
                     ))}
                     <button
                       onClick={() => { closeCart(); router.push('/checkout') }}
-                      className="w-full text-left p-3 rounded-xl border border-dashed border-indigo-300 text-indigo-500 text-xs font-medium hover:bg-indigo-50 transition-colors"
+                      className="w-full text-left p-3 rounded-xl border border-dashed border-primary c-primary text-xs font-medium hover:opacity-80 transition-opacity"
                     >
                       + Add new address
                     </button>
@@ -353,7 +353,7 @@ export default function CartDrawer() {
                     {addresses.length > 1 && (
                       <button
                         onClick={() => setShowAddressPicker(true)}
-                        className="text-xs text-indigo-500 font-medium mt-1.5 hover:text-indigo-700 transition-colors"
+                        className="text-xs c-primary font-medium mt-1.5 hover:opacity-70 transition-opacity"
                       >
                         Change address
                       </button>
@@ -362,7 +362,7 @@ export default function CartDrawer() {
                 ) : (
                   <button
                     onClick={() => addresses.length > 0 ? setShowAddressPicker(true) : (closeCart(), router.push('/checkout'))}
-                    className="w-full flex items-center gap-2 p-3 rounded-xl border border-dashed border-indigo-300 text-indigo-500 text-sm font-medium hover:bg-indigo-50 transition-colors"
+                    className="w-full flex items-center gap-2 p-3 rounded-xl border border-dashed border-primary c-primary text-sm font-medium hover:opacity-80 transition-opacity"
                   >
                     <Plus className="w-4 h-4" />
                     {addresses.length > 0 ? 'Select delivery address' : 'Add delivery address'}
@@ -379,7 +379,7 @@ export default function CartDrawer() {
             <p className="text-xs text-gray-400 text-center mb-2">Sign in to place your order</p>
             <button
               onClick={handleGuestCheckout}
-              className="w-full flex items-center justify-between bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-semibold py-3.5 px-5 rounded-2xl text-sm transition-colors"
+              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm"
             >
               <span>Sign in &amp; Checkout</span>
               <ChevronRight className="w-4 h-4" />
@@ -392,7 +392,7 @@ export default function CartDrawer() {
           <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100 bg-white">
             <button
               onClick={handleCheckout}
-              className="w-full flex items-center justify-between bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-semibold py-3.5 px-5 rounded-2xl text-sm transition-colors"
+              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm"
             >
               <span>Proceed to Checkout</span>
               <div className="flex items-center gap-2">
