@@ -56,14 +56,24 @@ export default function NewBrandPage() {
             />
           </div>
 
-          <Button
-            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
-            {isSaving ? 'Saving…' : 'Add brand'}
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 h-11 text-base"
+              onClick={() => router.back()}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white h-11 text-base"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+              {isSaving ? 'Saving…' : 'Add brand'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

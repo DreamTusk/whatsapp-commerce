@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
@@ -44,7 +44,18 @@ export function AppCombobox({
         )}
       >
         <span className="truncate">{selectedLabel ?? placeholder}</span>
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        <span className="ml-2 flex items-center shrink-0">
+          {selectedLabel && (
+            <span
+              role="button"
+              onClick={e => { e.stopPropagation(); onValueChange('') }}
+              className="p-0.5 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 mr-1"
+            >
+              <X className="h-3.5 w-3.5" />
+            </span>
+          )}
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </span>
       </PopoverTrigger>
       <PopoverContent
         className="w-(--anchor-width) p-0"
