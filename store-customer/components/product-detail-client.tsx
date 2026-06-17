@@ -232,7 +232,7 @@ export default function ProductDetailClient({
               }}
             >
               {thumbSrc ? (
-                <img src={thumbSrc} alt="" className="w-full h-full object-cover" />
+                <img src={thumbSrc} alt="" className="w-full h-full object-contain" />
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center text-lg">🛍️</div>
               )}
@@ -262,9 +262,9 @@ export default function ProductDetailClient({
         {/* Card: image + thumbnails + info */}
         <div className="mx-3 mt-3 bg-white rounded-2xl shadow-sm overflow-hidden space-y-3">
           {/* Main image */}
-          <div className="relative w-full aspect-square overflow-hidden bg-gray-50">
+          <div className="relative w-full aspect-square overflow-hidden bg-white">
             {activeImgSrc ? (
-              <img src={activeImgSrc} alt={productName} className="w-full h-full object-cover transition-all duration-200" />
+              <img src={activeImgSrc} alt={productName} className="w-full h-full object-contain transition-all duration-200" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-6xl">🛍️</div>
             )}
@@ -410,7 +410,7 @@ export default function ProductDetailClient({
               {/* Main image */}
               <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square">
                 {activeImgSrc ? (
-                  <img src={activeImgSrc} alt={productName} className="w-full h-full object-cover transition-all duration-200" />
+                  <img src={activeImgSrc} alt={productName} className="w-full h-full object-contain transition-all duration-200" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-8xl bg-gray-50">🛍️</div>
                 )}

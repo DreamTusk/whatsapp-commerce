@@ -114,12 +114,12 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
       <Link href={productHref} className="absolute inset-0 z-10" aria-label={p.name} />
 
       {/* Image */}
-      <div className="relative w-full aspect-[4/5] bg-gray-50 overflow-hidden">
+      <div className="relative w-full aspect-square bg-white overflow-hidden">
         {p.image_url ? (
           <img
             src={p.image_url.startsWith('http') ? p.image_url : `${API_URL}${p.image_url}`}
             alt={p.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-3xl lg:text-4xl transition-transform duration-300 group-hover:scale-110">🛍️</div>
