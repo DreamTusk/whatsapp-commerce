@@ -238,7 +238,7 @@ export default function CheckoutClient() {
               })
               updateCustomer({ name: name.trim() || undefined })
               refreshCount()
-              router.push(`/orders/${data.order.id}`)
+              router.push(`/account?tab=orders&orderId=${data.order.id}`)
             } catch {
               setError('Payment verification failed. Please contact support with your order ID.')
               setPlacing(false)
@@ -259,7 +259,7 @@ export default function CheckoutClient() {
       // COD flow
       updateCustomer({ name: name.trim() || undefined, address: combined })
       refreshCount()
-      router.push(`/orders/${data.order.id}`)
+      router.push(`/account?tab=orders&orderId=${data.order.id}`)
     } catch (e: unknown) {
       setConfirmOpen(false)
       setError((e as { error?: string })?.error ?? 'Failed to place order')

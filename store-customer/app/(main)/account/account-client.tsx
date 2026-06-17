@@ -76,6 +76,16 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
     }
   }, [searchParams])
 
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const orderId = searchParams.get('orderId')
+    if (!orderId) return
+    setTab('orders')
+    setMobilePanelOpen(true)
+    selectOrder(orderId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated])
+
   // Profile
   const [profileName, setProfileName] = useState('')
   const [profileEmail, setProfileEmail] = useState('')
@@ -858,9 +868,11 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
 
               {/* Cancel */}
               {canCancel && (
-                <button onClick={() => { setCancelReason(''); setCancelOther(''); setShowCancelSheet(true) }} className="w-full text-center bg-red-50 hover:bg-red-100 text-red-500 font-semibold py-3 rounded-xl text-sm transition-colors">
-                  Cancel order
-                </button>
+                <div className="flex">
+                  <button onClick={() => { setCancelReason(''); setCancelOther(''); setShowCancelSheet(true) }} className="bg-red-50 hover:bg-red-100 text-red-500 font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors">
+                    Cancel order
+                  </button>
+                </div>
               )}
             </div>
 
