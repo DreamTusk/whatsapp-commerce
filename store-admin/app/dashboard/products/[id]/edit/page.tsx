@@ -76,8 +76,17 @@ export default function EditProductPage() {
   function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
     if (!files.length) return
-    setNewImageFiles(prev => [...prev, ...files])
-    setNewImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
+    const valid: File[] = []
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`"${file.name}" exceeds the 10 MB limit and was skipped.`)
+      } else {
+        valid.push(file)
+      }
+    }
+    if (!valid.length) { e.target.value = ''; return }
+    setNewImageFiles(prev => [...prev, ...valid])
+    setNewImagePreviews(prev => [...prev, ...valid.map(f => URL.createObjectURL(f))])
     e.target.value = ''
   }
 
@@ -329,7 +338,7 @@ export default function EditProductPage() {
               </div>
 
               {existingImages.length > 0 && (
-                <p className="text-xs text-gray-400">Hover image — ★ sets primary · ✕ removes</p>
+                <p className="text-xs text-gray-400">Hover image — ★ sets primary · ✕ removes · JPEG, PNG, WebP, AVIF · Max 10 MB</p>
               )}
               {newImagePreviews.length > 0 && (
                 <p className="text-xs text-[#6366f1]/60">Dashed = will upload on save</p>

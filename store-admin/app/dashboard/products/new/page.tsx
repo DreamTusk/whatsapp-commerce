@@ -56,8 +56,17 @@ function NewProductForm() {
   function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
     if (!files.length) return
-    setImageFiles(prev => [...prev, ...files])
-    setImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
+    const valid: File[] = []
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`"${file.name}" exceeds the 10 MB limit and was skipped.`)
+      } else {
+        valid.push(file)
+      }
+    }
+    if (!valid.length) { e.target.value = ''; return }
+    setImageFiles(prev => [...prev, ...valid])
+    setImagePreviews(prev => [...prev, ...valid.map(f => URL.createObjectURL(f))])
     e.target.value = ''
   }
 
@@ -233,9 +242,9 @@ function NewProductForm() {
                   </label>
                 </div>
 
-                {imagePreviews.length > 0 && (
-                  <p className="text-xs text-gray-400">Click ★ on an image to set it as primary</p>
-                )}
+                <p className="text-xs text-gray-400">
+                  {imagePreviews.length > 0 ? 'Click ★ on an image to set it as primary · ' : ''}JPEG, PNG, WebP, AVIF · Max 10 MB
+                </p>
               </div>
             </div>
 

@@ -16,6 +16,7 @@ interface UseFileUploadReturn {
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
 const ALLOWED_LABEL = 'JPEG, PNG, WebP, or AVIF'
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10 MB
 
 export function useFileUpload(): UseFileUploadReturn {
   const [isUploading, setIsUploading] = useState(false)
@@ -23,6 +24,9 @@ export function useFileUpload(): UseFileUploadReturn {
   async function uploadFile(file: File, opts: UploadOptions): Promise<string> {
     if (!ALLOWED_TYPES.includes(file.type)) {
       throw new Error(`"${file.type || file.name}" is not supported. Please use ${ALLOWED_LABEL}.`)
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      throw new Error(`"${file.name}" exceeds the 10 MB limit.`)
     }
 
     setIsUploading(true)
