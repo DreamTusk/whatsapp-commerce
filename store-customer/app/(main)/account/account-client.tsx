@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
-import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink } from "@deemlol/next-icons"
+import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink, ShoppingBag, CheckCircle } from "@deemlol/next-icons"
 
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
@@ -34,10 +34,10 @@ const STATUS_COLOR: Record<string, string> = {
   DELIVERED: 'text-green-600', CANCELLED: 'text-gray-400',
 }
 const TRACKING_STEPS = [
-  { status: 'NEW', label: 'Order placed' },
-  { status: 'CONFIRMED', label: 'Confirmed' },
-  { status: 'OUT_FOR_DELIVERY', label: 'Out for delivery' },
-  { status: 'DELIVERED', label: 'Delivered' },
+  { status: 'NEW', label: 'Order placed', Icon: ShoppingBag },
+  { status: 'CONFIRMED', label: 'Confirmed', Icon: CheckCircle },
+  { status: 'OUT_FOR_DELIVERY', label: 'Out for delivery', Icon: Truck },
+  { status: 'DELIVERED', label: 'Delivered', Icon: Package },
 ]
 const TRACKING_ORDER: Record<string, number> = { NEW: 0, CONFIRMED: 1, OUT_FOR_DELIVERY: 2, DELIVERED: 3, CANCELLED: -1 }
 const CANCEL_REASONS = ['Changed my mind', 'Ordered by mistake', 'Found a better price', 'Delivery taking too long', 'Other']
@@ -706,12 +706,12 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         {TRACKING_STEPS.map((step, idx) => {
           const isLast = idx === TRACKING_STEPS.length - 1
           return (
-            <div key={step.status} className={`flex gap-3 ${!isLast ? 'flex-1' : ''}`}>
+            <div key={step.status} className="flex gap-3">
               <div className="flex flex-col items-center">
                 <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 bg-white border-gray-200" />
-                {!isLast && <div className="w-0.5 flex-1 my-1 rounded-full bg-gray-100" />}
+                {!isLast && <div className="w-0.5 h-8 rounded-full bg-gray-100" />}
               </div>
-              <div className="pt-0.5">
+              <div className="pt-0.5 pb-20">
                 <p className="text-sm font-medium leading-tight text-gray-300">{step.label}</p>
               </div>
             </div>
@@ -731,20 +731,24 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         </div>
       </div>
     ) : (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         {TRACKING_STEPS.map((step, idx) => {
           const done = currentStep >= idx
           const active = currentStep === idx
           const isLast = idx === TRACKING_STEPS.length - 1
+          const { Icon } = step
           return (
-            <div key={step.status} className={`flex gap-3 ${!isLast ? 'flex-1' : ''}`}>
+            <div key={step.status} className="flex gap-3">
               <div className="flex flex-col items-center">
-                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-primary border-primary' : 'bg-white border-gray-200'} ${active ? 'ring-4 ring-[var(--color-primary)]' : ''}`}>
-                  {done && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+                <div className="relative flex items-center justify-center flex-shrink-0">
+                  {active && <div className="absolute w-7 h-7 rounded-full bg-primary opacity-40 animate-ping" />}
+                  <div className={`relative w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}>
+                    <Icon className={`w-3.5 h-3.5 ${done ? 'text-white' : 'text-gray-300'}`} strokeWidth={2.5} />
+                  </div>
                 </div>
-                {!isLast && <div className={`w-0.5 flex-1 my-1 rounded-full ${currentStep > idx ? 'bg-primary' : 'bg-gray-100'}`} />}
+                {!isLast && <div className={`w-0.5 h-20 rounded-full ${currentStep > idx ? 'bg-primary' : 'bg-gray-100'}`} />}
               </div>
-              <div className="pt-0.5">
+              <div className="pt-0.5 pb-20">
                 <p className={`text-sm font-medium leading-tight ${done ? 'c-primary' : 'text-gray-400'}`}>{step.label}</p>
               </div>
             </div>
@@ -877,10 +881,10 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
             </div>
 
             {/* RIGHT: tracking card — desktop only */}
-            <div className="hidden lg:flex flex-col w-[200px] flex-shrink-0 self-stretch">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 flex-1 flex flex-col">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex-shrink-0">Order tracking</p>
-                <div className="flex-1">{verticalTracker}</div>
+            <div className="hidden lg:block w-[200px] flex-shrink-0 self-start sticky top-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Order tracking</p>
+                {verticalTracker}
               </div>
             </div>
 
