@@ -45,8 +45,7 @@ export class AuthService {
     id: string; name: string; phone: string; domain: string | null;
     catalogId: string | null; address: string | null; logo: string | null;
     minOrderAmount: number; deliveryRadius: number | null; isActive: boolean;
-    whatsappPhoneNumberId: string | null; whatsappBusinessAccountId: string | null;
-    whatsappAccessToken: string | null; createdAt: Date; updatedAt: Date;
+    createdAt: Date; updatedAt: Date;
   }) {
     return {
       id: store.id,
@@ -59,8 +58,6 @@ export class AuthService {
       min_order_amount: store.minOrderAmount,
       delivery_radius: store.deliveryRadius,
       is_active: store.isActive,
-      whatsapp_phone_number_id: store.whatsappPhoneNumberId,
-      whatsapp_business_account_id: store.whatsappBusinessAccountId,
       created_at: store.createdAt,
       updated_at: store.updatedAt,
     };

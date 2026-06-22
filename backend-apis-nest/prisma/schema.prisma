@@ -118,6 +118,8 @@ model Customer {
   email               String?
   name                String?
   storeId             String
+  marketingOptIn      Boolean               @default(false)
+  optedInAt           DateTime?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   CartItem            CartItem[]
@@ -358,41 +360,71 @@ model StoreCustomization {
 }
 
 model Store {
-  id                        String            @id @default(cuid())
-  name                      String
-  phone                     String            @unique
-  whatsappPhoneNumberId     String?           @unique
-  whatsappBusinessAccountId String?
-  whatsappAccessToken       String?
-  domain                    String?           @unique
-  catalogId                 String?
-  address                   String?
-  logo                      String?
-  minOrderAmount            Float             @default(0)
-  deliveryRadius            Float?
-  isActive                  Boolean           @default(true)
-  isPickupEnabled           Boolean           @default(false)
-  isHomeDeliveryEnabled     Boolean           @default(true)
-  customerAuthMethods       String[]          @default(["PHONE_OTP"])
-  createdAt                 DateTime          @default(now())
-  updatedAt                 DateTime          @updatedAt
-  Banner                    Banner[]
-  Brand                     Brand[]
-  CartItem                  CartItem[]
-  Category                  Category[]
-  Collection                Collection[]
-  Customer                  Customer[]
-  CustomerAddress           CustomerAddress[]
-  CustomerOtp               CustomerOtp[]
-  Media                     Media[]
-  Order                     Order[]
-  Product                   Product[]
-  StoreInvite               StoreInvite[]
-  StorePaymentProvider      StorePaymentProvider[]
-  UserStore                 UserStore[]
-  WishlistItem              WishlistItem[]
-  OrderShipment             OrderShipment[]
-  StoreCustomization        StoreCustomization?
+  id                    String                 @id @default(cuid())
+  name                  String
+  phone                 String                 @unique
+  domain                String?                @unique
+  catalogId             String?
+  address               String?
+  logo                  String?
+  minOrderAmount        Float                  @default(0)
+  deliveryRadius        Float?
+  isActive              Boolean                @default(true)
+  isPickupEnabled       Boolean                @default(false)
+  isHomeDeliveryEnabled Boolean                @default(true)
+  customerAuthMethods   String[]               @default(["PHONE_OTP"])
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  Banner                Banner[]
+  Brand                 Brand[]
+  Campaign              Campaign[]
+  CartItem              CartItem[]
+  Category              Category[]
+  Collection            Collection[]
+  Customer              Customer[]
+  CustomerAddress       CustomerAddress[]
+  CustomerOtp           CustomerOtp[]
+  Media                 Media[]
+  Order                 Order[]
+  Product               Product[]
+  StoreInvite           StoreInvite[]
+  StorePaymentProvider  StorePaymentProvider[]
+  StoreWhatsappNumber   StoreWhatsappNumber[]
+  UserStore             UserStore[]
+  WishlistItem          WishlistItem[]
+  OrderShipment         OrderShipment[]
+  StoreCustomization    StoreCustomization?
+}
+
+model StoreWhatsappNumber {
+  id            String                @id @default(cuid())
+  storeId       String
+  phoneNumberId String
+  accessToken   String
+  phone         String
+  purpose       WhatsappNumberPurpose
+  label         String?
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  Store         Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, purpose])
+}
+
+model Campaign {
+  id           String         @id @default(cuid())
+  storeId      String
+  title        String
+  templateName String
+  variables    Json
+  status       CampaignStatus @default(DRAFT)
+  scheduledAt  DateTime?
+  sentAt       DateTime?
+  totalSent    Int            @default(0)
+  totalFailed  Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Store        Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
 }
 
 model StorePaymentProvider {
@@ -461,6 +493,19 @@ model WishlistItem {
   Store      Store    @relation(fields: [storeId], references: [id])
 
   @@unique([customerId, productId])
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+}
+
+enum WhatsappNumberPurpose {
+  ORDER_MANAGEMENT
+  MARKETING
 }
 
 enum BannerType {
