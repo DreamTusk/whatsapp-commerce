@@ -49,7 +49,7 @@ export class InviteService {
       include: { Store: true },
     });
 
-    const inviteLink = `${process.env.ADMIN_APP_URL || 'http://localhost:3001'}/accept-invite?token=${token}`;
+    const inviteLink = `${process.env.ADMIN_APP_URL || 'http://localhost:3011'}/accept-invite?token=${token}`;
 
     console.log(`\n--- STAFF INVITE ---`);
     console.log(`Store  : ${invite.Store.name}`);

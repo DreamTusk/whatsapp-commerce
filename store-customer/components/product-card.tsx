@@ -10,7 +10,7 @@ import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
 import type { Product } from '@/types'
 import { Heart, ShoppingCart, Check, Trash } from "@deemlol/next-icons"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export type ProductCardSource =
   | { type: 'all' }

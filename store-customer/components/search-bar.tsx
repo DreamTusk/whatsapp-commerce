@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { clientFetch } from '@/lib/client-api'
 import { Search, X, ChevronRight } from "@deemlol/next-icons"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 interface SearchProduct {
   id: string

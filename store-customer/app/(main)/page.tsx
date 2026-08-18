@@ -6,7 +6,7 @@ import ProductCard from '@/components/product-card'
 import BannerCarousel from '@/components/banner-carousel'
 import type { Store, Category, Product, StoreCollection, Banner } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 
 export default async function HomePage() {

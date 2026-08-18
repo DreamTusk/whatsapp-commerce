@@ -11,7 +11,7 @@ import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, Chevro
 
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 type Tab = 'profile' | 'orders' | 'addresses' | 'wishlist'
 

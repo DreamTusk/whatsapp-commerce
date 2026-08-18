@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010'
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['*.ngrok-free.app', '*.ngrok-free.dev', '*.devtunnels.ms'],

@@ -14,7 +14,7 @@ import type { Product, Category, Brand } from '@/types'
 import { useIsOwner } from '@/contexts/role'
 import { apiErrorMessage } from '@/lib/utils'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export default function ProductsPage() {
   const router = useRouter()

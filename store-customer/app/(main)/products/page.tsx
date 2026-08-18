@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/api'
 import ProductCard from '@/components/product-card'
 import type { Product, Category } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 interface Props {
   searchParams: Promise<{ category?: string; search?: string }>

@@ -4,7 +4,7 @@ import { ArrowLeft } from '@deemlol/next-icons'
 import { apiFetch } from '@/lib/api'
 import type { Store, Category } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export default async function NotFound() {
   const headersList = await headers()

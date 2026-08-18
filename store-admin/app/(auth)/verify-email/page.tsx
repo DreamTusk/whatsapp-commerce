@@ -23,7 +23,7 @@ function VerifyEmailForm() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const [userId] = useState(() => auth.getPendingUserId())
-  const [email] = useState(() => auth.getUser()?.email ?? searchParams.get('email') ?? '')
+  const [email, setEmail] = useState(() => searchParams.get('email') ?? '')
 
   useEffect(() => {
     if (!userId) {
@@ -32,6 +32,11 @@ function VerifyEmailForm() {
     }
     inputRefs.current[0]?.focus()
   }, [userId, router])
+
+  useEffect(() => {
+    const userEmail = auth.getUser()?.email
+    if (userEmail) setEmail(userEmail)
+  }, [])
 
   useEffect(() => {
     if (countdown <= 0) return

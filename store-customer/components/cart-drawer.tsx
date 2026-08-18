@@ -10,7 +10,7 @@ import { getGuestCart, updateGuestQty, type GuestCartItem } from '@/lib/guest-ca
 import { X, ChevronRight, Plus } from "@deemlol/next-icons"
 import type { Cart, CustomerAddress } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export default function CartDrawer() {
   const { isOpen, closeCart, selectedAddress, setSelectedAddress } = useCartDrawer()

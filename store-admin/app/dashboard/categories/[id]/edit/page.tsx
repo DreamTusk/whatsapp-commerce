@@ -14,7 +14,7 @@ import AppSwitch from '@/components/ui/app-switch'
 import { AppCombobox } from '@/components/ui/app-combobox'
 import { apiErrorMessage } from '@/lib/utils'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export default function EditCategoryPage() {
   const { id } = useParams<{ id: string }>()

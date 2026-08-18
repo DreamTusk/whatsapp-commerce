@@ -2,12 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 const allowedOrigins = [
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:3003',
-  'https://x60r4ghj-3001.inc1.devtunnels.ms',
-  'https://x60r4ghj-3002.inc1.devtunnels.ms',
-  'https://14b2-120-60-199-220.ngrok-free.app',
+  'http://localhost:3010',
+  'http://localhost:3011',
+  'http://localhost:3012',
 ];
 
 const localhostSubdomainPattern = /^http:\/\/[a-z0-9-]+\.localhost:\d+$/;
@@ -35,6 +32,8 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3010;
+  await app.listen(port);
+  console.log(`Server running on http://localhost:${port}/api`);
 }
 bootstrap();

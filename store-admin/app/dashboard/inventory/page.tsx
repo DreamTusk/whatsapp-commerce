@@ -6,7 +6,7 @@ import { Loader, Search } from '@deemlol/next-icons'
 import { Warehouse } from 'lucide-react'
 import api from '@/lib/api'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 type Product = {
   id: string

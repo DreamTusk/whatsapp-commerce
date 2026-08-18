@@ -14,9 +14,9 @@ WhatsApp Commerce is a multi-tenant platform that lets store owners sell product
 
 | App | Port | Purpose |
 |-----|------|---------|
-| `backend-apis` | 3000 | Express + Prisma API server |
-| `store-admin` | 3001 | Store owner management portal (Next.js) |
-| `store-customer` | 3002 | Customer storefront, multi-tenant by domain (Next.js) |
+| `backend-apis` | 3010 | Express + Prisma API server |
+| `store-admin` | 3011 | Store owner management portal (Next.js) |
+| `store-customer` | 3012 | Customer storefront, multi-tenant by domain (Next.js) |
 
 ---
 
@@ -34,8 +34,8 @@ node src/scripts/seed.js      # Seed database
 
 ### Frontend Apps
 ```bash
-cd store-admin && npm run dev -- --port 3001
-cd store-customer && npm run dev -- --port 3002
+cd store-admin && npm run dev      # static port 3011, set in package.json
+cd store-customer && npm run dev   # static port 3012, set in package.json
 ```
 
 ---
@@ -49,7 +49,7 @@ The customer storefront resolves tenants by domain, not URL path. Each developer
 127.0.0.1   bakehouse.localhost
 ```
 
-Then access `http://freshmart.localhost:3002`. The `Store.domain` field in the DB holds the value (`freshmart.localhost` in dev, `freshmart.com` in prod). The Next.js middleware forwards `X-Store-Domain` header to all API calls.
+Then access `http://freshmart.localhost:3012`. The `Store.domain` field in the DB holds the value (`freshmart.localhost` in dev, `freshmart.com` in prod). The Next.js middleware forwards `X-Store-Domain` header to all API calls.
 
 ---
 

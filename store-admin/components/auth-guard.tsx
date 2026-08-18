@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { auth } from '@/lib/auth'
 
 // Pages inside (auth) that authenticated users are allowed to visit
-const ALLOW_AUTHENTICATED = ['/accept-invite']
+const ALLOW_AUTHENTICATED = ['/accept-invite', '/verify-email']
 
 export function AuthGuard() {
   const router = useRouter()

@@ -14,7 +14,7 @@ import {
 import api from '@/lib/api'
 import { AppSelect } from '@/components/ui/app-select'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 interface Customer { id: string; name: string | null; phone: string | null }
 interface SavedAddress {

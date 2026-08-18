@@ -11,7 +11,7 @@ import SearchBar from './search-bar'
 import type { Store, CustomerAddress } from '@/types'
 import { Heart, Package, ShoppingCart, MapPin, ChevronDown, ChevronLeft, X, Check, Plus, User } from "@deemlol/next-icons"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 const LABEL_OPTIONS = ['Home', 'Work', 'Other']
 
 type PickerView = 'list' | 'add'

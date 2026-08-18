@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from '@deemlol/next-icons'
 import type { Banner } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 function getBannerHref(banner: Banner): string {
   if (banner.type === 'product' && banner.product_id) return `/products/${banner.product_id}`

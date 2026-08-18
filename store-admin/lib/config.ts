@@ -5,7 +5,7 @@ export function getApiBaseUrl(): string {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) return stored
   }
-  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 }
 
 export function setApiBaseUrl(url: string) {
