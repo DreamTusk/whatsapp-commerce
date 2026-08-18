@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader, ShoppingBag, Users, Package, TrendingUp, AlertTriangle, ArrowRight } from '@deemlol/next-icons'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import StorefrontLink from '@/components/storefront-link'
 import api from '@/lib/api'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
@@ -63,12 +64,16 @@ export default function DashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [storeDomain, setStoreDomain] = useState<string | null>(null)
 
   useEffect(() => {
     api.get('/api/dashboard/stats')
       .then(r => setStats(r.data))
       .catch(() => {})
       .finally(() => setLoading(false))
+    api.get('/api/store')
+      .then(r => setStoreDomain(r.data.store.domain))
+      .catch(() => {})
   }, [])
 
   if (loading) {
@@ -130,9 +135,16 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full overflow-auto">
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 bg-gray-50">
-        <h1 className="text-[26px] font-bold text-gray-900">Dashboard</h1>
-        <p className="text-base text-gray-500 mt-0.5">Overview of your store</p>
+      <div className="flex-shrink-0 flex items-start justify-between gap-4 px-6 pt-6 pb-4 bg-gray-50">
+        <div>
+          <h1 className="text-[26px] font-bold text-gray-900">Dashboard</h1>
+          <p className="text-base text-gray-500 mt-0.5">Overview of your store</p>
+        </div>
+        {storeDomain && (
+          <div className="pt-1.5">
+            <StorefrontLink domain={storeDomain} compact />
+          </div>
+        )}
       </div>
 
       <div className="px-6 pb-8 space-y-6">

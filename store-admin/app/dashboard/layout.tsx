@@ -11,8 +11,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { NAV_ITEMS } from '@/config/nav'
 import { RoleProvider } from '@/contexts/role'
+import StorefrontLink from '@/components/storefront-link'
 import type { Store as StoreType } from '@/types'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -23,6 +25,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [storeLoading, setStoreLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen]   = useState(false)
   const [logoutOpen, setLogoutOpen]     = useState(false)
+  const [logoPreviewOpen, setLogoPreviewOpen] = useState(false)
   const [user, setUser] = useState<import('@/types').User | null>(null)
   const [role, setRole] = useState<string | null>(null)
 
@@ -94,7 +97,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         ) : store ? (
           <div className="flex items-center gap-3">
             {store.logo ? (
-              <img src={store.logo} alt={store.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+              <button onClick={() => setLogoPreviewOpen(true)} className="flex-shrink-0">
+                <img src={store.logo} alt={store.name} className="w-10 h-10 rounded-xl object-cover" />
+              </button>
             ) : (
               <div className="w-10 h-10 bg-[#6366f1]/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Store className="w-5 h-5 text-[#6366f1]" />
@@ -103,6 +108,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-900 text-base truncate">{store.name}</p>
               <p className="text-sm text-gray-400 truncate">{store.phone}</p>
+              <StorefrontLink domain={store.domain} compact />
             </div>
             {role === 'OWNER' && (
               <Link
@@ -200,7 +206,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <Menu className="w-5 h-5" />
           </button>
           {store?.logo ? (
-            <img src={store.logo} alt={store.name} className="w-7 h-7 rounded-lg object-cover" />
+            <button onClick={() => setLogoPreviewOpen(true)}>
+              <img src={store.logo} alt={store.name} className="w-7 h-7 rounded-lg object-cover" />
+            </button>
           ) : (
             <div className="w-7 h-7 bg-[#6366f1]/10 rounded-lg flex items-center justify-center">
               <Store className="w-4 h-4 text-[#6366f1]" />
@@ -235,6 +243,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={logoPreviewOpen} onOpenChange={setLogoPreviewOpen}>
+        <DialogContent className="max-w-md sm:max-w-md p-0 overflow-hidden bg-transparent ring-0">
+          {store?.logo && (
+            <img src={store.logo} alt={store.name} className="w-full h-auto rounded-xl" />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
