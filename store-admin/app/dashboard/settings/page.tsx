@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Globe, CreditCard, Truck, Sparkles, ShoppingBag, User, Heart, FileText } from '@deemlol/next-icons'
 import GeneralPanel       from './panels/general'
@@ -25,6 +26,14 @@ const SETTINGS_TABS = [
 type TabKey = typeof SETTINGS_TABS[number]['key']
 
 export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-sm text-gray-400">Loading…</div>}>
+      <SettingsContent />
+    </Suspense>
+  )
+}
+
+function SettingsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 

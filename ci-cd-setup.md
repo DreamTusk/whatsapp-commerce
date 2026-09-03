@@ -4,7 +4,7 @@
 
 | App | CI | CD |
 |-----|----|----|
-| `backend-apis-nest` | GitHub Actions (lint + build) | Railway (auto-deploy on push to main) |
+| `api-server` | GitHub Actions (lint + build) | Railway (auto-deploy on push to main) |
 | `store-admin` | GitHub Actions (lint + build) | Cloudflare Pages (auto-deploy on push to main) |
 | `store-customer` | GitHub Actions (lint + build) | Cloudflare Pages (auto-deploy on push to main) |
 
@@ -41,7 +41,7 @@ Go to: **GitHub repo → Settings → Secrets and variables → Actions**
 1. Go to [railway.app](https://railway.app) and sign in with GitHub
 2. Click **New Project → Deploy from GitHub repo**
 3. Select `whatsapp-commerce` repo
-4. Set **Root Directory** to `backend-apis-nest`
+4. Set **Root Directory** to `api-server`
 5. Railway auto-detects Node.js and runs `npm run build` + `npm run start:prod`
 
 ### Add PostgreSQL

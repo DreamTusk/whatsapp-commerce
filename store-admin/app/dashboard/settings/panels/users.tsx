@@ -205,10 +205,8 @@ export default function UsersPanel() {
                 <span className="text-sm text-gray-600">{roleLabel(member.role)}</span>
                 <span className="text-sm text-gray-500">{member.email}</span>
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+                  <PopoverTrigger render={<button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors" />}>
+                    <MoreVertical className="w-4 h-4" />
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-36 p-1">
                     <button
@@ -240,10 +238,8 @@ export default function UsersPanel() {
                 <span className="text-sm text-gray-600">{roleLabel(invite.role)}</span>
                 <span className="text-sm text-gray-500">{invite.email}</span>
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+                  <PopoverTrigger render={<button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors" />}>
+                    <MoreVertical className="w-4 h-4" />
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-36 p-1">
                     <button

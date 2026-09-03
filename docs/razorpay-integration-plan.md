@@ -128,7 +128,7 @@ Existing fields cover everything:
 
 ## Environment Variables
 
-### backend-apis-nest/.env
+### api-server/.env
 ```
 ENCRYPTION_KEY=<32-byte-hex-string>   # AES-256-GCM encryption for keySecret
 ```

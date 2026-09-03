@@ -5,9 +5,10 @@ interface Props {
   onChange: (checked: boolean) => void
   label?: string
   description?: string
+  disabled?: boolean
 }
 
-export default function AppSwitch({ checked, onChange, label, description }: Props) {
+export default function AppSwitch({ checked, onChange, label, description, disabled }: Props) {
   return (
     <div className="flex items-center justify-between gap-4">
       {(label || description) && (
@@ -20,10 +21,11 @@ export default function AppSwitch({ checked, onChange, label, description }: Pro
         type="button"
         role="switch"
         aria-checked={checked}
+        disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none ${
           checked ? 'bg-[#6366f1]' : 'bg-gray-200'
-        }`}
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <span
           className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${

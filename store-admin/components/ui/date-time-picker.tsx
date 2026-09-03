@@ -53,7 +53,7 @@ export function DateTimePicker({ value, onChange, placeholder = 'Pick date & tim
           mode="single"
           selected={date}
           onSelect={handleDaySelect}
-          initialFocus
+          autoFocus
         />
         <div className="px-4 pb-4 pt-2 border-t">
           <p className="text-xs text-gray-500 mb-2">Time</p>
