@@ -41,6 +41,7 @@ export class StoreService {
   private formatStore(store: {
     id: string; name: string; phone: string; domain: string | null;
     catalogId: string | null; address: string | null; logo: string | null;
+    favicon: string | null;
     minOrderAmount: number; deliveryRadius: number | null; isActive: boolean;
     isPickupEnabled: boolean; isHomeDeliveryEnabled: boolean;
     createdAt: Date; updatedAt: Date;
@@ -54,6 +55,7 @@ export class StoreService {
       catalog_id: store.catalogId,
       address: store.address,
       logo: store.logo,
+      favicon: store.favicon,
       min_order_amount: store.minOrderAmount,
       delivery_radius: store.deliveryRadius,
       is_active: store.isActive,
@@ -162,6 +164,7 @@ export class StoreService {
         phone: store.phone,
         domain: store.domain,
         logo: store.logo,
+        favicon: store.favicon,
         address: store.address,
         min_order_amount: store.minOrderAmount,
         delivery_radius: store.deliveryRadius,
@@ -178,6 +181,7 @@ export class StoreService {
     body: {
       name: string; phone: string; domain: string; address?: string;
       min_order_amount?: string; delivery_radius?: string; logo_media_id?: string;
+      favicon_media_id?: string;
     },
   ) {
     const existingUserStore = await this.prisma.userStore.findFirst({ where: { userId } });
@@ -200,6 +204,12 @@ export class StoreService {
       if (media?.url) logoUrl = media.url;
     }
 
+    let faviconUrl: string | null = null;
+    if (body.favicon_media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.favicon_media_id } });
+      if (media?.url) faviconUrl = media.url;
+    }
+
     const store = await this.prisma.store.create({
       data: {
         name,
@@ -207,6 +217,7 @@ export class StoreService {
         domain,
         address: body.address || null,
         logo: logoUrl,
+        favicon: faviconUrl,
         minOrderAmount: body.min_order_amount ? parseFloat(body.min_order_amount) : 0,
         deliveryRadius: body.delivery_radius ? parseFloat(body.delivery_radius) : null,
         StoreCustomization: { create: {} },
@@ -299,7 +310,7 @@ export class StoreService {
       name?: string; phone?: string; domain?: string; address?: string;
       min_order_amount?: string; delivery_radius?: string; is_active?: string;
       is_pickup_enabled?: string; is_home_delivery_enabled?: string;
-      logo_media_id?: string;
+      logo_media_id?: string; favicon_media_id?: string;
     },
   ) {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
@@ -311,6 +322,12 @@ export class StoreService {
       if (media?.url) logoUrl = media.url;
     }
 
+    let faviconUrl: string | undefined = undefined;
+    if (body.favicon_media_id) {
+      const media = await this.prisma.media.findFirst({ where: { id: body.favicon_media_id } });
+      if (media?.url) faviconUrl = media.url;
+    }
+
     const store = await this.prisma.store.update({
       where: { id: userStore.storeId },
       data: {
@@ -319,6 +336,7 @@ export class StoreService {
         ...(body.domain !== undefined && { domain: body.domain }),
         ...(body.address !== undefined && { address: body.address }),
         ...(logoUrl !== undefined && { logo: logoUrl }),
+        ...(faviconUrl !== undefined && { favicon: faviconUrl }),
         ...(body.min_order_amount !== undefined && { minOrderAmount: parseFloat(body.min_order_amount) }),
         ...(body.delivery_radius !== undefined && { deliveryRadius: parseFloat(body.delivery_radius) }),
         ...(body.is_active !== undefined && { isActive: body.is_active === 'true' }),

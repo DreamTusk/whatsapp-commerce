@@ -367,6 +367,7 @@ model Store {
   catalogId             String?
   address               String?
   logo                  String?
+  favicon               String?
   minOrderAmount        Float                  @default(0)
   deliveryRadius        Float?
   isActive              Boolean                @default(true)

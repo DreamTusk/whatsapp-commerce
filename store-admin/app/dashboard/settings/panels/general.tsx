@@ -31,8 +31,11 @@ export default function GeneralPanel() {
   const [isDeactivating, setIsDeactivating] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null)
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(null)
+  const [pendingFaviconFile, setPendingFaviconFile] = useState<File | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const faviconInputRef = useRef<HTMLInputElement>(null)
   const { uploadFile, isUploading } = useFileUpload()
 
   useEffect(() => {
@@ -58,6 +61,13 @@ export default function GeneralPanel() {
     setLogoPreview(URL.createObjectURL(file))
   }
 
+  function handleFaviconChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    if (!file) return
+    setPendingFaviconFile(file)
+    setFaviconPreview(URL.createObjectURL(file))
+  }
+
   async function handleSave() {
     if (!name.trim()) { toast.error('Store name is required'); return }
     if (!phone.trim()) { toast.error('Phone is required'); return }
@@ -68,6 +78,11 @@ export default function GeneralPanel() {
         logoMediaId = await uploadFile(pendingLogoFile, { entityType: 'STORE' })
       }
 
+      let faviconMediaId: string | undefined
+      if (pendingFaviconFile) {
+        faviconMediaId = await uploadFile(pendingFaviconFile, { entityType: 'STORE' })
+      }
+
       const res = await api.put('/api/store', {
         name: name.trim(),
         phone: phone.trim(),
@@ -76,10 +91,13 @@ export default function GeneralPanel() {
         ...(radius && { delivery_radius: radius }),
         is_active: String(isActive),
         ...(logoMediaId && { logo_media_id: logoMediaId }),
+        ...(faviconMediaId && { favicon_media_id: faviconMediaId }),
       })
       setStore(res.data.store)
       setPendingLogoFile(null)
       setLogoPreview(null)
+      setPendingFaviconFile(null)
+      setFaviconPreview(null)
       toast.success('Store updated')
     } catch (err: unknown) {
       const msg = apiErrorMessage(err, 'Failed to update store')
@@ -117,6 +135,7 @@ export default function GeneralPanel() {
   }
 
   const currentLogo = logoPreview ?? store?.logo ?? null
+  const currentFavicon = faviconPreview ?? store?.favicon ?? null
 
   if (loading) {
     return (
@@ -136,25 +155,50 @@ export default function GeneralPanel() {
         <p className="text-sm text-gray-400 mt-0.5">Update and customize your store's information.</p>
       </div>
 
-      {/* Logo */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium text-gray-700">Logo</Label>
-        <label className="flex items-center gap-4 cursor-pointer group w-fit">
-          <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
-            {currentLogo ? (
-              <img src={currentLogo} alt="logo" className="w-full h-full object-cover" />
-            ) : (
-              <div className="flex flex-col items-center gap-1">
-                <Store className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-              </div>
-            )}
-          </div>
-          <span className="text-sm text-gray-500 group-hover:text-gray-700">
-            {currentLogo ? 'Change logo' : 'Upload logo'}
-          </span>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleLogoChange} />
-        </label>
+      {/* Logo & Favicon */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-gray-700">Logo</Label>
+          <label className="flex items-center gap-4 cursor-pointer group w-fit">
+            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+              {currentLogo ? (
+                <img src={currentLogo} alt="logo" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <Store className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                  <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                </div>
+              )}
+            </div>
+            <span className="text-sm text-gray-500 group-hover:text-gray-700">
+              {currentLogo ? 'Change logo' : 'Upload logo'}
+            </span>
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleLogoChange} />
+          </label>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-gray-700">Favicon</Label>
+          <label className="flex items-center gap-4 cursor-pointer group w-fit">
+            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+              {currentFavicon ? (
+                <img src={currentFavicon} alt="favicon" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <Store className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                  <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm text-gray-500 group-hover:text-gray-700">
+                {currentFavicon ? 'Change favicon' : 'Upload favicon'}
+              </span>
+              <span className="text-xs text-gray-400">Recommended size 16×16px</span>
+            </div>
+            <input ref={faviconInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleFaviconChange} />
+          </label>
+        </div>
       </div>
 
       {/* Fields */}
@@ -192,7 +236,7 @@ export default function GeneralPanel() {
           disabled={isSaving || isUploading}
         >
           {(isSaving || isUploading) ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
-          {isUploading ? 'Uploading logo…' : isSaving ? 'Saving…' : 'Save changes'}
+          {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Save changes'}
         </Button>
       </div>
 

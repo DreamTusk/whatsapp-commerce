@@ -69,6 +69,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       .finally(() => setStoreLoading(false))
   }, [router])
 
+  // Swap the browser tab icon to the store's own favicon once it loads —
+  // store-admin isn't domain-resolved like store-customer, so this can only happen client-side after auth.
+  useEffect(() => {
+    if (!store?.favicon) return
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']")
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = 'icon'
+      document.head.appendChild(link)
+    }
+    link.href = store.favicon
+  }, [store?.favicon])
+
   const visibleNav = NAV_ITEMS.filter(item =>
     item.roles.length === 0 || (role && item.roles.includes(role))
   )

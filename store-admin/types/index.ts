@@ -10,6 +10,7 @@ export interface Store {
   phone: string
   domain: string | null
   logo: string | null
+  favicon: string | null
   address: string | null
   min_order_amount: number
   delivery_radius: number | null
