@@ -1,0 +1,12 @@
+export { Icon } from "./Icon";
+export { Header } from "./Header";
+export { Footer } from "./Footer";
+export { HeroSection } from "./HeroSection";
+export { TrustSection } from "./TrustSection";
+export { CoreFeaturesSection } from "./CoreFeaturesSection";
+export { DashboardShowcaseSection } from "./DashboardShowcaseSection";
+export { HowItWorksSection } from "./HowItWorksSection";
+export { PaymentsSection } from "./PaymentsSection";
+export { BusinessControlSection } from "./BusinessControlSection";
+export { WhyPlatformSection } from "./WhyPlatformSection";
+export { CTASection } from "./CTASection";
