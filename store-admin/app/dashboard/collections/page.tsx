@@ -53,7 +53,7 @@ function SortableRow({
       </td>
       <td className="px-4 py-3">
         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-          col.type === 'manual' ? 'bg-indigo-50 text-indigo-600' : 'bg-violet-50 text-violet-600'
+          col.type === 'manual' ? 'bg-violet-50 text-violet-600' : 'bg-violet-50 text-violet-600'
         }`}>
           {col.type === 'manual' ? <MousePointerClick className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
           {col.type === 'manual' ? 'Manual' : 'Auto'}
@@ -171,7 +171,7 @@ export default function CollectionsPage() {
             <h1 className="text-[26px] font-bold text-gray-900">Collections</h1>
             <p className="text-base text-gray-500 mt-0.5">{collections.length} collection{collections.length !== 1 ? 's' : ''}</p>
           </div>
-          <Button onClick={() => router.push('/dashboard/collections/new')} className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2">
+          <Button onClick={() => router.push('/dashboard/collections/new')} className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white gap-2">
             <Plus className="w-4 h-4" /> Create collection
           </Button>
         </div>
@@ -193,7 +193,7 @@ export default function CollectionsPage() {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={collections.map(c => c.id)} strategy={verticalListSortingStrategy}>
                   <table className="w-full text-base min-w-[500px]">
-                    <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
+                    <thead className="bg-violet-50 border-b border-violet-100 sticky top-0 z-10">
                       <tr>
                         <th className="px-2 py-3 w-8"></th>
                         <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Collection</th>

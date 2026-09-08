@@ -137,18 +137,18 @@ export default function NewCollectionPage() {
               <div className="space-y-3">
                 <p className="text-sm text-gray-500">Choose how products are added to this collection</p>
                 <div className="grid grid-cols-2 gap-4">
-                  <button onClick={() => setFormType('manual')} className="group flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-gray-200 hover:border-[#6366f1] hover:bg-indigo-50/40 transition-all text-left cursor-pointer">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 group-hover:bg-[#6366f1]/10 flex items-center justify-center transition-colors">
-                      <MousePointerClick className="w-5 h-5 text-indigo-500 group-hover:text-[#6366f1] transition-colors" />
+                  <button onClick={() => setFormType('manual')} className="group flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-gray-200 hover:border-[#7c3aed] hover:bg-violet-50/40 transition-all text-left cursor-pointer">
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 group-hover:bg-[#7c3aed]/10 flex items-center justify-center transition-colors">
+                      <MousePointerClick className="w-5 h-5 text-violet-500 group-hover:text-[#7c3aed] transition-colors" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Manual</p>
                       <p className="text-sm text-gray-500 mt-0.5 leading-snug">Hand-pick products and control their order</p>
                     </div>
                   </button>
-                  <button onClick={() => setFormType('auto')} className="group flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-gray-200 hover:border-[#6366f1] hover:bg-indigo-50/40 transition-all text-left cursor-pointer">
-                    <div className="w-10 h-10 rounded-xl bg-violet-50 group-hover:bg-[#6366f1]/10 flex items-center justify-center transition-colors">
-                      <Zap className="w-5 h-5 text-violet-500 group-hover:text-[#6366f1] transition-colors" />
+                  <button onClick={() => setFormType('auto')} className="group flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-gray-200 hover:border-[#7c3aed] hover:bg-violet-50/40 transition-all text-left cursor-pointer">
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 group-hover:bg-[#7c3aed]/10 flex items-center justify-center transition-colors">
+                      <Zap className="w-5 h-5 text-violet-500 group-hover:text-[#7c3aed] transition-colors" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Automatic</p>
@@ -160,7 +160,7 @@ export default function NewCollectionPage() {
             ) : (
               <>
                 <div className="flex items-center gap-3">
-                  <span className={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full ${formType === 'manual' ? 'bg-indigo-50 text-indigo-600' : 'bg-violet-50 text-violet-600'}`}>
+                  <span className={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full ${formType === 'manual' ? 'bg-violet-50 text-violet-600' : 'bg-violet-50 text-violet-600'}`}>
                     {formType === 'manual' ? <MousePointerClick className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
                     {formType === 'manual' ? 'Manual collection' : 'Automatic collection'}
                   </span>
@@ -190,12 +190,12 @@ export default function NewCollectionPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium text-gray-700">Products</Label>
-                      {selectedProductIds.length > 0 && <span className="text-sm text-[#6366f1] font-medium">{selectedProductIds.length} selected</span>}
+                      {selectedProductIds.length > 0 && <span className="text-sm text-[#7c3aed] font-medium">{selectedProductIds.length} selected</span>}
                     </div>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                       <input type="text" placeholder="Search products…" value={productSearch} onChange={e => setProductSearch(e.target.value)}
-                        className="w-full h-10 pl-9 pr-4 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1]" />
+                        className="w-full h-10 pl-9 pr-4 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#7c3aed]" />
                     </div>
                     <div className="border border-gray-200 rounded-xl overflow-hidden">
                       {productsLoading ? (
@@ -209,7 +209,7 @@ export default function NewCollectionPage() {
                             return (
                               <button key={p.id} type="button" onClick={() => toggleProduct(p.id)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer ${selected ? 'bg-green-50' : 'hover:bg-gray-50'}`}>
-                                {selected ? <CheckSquare className="w-4 h-4 text-[#6366f1] flex-shrink-0" /> : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                                {selected ? <CheckSquare className="w-4 h-4 text-[#7c3aed] flex-shrink-0" /> : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />}
                                 {p.image_url ? <img src={p.image_url} alt={p.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-lg bg-gray-100 flex-shrink-0" />}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
@@ -278,10 +278,10 @@ export default function NewCollectionPage() {
                             />
                           ) : row.field === 'price' ? (
                             <input type="number" min={0} placeholder="300" value={row.value} onChange={e => updateRow(row.id, { value: e.target.value })}
-                              className="h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] flex-1 min-w-0" />
+                              className="h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#7c3aed] flex-1 min-w-0" />
                           ) : (
                             <input type="text" placeholder="keyword…" value={row.value} onChange={e => updateRow(row.id, { value: e.target.value })}
-                              className="h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#6366f1] flex-1 min-w-0" />
+                              className="h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#7c3aed] flex-1 min-w-0" />
                           )}
                           <button type="button" onClick={() => removeRow(row.id)} disabled={criteriaRows.length === 1}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-30 flex-shrink-0">
@@ -290,14 +290,14 @@ export default function NewCollectionPage() {
                         </div>
                       ))}
                     </div>
-                    <button type="button" onClick={addRow} className="flex items-center gap-1.5 text-sm text-[#6366f1] hover:text-[#4f46e5] font-medium cursor-pointer">
+                    <button type="button" onClick={addRow} className="flex items-center gap-1.5 text-sm text-[#7c3aed] hover:text-[#6d28d9] font-medium cursor-pointer">
                       <Plus className="w-4 h-4" /> Add filter
                     </button>
                   </div>
                 )}
 
                 <div className="border-t border-gray-50 pt-1">
-                  <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11" onClick={handleSave} disabled={formIsSaving}>
+                  <Button className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white w-full h-11" onClick={handleSave} disabled={formIsSaving}>
                     {formIsSaving && <Loader className="w-4 h-4 animate-spin mr-2" />}
                     {formIsSaving ? 'Saving…' : 'Create collection'}
                   </Button>

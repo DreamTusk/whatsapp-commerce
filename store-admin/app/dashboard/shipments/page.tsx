@@ -117,7 +117,7 @@ export default function ShipmentsPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-xs text-[#6366f1] hover:underline"
+                          className="inline-flex items-center gap-1 text-xs text-[#7c3aed] hover:underline"
                         >
                           <ExternalLink className="w-3 h-3" /> Track
                         </a>

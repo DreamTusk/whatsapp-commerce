@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader } from '@deemlol/next-icons'
 import { Store } from 'lucide-react'
+import { AppSelect } from '@/components/ui/app-select'
+import AppSwitch from '@/components/ui/app-switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +14,16 @@ import api from '@/lib/api'
 import { apiErrorMessage } from '@/lib/utils'
 
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_STORE_DOMAIN ?? 'localhost'
+
+const PLAN_OPTIONS = [
+  { value: 'BASIC', label: 'Basic' },
+  { value: 'PRO', label: 'Pro' },
+]
+
+const BILLING_CYCLE_OPTIONS = [
+  { value: 'MONTHLY', label: 'Monthly' },
+  { value: 'YEARLY', label: 'Yearly' },
+]
 
 function toSlug(value: string): string {
   return value
@@ -31,6 +43,9 @@ export default function CreateStorePage() {
   const [address, setAddress] = useState('')
   const [minOrderAmount, setMinOrderAmount] = useState('')
   const [deliveryRadius, setDeliveryRadius] = useState('')
+  const [plan, setPlan] = useState('BASIC')
+  const [isPaid, setIsPaid] = useState(false)
+  const [billingCycle, setBillingCycle] = useState('MONTHLY')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -65,6 +80,9 @@ export default function CreateStorePage() {
         ...(address.trim() && { address: address.trim() }),
         min_order_amount: String(parseFloat(minOrderAmount) || 0),
         ...(deliveryRadius && { delivery_radius: String(parseFloat(deliveryRadius)) }),
+        plan,
+        is_paid: isPaid,
+        ...(isPaid && { billing_cycle: billingCycle }),
       })
       toast.success('Store created! Welcome to your dashboard.')
       router.push('/dashboard')
@@ -78,10 +96,10 @@ export default function CreateStorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[url('/images/create-store-bg.jpg')] bg-cover bg-center bg-no-repeat flex items-center justify-center p-6">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-[#6366f1] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+          <div className="w-14 h-14 bg-[#7c3aed] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
             <Store className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Set up your store</h1>
@@ -121,7 +139,7 @@ export default function CreateStorePage() {
             {/* Domain — slug editable, base domain read-only */}
             <div className="space-y-1.5">
               <Label htmlFor="slug">Store subdomain <span className="text-destructive">*</span></Label>
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#6366f1] focus-within:border-transparent">
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#7c3aed] focus-within:border-transparent">
                 <input
                   id="slug"
                   type="text"
@@ -142,6 +160,38 @@ export default function CreateStorePage() {
                   : <p className="text-xs text-gray-400">Auto-filled from store name — you can edit it</p>
               }
             </div>
+
+            {/* Plan */}
+            <div className="space-y-1.5">
+              <Label htmlFor="plan">Plan <span className="text-destructive">*</span></Label>
+              <AppSelect
+                value={plan}
+                onValueChange={setPlan}
+                options={PLAN_OPTIONS}
+              />
+            </div>
+
+            {/* Paid status */}
+            <div className="rounded-lg border border-gray-200 px-4 py-3">
+              <AppSwitch
+                checked={isPaid}
+                onChange={setIsPaid}
+                label="Paid"
+                description="Has the store owner already paid for this plan?"
+              />
+            </div>
+
+            {/* Billing cycle — only relevant once paid */}
+            {isPaid && (
+              <div className="space-y-1.5">
+                <Label htmlFor="billing_cycle">Billing cycle <span className="text-destructive">*</span></Label>
+                <AppSelect
+                  value={billingCycle}
+                  onValueChange={setBillingCycle}
+                  options={BILLING_CYCLE_OPTIONS}
+                />
+              </div>
+            )}
 
             {/* Address */}
             <div className="space-y-1.5">
@@ -192,7 +242,7 @@ export default function CreateStorePage() {
 
             <Button
               type="submit"
-              className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white mt-2"
+              className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white mt-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}

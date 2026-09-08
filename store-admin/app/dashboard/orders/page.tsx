@@ -68,7 +68,7 @@ export default function OrdersPage() {
             <h1 className="text-[26px] font-bold text-gray-900">Orders</h1>
             <p className="text-base text-gray-500 mt-0.5">{orders.length} orders</p>
           </div>
-          <Button onClick={() => router.push('/dashboard/orders/new')} className="gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white">
+          <Button onClick={() => router.push('/dashboard/orders/new')} className="gap-2 bg-[#7c3aed] hover:bg-[#6d28d9] text-white">
             <Plus className="w-4 h-4" /> Create Order
           </Button>
         </div>
@@ -82,7 +82,7 @@ export default function OrdersPage() {
               onClick={() => setActiveTab(tab.value)}
               className={`px-3 py-1.5 rounded-full text-base font-medium transition-colors cursor-pointer ${
                 activeTab === tab.value
-                  ? 'bg-[#6366f1] text-white'
+                  ? 'bg-[#7c3aed] text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -106,7 +106,7 @@ export default function OrdersPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full text-base min-w-[800px]">
-            <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
+            <thead className="bg-violet-50 border-b border-violet-100 sticky top-0 z-10">
               <tr>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Order</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Customer</th>

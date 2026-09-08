@@ -126,7 +126,7 @@ function NewProductForm() {
           <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600">
             <ArrowLeft className="w-3.5 h-3.5" /> Products
           </button>
-          <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+          <Button className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
             {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
             {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add product'}
           </Button>
@@ -235,9 +235,9 @@ function NewProductForm() {
                   })}
 
                   {/* Add button */}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#6366f1] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors bg-gray-50 hover:bg-[#6366f1]/5 group">
-                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                    <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Add</span>
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#7c3aed] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors bg-gray-50 hover:bg-[#7c3aed]/5 group">
+                    <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
+                    <span className="text-xs text-gray-400 group-hover:text-[#7c3aed] transition-colors">Add</span>
                     <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="hidden" onChange={handleImagesChange} />
                   </label>
                 </div>
@@ -290,7 +290,7 @@ function NewProductForm() {
             </div>
 
             <div className="flex justify-end mt-4">
-              <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+              <Button className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
                 {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                 {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Add product'}
               </Button>

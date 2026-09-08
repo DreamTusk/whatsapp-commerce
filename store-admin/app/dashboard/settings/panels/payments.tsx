@@ -200,7 +200,7 @@ export default function PaymentsPanel() {
                 <AppSwitch checked={razorpay!.is_active} onChange={handleToggle} />
                 <button
                   onClick={openEdit}
-                  className="text-xs text-indigo-500 font-semibold hover:text-indigo-700 transition-colors"
+                  className="text-xs text-violet-500 font-semibold hover:text-violet-700 transition-colors"
                 >
                   Edit keys
                 </button>

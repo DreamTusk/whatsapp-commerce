@@ -221,11 +221,11 @@ export default function EditBannerPage() {
               <p className="text-xs text-gray-400">Recommended size: <span className="font-medium text-gray-500">1200 × 300 px</span> (4:1 ratio). Images of other sizes will be cropped.</p>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                  <div className="w-24 h-14 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+                  <div className="w-24 h-14 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#7c3aed] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
                     {(imagePreview || imageUrl) ? (
                       <img src={imagePreview ?? imageUrl} alt="preview" className="w-full h-full object-cover" />
                     ) : (
-                      <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                      <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
                     )}
                   </div>
                   <span className="text-base text-gray-500 group-hover:text-gray-700">
@@ -275,7 +275,7 @@ export default function EditBannerPage() {
             </div>
 
             <Button
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11 text-base"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white w-full h-11 text-base"
               onClick={handleSave}
               disabled={isSaving || isUploading}
             >

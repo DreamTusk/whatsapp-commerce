@@ -24,7 +24,7 @@ export default function AppSwitch({ checked, onChange, label, description, disab
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-          checked ? 'bg-[#6366f1]' : 'bg-gray-200'
+          checked ? 'bg-[#7c3aed]' : 'bg-gray-200'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <span

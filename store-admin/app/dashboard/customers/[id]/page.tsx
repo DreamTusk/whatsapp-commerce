@@ -74,8 +74,8 @@ export default function CustomerDetailPage() {
           <ArrowLeft className="w-3.5 h-3.5" /> Customers
         </button>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-lg font-bold text-[#6366f1]">
+          <div className="w-12 h-12 rounded-full bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-lg font-bold text-[#7c3aed]">
               {(customer.name ?? customer.phone ?? '?').charAt(0).toUpperCase()}
             </span>
           </div>
@@ -120,7 +120,7 @@ export default function CustomerDetailPage() {
                     <div className="flex items-center gap-2 mb-0.5">
                       {a.label && <span className="text-xs font-medium text-gray-700">{a.label}</span>}
                       {a.is_default && (
-                        <span className="text-[10px] font-semibold bg-[#6366f1]/10 text-[#6366f1] px-1.5 py-0.5 rounded-full">Default</span>
+                        <span className="text-[10px] font-semibold bg-[#7c3aed]/10 text-[#7c3aed] px-1.5 py-0.5 rounded-full">Default</span>
                       )}
                     </div>
                     <p className="text-sm text-gray-600">{formatAddress(a)}</p>

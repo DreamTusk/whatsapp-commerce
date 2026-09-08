@@ -31,7 +31,7 @@ export default function StorefrontLink({ domain, compact = false }: Props) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-[#6366f1] transition-colors truncate min-w-0"
+          className="flex items-center gap-1 text-sm text-gray-400 hover:text-[#7c3aed] transition-colors truncate min-w-0"
         >
           <ExternalLink className="w-3 h-3 flex-shrink-0" />
           <span className="truncate">{domain}</span>
@@ -54,7 +54,7 @@ export default function StorefrontLink({ domain, compact = false }: Props) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-1 text-sm font-medium text-[#6366f1] hover:underline truncate"
+        className="flex-1 text-sm font-medium text-[#7c3aed] hover:underline truncate"
       >
         {url}
       </a>

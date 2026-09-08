@@ -66,7 +66,7 @@ export default function CustomersPage() {
             placeholder="Search by name, phone or address…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
+            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent"
           />
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function CustomersPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full text-base min-w-[800px]">
-            <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
+            <thead className="bg-violet-50 border-b border-violet-100 sticky top-0 z-10">
               <tr>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Customer</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Orders</th>
@@ -99,8 +99,8 @@ export default function CustomersPage() {
                 <tr key={c.id} onClick={() => router.push(`/dashboard/customers/${c.id}`)} className="hover:bg-gray-50 transition-colors cursor-pointer">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-base font-bold text-[#6366f1]">
+                      <div className="w-8 h-8 rounded-full bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-base font-bold text-[#7c3aed]">
                           {(c.name ?? c.phone ?? '?').charAt(0).toUpperCase()}
                         </span>
                       </div>
@@ -114,7 +114,7 @@ export default function CustomersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-base font-semibold px-2 py-1 rounded-full ${
-                      c.order_count > 0 ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'bg-gray-100 text-gray-400'
+                      c.order_count > 0 ? 'bg-[#7c3aed]/10 text-[#7c3aed]' : 'bg-gray-100 text-gray-400'
                     }`}>
                       {c.order_count}
                     </span>

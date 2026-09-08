@@ -77,11 +77,11 @@ export default function CategoriesPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setLatestFirst(v => !v)}
-              className={`text-sm font-medium px-3 py-2 rounded-lg border transition-colors ${latestFirst ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}
+              className={`text-sm font-medium px-3 py-2 rounded-lg border transition-colors ${latestFirst ? 'bg-violet-50 text-violet-600 border-violet-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}
             >
               Latest added
             </button>
-            <Button onClick={() => router.push('/dashboard/categories/new')} className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2">
+            <Button onClick={() => router.push('/dashboard/categories/new')} className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white gap-2">
               <Plus className="w-4 h-4" /> Add category
             </Button>
           </div>
@@ -102,7 +102,7 @@ export default function CategoriesPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-auto min-h-0">
               <table className="w-full text-base min-w-[500px]">
-                <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
+                <thead className="bg-violet-50 border-b border-violet-100 sticky top-0 z-10">
                   <tr>
                     <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Category</th>
                     <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Status</th>

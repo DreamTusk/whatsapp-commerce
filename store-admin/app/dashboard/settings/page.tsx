@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Globe, CreditCard, Truck, Sparkles, ShoppingBag, User, Heart, FileText } from '@deemlol/next-icons'
+import { Globe, CreditCard, Truck, Sparkles, ShoppingBag, User, Heart, FileText, Package } from '@deemlol/next-icons'
 import GeneralPanel       from './panels/general'
 import UsersPanel         from './panels/users'
 import DomainPanel        from './panels/domain'
@@ -11,11 +11,13 @@ import SupportSocialPanel from './panels/support-social'
 import PoliciesPanel      from './panels/policies'
 import PaymentsPanel      from './panels/payments'
 import DeliveryPanel      from './panels/delivery'
+import PlanPanel          from './panels/plan'
 
 const SETTINGS_TABS = [
   { key: 'general',        label: 'General',          icon: ShoppingBag, component: GeneralPanel       },
   { key: 'users',          label: 'Staffs',           icon: User,        component: UsersPanel         },
   { key: 'domain',         label: 'Domain',           icon: Globe,       component: DomainPanel        },
+  { key: 'plan',           label: 'Plan & Billing',   icon: Package,     component: PlanPanel          },
   { key: 'payments',       label: 'Payments',         icon: CreditCard,  component: PaymentsPanel      },
   { key: 'delivery',       label: 'Delivery',         icon: Truck,       component: DeliveryPanel      },
   { key: 'theme',          label: 'Theme',            icon: Sparkles,    component: ThemePanel         },
@@ -60,14 +62,14 @@ function SettingsContent() {
                 onClick={() => switchTab(key)}
                 className={`w-full flex items-center gap-2.5 px-4 py-1 text-sm transition-colors text-left border-l-2 ${
                   active
-                    ? 'border-[#6366f1] text-[#6366f1] font-semibold bg-white/60'
+                    ? 'border-[#7c3aed] text-[#7c3aed] font-semibold bg-white/60'
                     : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-white/40 font-medium'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                 {label}
               </button>
-              {!isLast && <div className="h-px bg-indigo-100 mx-3 my-2" />}
+              {!isLast && <div className="h-px bg-violet-100 mx-3 my-2" />}
             </div>
           )
         })}

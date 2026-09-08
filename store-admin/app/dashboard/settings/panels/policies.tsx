@@ -82,7 +82,7 @@ export default function PoliciesPanel() {
             onClick={() => setActive(t.key)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               active === t.key
-                ? 'border-[#6366f1] text-[#6366f1]'
+                ? 'border-[#7c3aed] text-[#7c3aed]'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -104,7 +104,7 @@ export default function PoliciesPanel() {
         <button
           onClick={save}
           disabled={saving || !isDirty}
-          className="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-[#6366f1] hover:bg-[#4f52d8] disabled:opacity-60 transition-colors"
+          className="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-[#7c3aed] hover:bg-[#4f52d8] disabled:opacity-60 transition-colors"
         >
           {saving ? 'Saving…' : 'Save Policies'}
         </button>

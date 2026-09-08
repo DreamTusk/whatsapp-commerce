@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Loader, Eye, EyeOff, XCircle, CheckCircle, Clock } from '@deemlol/next-icons'
 import { Store } from 'lucide-react'
+import { AuthBrandMark } from '@/components/auth/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -120,7 +121,7 @@ function AcceptInviteForm() {
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center space-y-3 py-12">
-        <Loader className="w-8 h-8 text-[#6366f1] animate-spin" />
+        <Loader className="w-8 h-8 text-[#7c3aed] animate-spin" />
         <p className="text-sm text-gray-500">Loading invite…</p>
       </div>
     )
@@ -139,12 +140,7 @@ function AcceptInviteForm() {
 
     return (
       <div className="space-y-6 text-center">
-        <div className="flex items-center gap-2 mb-6 lg:hidden justify-center">
-          <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">DT</span>
-          </div>
-          <span className="font-bold text-gray-900">DT Commerce</span>
-        </div>
+        <AuthBrandMark centered />
         <div className="flex justify-center">
           <Icon className={`w-14 h-14 ${config.color}`} />
         </div>
@@ -159,19 +155,14 @@ function AcceptInviteForm() {
   // ── Invite header (shared between both forms) ──
   const inviteHeader = (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2 lg:hidden">
-        <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-xs">DT</span>
-        </div>
-        <span className="font-bold text-gray-900">DT Commerce</span>
-      </div>
+      <AuthBrandMark className="mb-2" />
 
       <div className="flex items-center gap-3">
         {invite!.store_logo ? (
           <img src={invite!.store_logo} alt={invite!.store_name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
         ) : (
-          <div className="w-12 h-12 bg-[#6366f1]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Store className="w-6 h-6 text-[#6366f1]" />
+          <div className="w-12 h-12 bg-[#7c3aed]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Store className="w-6 h-6 text-[#7c3aed]" />
           </div>
         )}
         <div>
@@ -181,7 +172,7 @@ function AcceptInviteForm() {
           <p className="text-sm text-gray-500">
             <span className="font-semibold text-gray-800">{invite!.store_name}</span>
             {' '}as{' '}
-            <span className="font-semibold text-[#6366f1]">{formatRole(invite!.role)}</span>
+            <span className="font-semibold text-[#7c3aed]">{formatRole(invite!.role)}</span>
           </p>
         </div>
       </div>
@@ -199,7 +190,7 @@ function AcceptInviteForm() {
           <span className="font-semibold text-gray-900">{user?.email ?? invite!.email}</span>
         </div>
         <Button
-          className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+          className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
           onClick={acceptAsExistingUser}
           disabled={isSubmitting}
         >
@@ -259,7 +250,7 @@ function AcceptInviteForm() {
 
         <Button
           type="submit"
-          className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+          className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -274,7 +265,7 @@ export default function AcceptInvitePage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-12">
-        <Loader className="w-8 h-8 text-[#6366f1] animate-spin" />
+        <Loader className="w-8 h-8 text-[#7c3aed] animate-spin" />
       </div>
     }>
       <AcceptInviteForm />

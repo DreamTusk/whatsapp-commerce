@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Loader } from '@deemlol/next-icons'
+import { AuthBrandMark } from '@/components/auth/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -59,12 +60,7 @@ export default function SignupPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2 mb-6 lg:hidden">
-          <div className="w-8 h-8 bg-[#6366f1] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">DT</span>
-          </div>
-          <span className="font-bold text-gray-900">DT Commerce</span>
-        </div>
+        <AuthBrandMark />
         <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
         <p className="text-sm text-gray-500">Start managing your store today</p>
       </div>
@@ -129,7 +125,7 @@ export default function SignupPage() {
 
         <Button
           type="submit"
-          className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+          className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -139,7 +135,7 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{' '}
-        <Link href="/login" className="text-[#6366f1] font-medium hover:underline">
+        <Link href="/login" className="text-[#7c3aed] font-medium hover:underline">
           Sign in
         </Link>
       </p>

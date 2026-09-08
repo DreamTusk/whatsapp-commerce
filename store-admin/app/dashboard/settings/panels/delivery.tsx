@@ -65,7 +65,7 @@ export default function DeliveryPanel() {
               Allow customers to pick up their orders directly from your store.
             </p>
             {isPickupEnabled && (
-              <p className="mt-2 text-xs text-indigo-600 bg-indigo-50 rounded-lg px-3 py-2 inline-block">
+              <p className="mt-2 text-xs text-violet-600 bg-violet-50 rounded-lg px-3 py-2 inline-block">
                 Customers will see a pickup option at checkout and can set an expected pickup time.
               </p>
             )}

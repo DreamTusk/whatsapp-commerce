@@ -16,6 +16,11 @@ interface Stats {
   total_customers: number
   total_products: number
   out_of_stock_count: number
+  plan: string
+  plan_usage: {
+    products: { used: number; limit: number | null }
+    staff: { used: number; limit: number | null }
+  }
   orders_by_status: {
     new: number
     confirmed: number
@@ -42,7 +47,7 @@ interface Stats {
 
 const STATUS_STYLES: Record<string, string> = {
   NEW: 'bg-blue-50 text-blue-600',
-  CONFIRMED: 'bg-indigo-50 text-indigo-600',
+  CONFIRMED: 'bg-violet-50 text-violet-600',
   OUT_FOR_DELIVERY: 'bg-amber-50 text-amber-600',
   DELIVERED: 'bg-green-50 text-green-600',
   CANCELLED: 'bg-red-50 text-red-500',
@@ -126,12 +131,17 @@ export default function DashboardPage() {
 
   const statusRows = [
     { label: 'New', count: stats.orders_by_status.new, color: 'bg-blue-500' },
-    { label: 'Confirmed', count: stats.orders_by_status.confirmed, color: 'bg-indigo-500' },
+    { label: 'Confirmed', count: stats.orders_by_status.confirmed, color: 'bg-violet-500' },
     { label: 'Out for Delivery', count: stats.orders_by_status.out_for_delivery, color: 'bg-amber-500' },
     { label: 'Delivered', count: stats.orders_by_status.delivered, color: 'bg-green-500' },
     { label: 'Cancelled', count: stats.orders_by_status.cancelled, color: 'bg-red-400' },
   ]
   const totalForBar = Math.max(stats.total_orders, 1)
+
+  const usageRows = [
+    { label: 'Products', ...(stats.plan_usage?.products ?? { used: 0, limit: null }) },
+    { label: 'Staff', ...(stats.plan_usage?.staff ?? { used: 0, limit: null }) },
+  ]
 
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -181,7 +191,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => router.push('/dashboard/orders')}
-                  className="flex items-center gap-1 text-sm text-[#6366f1] hover:text-[#4f46e5] font-medium transition-colors"
+                  className="flex items-center gap-1 text-sm text-[#7c3aed] hover:text-[#6d28d9] font-medium transition-colors"
                 >
                   View all <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -249,6 +259,50 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
+            {/* Plan usage */}
+            <Card>
+              <CardHeader className="border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-gray-900">Plan Usage</CardTitle>
+                  <span className="text-xs font-medium text-[#7c3aed] bg-violet-50 rounded-full px-2.5 py-1 capitalize">
+                    {(stats.plan ?? 'basic').toLowerCase()}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                {usageRows.map(row => {
+                  const pct = row.limit ? Math.min(Math.round((row.used / row.limit) * 100), 100) : 0
+                  const barColor = row.limit && row.used >= row.limit
+                    ? 'bg-red-500'
+                    : row.limit && pct >= 80
+                      ? 'bg-amber-500'
+                      : 'bg-[#7c3aed]'
+                  return (
+                    <div key={row.label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-gray-600">{row.label}</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {row.used} / {row.limit ?? '∞'}
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${barColor} transition-all`}
+                          style={{ width: `${row.limit ? pct : 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+                <button
+                  onClick={() => router.push('/dashboard/settings?tab=plan')}
+                  className="w-full text-center text-xs text-[#7c3aed] hover:text-[#6d28d9] font-medium pt-1 transition-colors"
+                >
+                  View plan & billing →
+                </button>
+              </CardContent>
+            </Card>
+
             {/* Out of stock */}
             {stats.out_of_stock_products.length > 0 && (
               <Card>
@@ -285,7 +339,7 @@ export default function DashboardPage() {
                   ))}
                   <button
                     onClick={() => router.push('/dashboard/inventory')}
-                    className="w-full text-center text-xs text-[#6366f1] hover:text-[#4f46e5] font-medium pt-1 transition-colors"
+                    className="w-full text-center text-xs text-[#7c3aed] hover:text-[#6d28d9] font-medium pt-1 transition-colors"
                   >
                     Manage inventory →
                   </button>

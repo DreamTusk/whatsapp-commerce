@@ -14,7 +14,6 @@ import {
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { NAV_ITEMS } from '@/config/nav'
 import { RoleProvider } from '@/contexts/role'
-import StorefrontLink from '@/components/storefront-link'
 import type { Store as StoreType } from '@/types'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -114,14 +113,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <img src={store.logo} alt={store.name} className="w-10 h-10 rounded-xl object-cover" />
               </button>
             ) : (
-              <div className="w-10 h-10 bg-[#6366f1]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Store className="w-5 h-5 text-[#6366f1]" />
+              <div className="w-10 h-10 bg-[#7c3aed]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Store className="w-5 h-5 text-[#7c3aed]" />
               </div>
             )}
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-900 text-base truncate">{store.name}</p>
               <p className="text-sm text-gray-400 truncate">{store.phone}</p>
-              <StorefrontLink domain={store.domain} compact />
             </div>
             {role === 'OWNER' && (
               <Link
@@ -147,7 +145,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-medium transition-colors ${
                 active
-                  ? 'bg-[#6366f1]/10 text-[#6366f1]'
+                  ? 'bg-[#7c3aed]/10 text-[#7c3aed]'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
@@ -223,8 +221,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <img src={store.logo} alt={store.name} className="w-7 h-7 rounded-lg object-cover" />
             </button>
           ) : (
-            <div className="w-7 h-7 bg-[#6366f1]/10 rounded-lg flex items-center justify-center">
-              <Store className="w-4 h-4 text-[#6366f1]" />
+            <div className="w-7 h-7 bg-[#7c3aed]/10 rounded-lg flex items-center justify-center">
+              <Store className="w-4 h-4 text-[#7c3aed]" />
             </div>
           )}
           <span className="font-semibold text-gray-900 text-sm truncate">{store?.name ?? ''}</span>
@@ -248,7 +246,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
               onClick={handleLogoutConfirmed}
             >
               Sign out

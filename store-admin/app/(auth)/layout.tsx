@@ -7,16 +7,13 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex">
       <AuthGuard />
       {/* Brand panel — hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#6366f1] flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#7c3aed] flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full" />
         <div className="absolute -bottom-32 -right-16 w-[28rem] h-[28rem] bg-white/10 rounded-full" />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-[#6366f1] font-bold text-sm">DT</span>
-            </div>
-            <span className="text-white text-xl font-bold tracking-tight">DT Commerce</span>
+          <div className="inline-flex items-center bg-white rounded-2xl shadow-md px-5 py-3">
+            <img src="/app-assets/logo-with-name.png" alt="Dreambiz" className="h-12 w-auto object-contain" />
           </div>
         </div>
 
@@ -45,7 +42,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
 
         <p className="relative z-10 text-white/50 text-sm">
-          © {new Date().getFullYear()} DT Commerce. All rights reserved.
+          © {new Date().getFullYear()} Dreambiz. All rights reserved.
         </p>
       </div>
 

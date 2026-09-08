@@ -106,7 +106,7 @@ export default function SupportSocialPanel() {
             value={form.instagram_url}
             onChange={e => setForm(f => ({ ...f, instagram_url: e.target.value }))}
             placeholder="https://instagram.com/yourstore"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 placeholder-gray-300"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 placeholder-gray-300"
           />
         </div>
 
@@ -121,7 +121,7 @@ export default function SupportSocialPanel() {
             value={form.facebook_url}
             onChange={e => setForm(f => ({ ...f, facebook_url: e.target.value }))}
             placeholder="https://facebook.com/yourstore"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 placeholder-gray-300"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 placeholder-gray-300"
           />
         </div>
 
@@ -138,7 +138,7 @@ export default function SupportSocialPanel() {
               value={form.whatsapp_number}
               onChange={e => setForm(f => ({ ...f, whatsapp_number: e.target.value }))}
               placeholder="+91 98765 43210"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 placeholder-gray-300 bg-white"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 placeholder-gray-300 bg-white"
             />
           </div>
           <div>
@@ -148,7 +148,7 @@ export default function SupportSocialPanel() {
               value={form.whatsapp_message}
               onChange={e => setForm(f => ({ ...f, whatsapp_message: e.target.value }))}
               placeholder="Hi! I'd like to know more about your products."
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 placeholder-gray-300 bg-white"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 placeholder-gray-300 bg-white"
             />
           </div>
           {waLink && (
@@ -169,7 +169,7 @@ export default function SupportSocialPanel() {
             value={form.youtube_url}
             onChange={e => setForm(f => ({ ...f, youtube_url: e.target.value }))}
             placeholder="https://youtube.com/@yourstore"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 placeholder-gray-300"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 placeholder-gray-300"
           />
         </div>
 
@@ -184,7 +184,7 @@ export default function SupportSocialPanel() {
             value={form.x_url}
             onChange={e => setForm(f => ({ ...f, x_url: e.target.value }))}
             placeholder="https://x.com/yourstore"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 placeholder-gray-300"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 placeholder-gray-300"
           />
         </div>
 
@@ -194,7 +194,7 @@ export default function SupportSocialPanel() {
         <button
           onClick={save}
           disabled={saving || !isDirty}
-          className="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-[#6366f1] hover:bg-[#4f52d8] disabled:opacity-60 transition-colors"
+          className="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-[#7c3aed] hover:bg-[#4f52d8] disabled:opacity-60 transition-colors"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
