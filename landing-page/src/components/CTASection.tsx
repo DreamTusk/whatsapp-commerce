@@ -21,7 +21,7 @@ export function CTASection() {
           />
         </div>
 
-        <h2 className="font-[var(--font-plus-jakarta)] text-4xl md:text-[56px] md:leading-[64px] text-on-primary max-w-2xl font-bold tracking-tight">
+        <h2 className="font-[var(--font-plus-jakarta)] text-4xl md:text-[56px] md:leading-[64px] text-on-primary max-w-2xl font-semibold tracking-tight">
           Ready to take your business online?
         </h2>
         <p className="mt-5 text-lg leading-7 text-primary-fixed max-w-xl">

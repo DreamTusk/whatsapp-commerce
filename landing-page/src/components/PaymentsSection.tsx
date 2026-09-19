@@ -11,7 +11,7 @@ export function PaymentsSection() {
               <Icon name="lock" className="text-sm" />
               <span>Secure Indian Payment Stack</span>
             </div>
-            <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface font-bold tracking-tight">
+            <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface font-semibold tracking-tight">
               Payments made simple.
             </h2>
             <p className="text-lg leading-7 text-on-surface-variant mt-4">
@@ -110,8 +110,7 @@ export function PaymentsSection() {
                 </span>
                 <span>•</span>
                 <span>Instant Confirmation</span>
-                <span>•</span>
-                <span>Direct Bank Settlement</span>
+                
               </div>
             </div>
           </div>

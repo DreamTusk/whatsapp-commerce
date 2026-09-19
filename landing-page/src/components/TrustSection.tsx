@@ -50,7 +50,7 @@ export function TrustSection() {
     <section id="solutions" className="w-full bg-surface-container-low py-10 border-y border-outline-variant/40 scroll-mt-24">
       <div className="max-w-[80rem] mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center mb-6">
-          <h2 className="font-[var(--font-plus-jakarta)] text-xl leading-7 text-on-surface font-bold">
+          <h2 className="font-[var(--font-plus-jakarta)] text-xl leading-7 text-on-surface font-semibold">
             Built for businesses ready to grow online
           </h2>
           <p className="text-[13px] leading-5 text-on-surface-variant mt-1">

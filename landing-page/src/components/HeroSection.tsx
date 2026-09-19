@@ -1,9 +1,23 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "./Icon";
 
 export function HeroSection() {
   return (
-    <section className="relative w-full overflow-hidden bg-surface py-16 md:py-20">
+    <section className="relative isolate w-full overflow-hidden bg-surface py-16 md:py-20">
+      {/* Background Video - hidden on mobile */}
+      <video
+        className="hidden md:block absolute inset-0 w-full h-full object-contain object-top -z-30 pointer-events-none"
+        autoPlay
+        muted
+        loop
+        playsInline
+
+      >
+        <source src="/videos/hero-background.mp4" type="video/mp4" />
+      </video>
+      <div className="hidden md:block absolute inset-0 bg-surface/25 -z-20" />
+
       {/* Ambient glowing backdrop orbs */}
       <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-gradient-to-tr from-primary-fixed-dim/40 via-secondary-fixed/30 to-transparent blur-3xl -z-10 pointer-events-none rounded-full" />
       <div className="absolute -top-16 right-[-80px] w-96 h-96 bg-primary-container/10 blur-3xl -z-10 pointer-events-none rounded-full" />
@@ -18,7 +32,7 @@ export function HeroSection() {
         </div>
 
         {/* Main Headline */}
-        <h1 className="font-[var(--font-plus-jakarta)] text-4xl md:text-[56px] md:leading-[64px] font-extrabold text-on-surface max-w-4xl tracking-tight">
+        <h1 className="font-[var(--font-plus-jakarta)] text-4xl md:text-[56px] md:leading-[64px] font-bold text-on-surface max-w-4xl tracking-tight">
           Build an online store your{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary-container">
             customers will love.
@@ -83,8 +97,8 @@ export function HeroSection() {
             <span className="text-xs font-semibold text-on-surface"><strong>98.4%</strong> in stock</span>
           </div>
 
-          {/* Customers Card - Bottom Right */}
-          <div className="hidden xl:flex absolute -right-4 bottom-16 z-20 items-center gap-3 px-4 py-3 bg-surface-container-lowest/95 backdrop-blur-md rounded-xl border border-outline-variant/60 shadow-lg">
+          {/* Customers Card - Right, below Live Orders */}
+          <div className="hidden xl:flex absolute -right-6 top-40 z-20 items-center gap-3 px-4 py-3 bg-surface-container-lowest/95 backdrop-blur-md rounded-xl border border-outline-variant/60 shadow-lg">
             <Icon name="group" className="text-primary text-lg" />
             <span className="text-xs font-semibold text-on-surface"><strong>3,420</strong> Active Customers</span>
           </div>
@@ -157,9 +171,7 @@ export function HeroSection() {
                 <ProductCard
                   badge="Seasonal"
                   badgeColor="bg-primary"
-                  icon="nutrition"
-                  iconColor="text-amber-500"
-                  bgGradient="from-amber-100 to-amber-50"
+                  image="/products/alphonso-mangoes.jpeg"
                   subtitle="Ratnagiri Alphonso"
                   title="Alphonso Mangoes"
                   description="Handpicked 1 Dozen (approx 2.8kg)"
@@ -172,9 +184,7 @@ export function HeroSection() {
                 <ProductCard
                   badge="Pure Kachi Ghani"
                   badgeColor="bg-emerald-600"
-                  icon="water_drop"
-                  iconColor="text-amber-600"
-                  bgGradient="from-yellow-100 to-amber-50"
+                  image="/products/mustard-oil.jpg"
                   subtitle="Cold Pressed Mustard Oil"
                   title="Mustard Oil 1L Glass Bottle"
                   description="Unrefined traditional pressed"
@@ -183,25 +193,21 @@ export function HeroSection() {
                   isAdded
                 />
 
-                {/* Product 3: Brown Rice */}
+                {/* Product 3: Shilajit Resin */}
                 <ProductCard
-                  icon="grain"
-                  iconColor="text-orange-600"
-                  bgGradient="from-orange-100 to-amber-50"
+                  image="/products/shilajit-resin.jpg"
                   subtitle="Himalayan Organic"
-                  title="Organic Brown Rice 5kg"
-                  description="Long grain, pesticide-free"
-                  price="₹440"
-                  originalPrice="₹499"
+                  title="Premium Shilajit Resin"
+                  description="100% pure, sourced at 16,000 ft"
+                  price="₹1,499"
+                  originalPrice="₹1,799"
                 />
 
                 {/* Product 4: Paneer */}
                 <ProductCard
                   badge="Fresh Daily"
                   badgeColor="bg-purple-600"
-                  icon="egg_alt"
-                  iconColor="text-indigo-500"
-                  bgGradient="from-sky-100 to-indigo-50"
+                  image="/products/a2-paneer.jpg"
                   subtitle="A2 Malai Paneer"
                   title="Farm Fresh Paneer 500g"
                   description="Crafted from Gir cow milk"
@@ -267,6 +273,87 @@ export function HeroSection() {
               </div>
             </div>
           </div>
+
+          {/* Mobile Storefront Mockup - overlapping bottom-right of the desktop mockup */}
+          <div className="hidden lg:block absolute -bottom-14 -right-6 xl:-right-12 z-30 w-[180px] rotate-3 hover:rotate-0 transition-transform duration-300">
+            <div className="rounded-[2.2rem] border-[6px] border-slate-900 bg-slate-900 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.35)]">
+              {/* Notch */}
+              <div className="absolute top-1.5 inset-x-0 flex justify-center z-10">
+                <div className="w-16 h-4 bg-slate-900 rounded-b-2xl" />
+              </div>
+
+              {/* Screen */}
+              <div className="relative rounded-[1.75rem] overflow-hidden bg-surface-container-lowest aspect-[9/19.5] flex flex-col">
+                {/* Store Header */}
+                <div className="px-3 pt-6 pb-1.5 flex items-center gap-1.5 border-b border-outline-variant/30">
+                  <div className="w-5 h-5 rounded-md bg-emerald-600 text-on-primary flex items-center justify-center font-bold text-[9px] shrink-0">F</div>
+                  <div className="text-left leading-tight min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] font-bold text-on-surface truncate">Fresh Mart</span>
+                      <Icon name="verified" className="text-[9px] text-emerald-600 shrink-0" />
+                    </div>
+                    <span className="text-[6.5px] text-on-surface-variant">Delivering in 45 mins</span>
+                  </div>
+                </div>
+
+                {/* Categories */}
+                <div className="px-3 py-1.5 flex items-center gap-1 overflow-hidden">
+                  <span className="text-[7px] font-bold text-primary bg-primary-fixed/40 px-1.5 py-0.5 rounded-md whitespace-nowrap">All</span>
+                  <span className="text-[7px] text-on-surface-variant whitespace-nowrap">Fruits</span>
+                  <span className="text-[7px] text-on-surface-variant whitespace-nowrap">Dairy</span>
+                  <span className="text-[7px] text-on-surface-variant whitespace-nowrap">Oils</span>
+                </div>
+
+                {/* Products */}
+                <div className="px-3 mt-0.5 flex-1 space-y-1.5">
+                  <div className="rounded-lg overflow-hidden bg-surface-container-lowest border border-outline-variant/40 shadow-sm">
+                    <div className="relative w-full h-14">
+                      <Image src="/products/alphonso-mangoes.jpeg" alt="Alphonso Mangoes" fill sizes="160px" className="object-cover" />
+                      <span className="absolute top-1 left-1 bg-primary text-on-primary text-[6px] font-bold px-1 py-0.5 rounded">Seasonal</span>
+                    </div>
+                    <div className="p-1.5">
+                      <p className="text-[8px] font-bold text-on-surface truncate">Alphonso Mangoes</p>
+                      <div className="flex items-center justify-between mt-0.5">
+                        <span className="text-[8px] font-bold text-on-surface">₹650</span>
+                        <span className="text-[7px] bg-primary text-on-primary px-1.5 py-0.5 rounded-md font-semibold">Added</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg overflow-hidden bg-surface-container-lowest border border-outline-variant/40 shadow-sm">
+                    <div className="relative w-full h-14">
+                      <Image src="/products/mustard-oil.jpg" alt="Mustard Oil" fill sizes="160px" className="object-cover" />
+                      <span className="absolute top-1 left-1 bg-emerald-600 text-on-primary text-[6px] font-bold px-1 py-0.5 rounded">Pure</span>
+                    </div>
+                    <div className="p-1.5">
+                      <p className="text-[8px] font-bold text-on-surface truncate">Mustard Oil 1L</p>
+                      <div className="flex items-center justify-between mt-0.5">
+                        <span className="text-[8px] font-bold text-on-surface">₹210</span>
+                        <span className="text-[7px] bg-primary text-on-primary px-1.5 py-0.5 rounded-md font-semibold">Added</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Cart Bar */}
+                <div className="px-3 pb-1.5 pt-1.5 border-t border-outline-variant/30 flex items-center justify-between bg-surface-container-lowest">
+                  <div className="text-left leading-tight">
+                    <span className="text-[6.5px] text-on-surface-variant block">2 items</span>
+                    <span className="text-[9px] font-bold text-primary">₹860</span>
+                  </div>
+                  <button className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-gradient-to-r from-secondary-container via-primary-container to-primary text-on-primary text-[7px] font-semibold">
+                    Pay
+                    <Icon name="arrow_forward" className="text-[8px]" />
+                  </button>
+                </div>
+
+                {/* Home Indicator */}
+                <div className="flex justify-center pb-1">
+                  <div className="w-14 h-1 rounded-full bg-outline-variant" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -276,9 +363,7 @@ export function HeroSection() {
 function ProductCard({
   badge,
   badgeColor,
-  icon,
-  iconColor,
-  bgGradient,
+  image,
   subtitle,
   title,
   description,
@@ -288,9 +373,7 @@ function ProductCard({
 }: {
   badge?: string;
   badgeColor?: string;
-  icon: string;
-  iconColor: string;
-  bgGradient: string;
+  image: string;
   subtitle: string;
   title: string;
   description: string;
@@ -300,15 +383,21 @@ function ProductCard({
 }) {
   return (
     <div className="bg-surface-container-lowest rounded-2xl p-3 border border-outline-variant/50 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-      <div className={`relative w-full h-36 rounded-xl bg-gradient-to-tr ${bgGradient} overflow-hidden flex items-center justify-center mb-3`}>
+      <div className="relative w-full h-36 rounded-xl overflow-hidden mb-3">
         {badge && (
-          <span className={`absolute top-2 left-2 ${badgeColor} text-on-primary text-[10px] font-bold px-2 py-0.5 rounded-md`}>
+          <span className={`absolute top-2 left-2 z-10 ${badgeColor} text-on-primary text-[10px] font-bold px-2 py-0.5 rounded-md`}>
             {badge}
           </span>
         )}
-        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center">
-          <Icon name={icon} className={`text-5xl ${iconColor} group-hover:scale-110 transition-transform`} />
-          <span className="text-[11px] font-semibold text-amber-900 mt-1">{subtitle}</span>
+        <Image
+          src={image}
+          alt={title}
+          fill
+          sizes="(min-width: 768px) 240px, 45vw"
+          className="object-cover group-hover:scale-105 transition-transform"
+        />
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pt-4 pb-1.5">
+          <span className="text-[11px] font-semibold text-white">{subtitle}</span>
         </div>
       </div>
       <div>

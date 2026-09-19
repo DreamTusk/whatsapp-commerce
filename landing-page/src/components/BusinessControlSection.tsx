@@ -49,7 +49,7 @@ export function BusinessControlSection() {
       <div className="max-w-[80rem] mx-auto px-4 md:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="text-xs font-bold text-primary-fixed uppercase tracking-widest">Realtime Control</span>
-          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-primary mt-2 font-bold tracking-tight">
+          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-primary mt-2 font-semibold tracking-tight">
             Your business, always within reach.
           </h2>
           <p className="text-lg leading-7 text-on-tertiary-container mt-2">
@@ -70,7 +70,7 @@ export function BusinessControlSection() {
                   {card.badge}
                   {card.icon && <Icon name={card.icon} className={`text-base ${card.iconColor}`} />}
                 </div>
-                <p className="font-[var(--font-plus-jakarta)] text-3xl font-extrabold text-on-primary mt-3">{card.value}</p>
+                <p className="font-[var(--font-plus-jakarta)] text-3xl font-bold text-on-primary mt-3">{card.value}</p>
                 <p className="text-xs text-on-tertiary-container mt-1">{card.description}</p>
               </div>
 
