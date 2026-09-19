@@ -33,9 +33,9 @@ export function DashboardShowcaseSection() {
           </div>
 
           {/* Dashboard Layout */}
-          <div className="flex flex-col lg:flex-row min-h-[520px]">
+          <div className="flex flex-col lg:flex-row lg:min-h-[520px]">
             {/* Left Sidebar */}
-            <div className="w-full lg:w-56 bg-white border-b lg:border-b-0 lg:border-r border-outline-variant/40 p-4 flex flex-col justify-between">
+            <div className="hidden lg:flex lg:w-56 bg-white lg:border-r border-outline-variant/40 p-4 flex-col justify-between">
               <div className="space-y-4">
                 {/* Store Badge */}
                 <div className="flex items-center gap-2.5 pb-3 border-b border-outline-variant/30">
