@@ -6,7 +6,7 @@ export function CoreFeaturesSection() {
       <div className="max-w-[80rem] mx-auto px-4 md:px-6 lg:px-8">
         <div className="max-w-3xl mb-12">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">Product Highlights</span>
-          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface mt-2 font-bold tracking-tight">
+          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface mt-2 font-semibold tracking-tight">
             Everything your online business needs.
           </h2>
           <p className="text-lg leading-7 text-on-surface-variant mt-3 tracking-tight">
@@ -168,7 +168,7 @@ function FeatureCard({
         <div className={`w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center ${iconColor} mb-5`}>
           <Icon name={icon} className="text-2xl" />
         </div>
-        <h3 className="font-[var(--font-plus-jakarta)] text-2xl leading-8 text-on-surface font-bold">{title}</h3>
+        <h3 className="font-[var(--font-plus-jakarta)] text-2xl leading-8 text-on-surface font-semibold">{title}</h3>
         <p className="text-[15px] leading-6 text-on-surface-variant mt-2">{description}</p>
       </div>
       {children}

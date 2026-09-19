@@ -6,7 +6,7 @@ export function DashboardShowcaseSection() {
       <div className="max-w-[80rem] mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">Centralized Command</span>
-          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface mt-2 font-bold tracking-tight">
+          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface mt-2 font-semibold tracking-tight">
             One platform. Your entire store.
           </h2>
           <p className="text-lg leading-7 text-on-surface-variant mt-2">
@@ -89,7 +89,7 @@ export function DashboardShowcaseSection() {
               {/* Top Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-[var(--font-plus-jakarta)] text-xl text-on-surface font-bold">Dashboard</h3>
+                  <h3 className="font-[var(--font-plus-jakarta)] text-xl text-on-surface font-semibold">Dashboard</h3>
                   <p className="text-xs text-on-surface-variant">Overview of your store</p>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">

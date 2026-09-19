@@ -37,7 +37,7 @@ export function WhyPlatformSection() {
       <div className="max-w-[80rem] mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">Purpose Built</span>
-          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface mt-2 font-bold tracking-tight">
+          <h2 className="font-[var(--font-plus-jakarta)] text-[28px] leading-9 md:text-4xl md:leading-[44px] text-on-surface mt-2 font-semibold tracking-tight">
             Built around your business.
           </h2>
           <p className="text-lg leading-7 text-on-surface-variant mt-2">
@@ -54,7 +54,7 @@ export function WhyPlatformSection() {
               <div className={`w-10 h-10 rounded-xl ${benefit.iconBg} ${benefit.iconColor} flex items-center justify-center mb-4`}>
                 <Icon name={benefit.icon} />
               </div>
-              <h3 className="font-[var(--font-plus-jakarta)] text-base font-bold text-on-surface">{benefit.title}</h3>
+              <h3 className="font-[var(--font-plus-jakarta)] text-base font-semibold text-on-surface">{benefit.title}</h3>
               <p className="text-sm leading-6 text-on-surface-variant mt-2">{benefit.description}</p>
             </div>
           ))}
