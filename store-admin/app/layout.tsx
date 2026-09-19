@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Dreambiz — Admin',
+  title: 'Dreambiz',
   description: 'Manage your WhatsApp store',
 }
 
