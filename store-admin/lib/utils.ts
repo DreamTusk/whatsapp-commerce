@@ -17,9 +17,13 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
   return fallback
 }
 
-// store-customer always runs on a fixed port (3012) in dev; in production each
-// store's domain is its own live domain served over https, no port needed.
+// The storefront link always points at the live dreambiz.app domain, even
+// when store-admin itself is running locally — some stores still have a
+// leftover "<slug>.localhost" domain saved from before prod deploys existed,
+// so normalize those to "<slug>.dreambiz.app" for display rather than
+// requiring a DB backfill.
 export function getStorefrontUrl(domain: string | null | undefined): string | null {
   if (!domain) return null
-  return process.env.NODE_ENV === 'production' ? `https://${domain}` : `http://${domain}:3012`
+  const prodDomain = domain.endsWith('.localhost') ? domain.replace(/\.localhost$/, '.dreambiz.app') : domain
+  return `https://${prodDomain}`
 }
