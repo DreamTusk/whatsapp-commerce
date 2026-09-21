@@ -17,12 +17,19 @@ export interface StoreCollection {
   products: Product[]
 }
 
+export interface SubCategory {
+  id: string
+  name: string
+  image_url: string | null
+}
+
 export interface Category {
   id: string
   name: string
   name_local: string | null
   image_url: string | null
   sort_order: number
+  children?: SubCategory[]
 }
 
 export interface ProductImage {

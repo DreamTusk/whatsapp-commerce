@@ -180,6 +180,9 @@ export class CategoriesService {
     if (!existing) throw new NotFoundException('Category not found');
     if (existing.other_Category.length > 0) throw new BadRequestException('Delete all sub-categories first');
 
+    const productCount = await this.prisma.product.count({ where: { categoryId, storeId } });
+    if (productCount > 0) throw new BadRequestException('Delete all products in this category first');
+
     if (existing.imageUrl) await this.deleteCategoryMedia(categoryId, storeId);
 
     await this.prisma.category.delete({ where: { id: categoryId } });
