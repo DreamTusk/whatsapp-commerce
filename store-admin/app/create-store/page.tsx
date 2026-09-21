@@ -13,7 +13,8 @@ import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import { apiErrorMessage } from '@/lib/utils'
 
-const BASE_DOMAIN = process.env.NEXT_PUBLIC_STORE_DOMAIN ?? 'localhost'
+const BASE_DOMAIN =
+  process.env.NEXT_PUBLIC_STORE_DOMAIN ?? (process.env.NODE_ENV === 'production' ? 'dreambiz.app' : 'localhost')
 
 const PLAN_OPTIONS = [
   { value: 'BASIC', label: 'Basic' },
