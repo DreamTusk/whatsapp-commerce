@@ -9,7 +9,7 @@
 #   CLOUDFLARE_ACCOUNT_ID  Account ID shown in the Cloudflare dashboard
 #
 # Optional:
-#   PROJECT_NAME  Cloudflare Pages project name (default: landing-page)
+#   PROJECT_NAME  Cloudflare Pages project name (default: dreambiz-app-landing-page)
 #   BRANCH        Branch name to associate the deployment with (default: main)
 
 set -euo pipefail
@@ -17,7 +17,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
-PROJECT_NAME="${PROJECT_NAME:-landing-page}"
+PROJECT_NAME="${PROJECT_NAME:-dreambiz-app-landing-page}"
 BRANCH="${BRANCH:-main}"
 
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
