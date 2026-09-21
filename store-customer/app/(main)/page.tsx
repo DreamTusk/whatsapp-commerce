@@ -49,10 +49,19 @@ export default async function HomePage() {
 
   const hasCollections = collections.length > 0
 
-  // Group products by category (used only when no collections)
+  // Group products by top-level category (used only when no collections).
+  // A product assigned to a sub-category rolls up to that sub-category's
+  // parent, so a category with no products of its own still gets a row
+  // when its sub-categories have products.
+  const topLevelIdFor = new Map<string, string>()
+  categories.forEach(c => {
+    topLevelIdFor.set(c.id, c.id)
+    c.children?.forEach(ch => topLevelIdFor.set(ch.id, c.id))
+  })
+
   const productsByCategory = new Map<string, Product[]>()
   products.forEach(p => {
-    const key = p.category_id ?? '__none__'
+    const key = topLevelIdFor.get(p.category_id) ?? p.category_id ?? '__none__'
     if (!productsByCategory.has(key)) productsByCategory.set(key, [])
     productsByCategory.get(key)!.push(p)
   })
