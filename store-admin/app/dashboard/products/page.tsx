@@ -98,7 +98,7 @@ export default function ProductsPage() {
               {products.length}{activeFilterCount > 0 ? ` of ${allProducts.length}` : ''} products
             </p>
           </div>
-          <Button onClick={() => router.push('/dashboard/products/new')} className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2">
+          <Button onClick={() => router.push('/dashboard/products/new')} className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white gap-2">
             <Plus className="w-4 h-4" /> Add product
           </Button>
         </div>
@@ -179,7 +179,7 @@ export default function ProductsPage() {
             <p className="text-xl font-medium">{activeFilterCount > 0 ? 'No products match filters' : 'No products yet'}</p>
             <p className="text-base mt-1">
               {activeFilterCount > 0
-                ? <button onClick={clearFilters} className="text-[#6366f1] hover:underline cursor-pointer">Clear filters</button>
+                ? <button onClick={clearFilters} className="text-[#7c3aed] hover:underline cursor-pointer">Clear filters</button>
                 : 'Add your first product to get started'}
             </p>
           </div>
@@ -187,7 +187,7 @@ export default function ProductsPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-auto min-h-0">
               <table className="w-full text-base min-w-[1060px]">
-                <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
+                <thead className="bg-violet-50 border-b border-violet-100 sticky top-0 z-10">
                   <tr>
                     <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Product</th>
                     <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Category</th>

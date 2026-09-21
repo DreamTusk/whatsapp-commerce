@@ -64,6 +64,14 @@ export class StoreController {
     return this.storeService.deleteStore(user.userId);
   }
 
+  // GET /api/store/plan — plan, usage, and billing history for the Settings panel
+  @Get('plan')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
+  getPlanDetails(@CurrentUser() user: { userId: string }) {
+    return this.storeService.getPlanDetails(user.userId);
+  }
+
   // GET /api/store/customization
   @Get('customization')
   @UseGuards(JwtAuthGuard)

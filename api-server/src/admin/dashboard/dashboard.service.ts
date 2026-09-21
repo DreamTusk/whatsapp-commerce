@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrderStatus } from '@prisma/client';
+import { getPlanUsage } from '../../utils/plan';
 
 @Injectable()
 export class DashboardService {
@@ -14,6 +15,7 @@ export class DashboardService {
 
   async getStats(userId: string) {
     const storeId = await this.getStoreId(userId);
+    const store = await this.prisma.store.findUnique({ where: { id: storeId }, select: { plan: true } });
 
     const [
       totalOrders,
@@ -24,6 +26,7 @@ export class DashboardService {
       ordersByStatus,
       recentOrders,
       outOfStockProducts,
+      planUsage,
     ] = await Promise.all([
       this.prisma.order.count({ where: { storeId } }),
 
@@ -66,6 +69,8 @@ export class DashboardService {
           Category: { select: { name: true } },
         },
       }),
+
+      getPlanUsage(this.prisma, storeId, store!.plan),
     ]);
 
     const statusMap = Object.fromEntries(
@@ -78,6 +83,8 @@ export class DashboardService {
       total_customers: totalCustomers,
       total_products: totalProducts,
       out_of_stock_count: outOfStockCount,
+      plan: store!.plan,
+      plan_usage: planUsage,
       orders_by_status: {
         new: statusMap['NEW'] ?? 0,
         confirmed: statusMap['CONFIRMED'] ?? 0,

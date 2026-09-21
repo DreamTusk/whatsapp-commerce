@@ -64,7 +64,7 @@ export default function BannersPage() {
           <p className="text-sm text-gray-500 mt-0.5">Manage carousel banners shown on your storefront</p>
         </div>
         <Button
-          className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-10 gap-2"
+          className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-10 gap-2"
           onClick={() => router.push('/dashboard/banners/new')}
         >
           <Plus className="w-4 h-4" /> Add banner
@@ -84,7 +84,7 @@ export default function BannersPage() {
             <p className="text-base font-medium text-gray-700">No banners yet</p>
             <p className="text-sm text-gray-400 mt-1 mb-4">Add your first banner to show on the storefront carousel</p>
             <Button
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white gap-2"
               onClick={() => router.push('/dashboard/banners/new')}
             >
               <Plus className="w-4 h-4" /> Add banner

@@ -152,7 +152,7 @@ export default function UsersPanel() {
         </div>
         <Button
           onClick={() => setInviteOpen(true)}
-          className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-10 px-4 text-sm gap-1.5 flex-shrink-0"
+          className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-10 px-4 text-sm gap-1.5 flex-shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
           Add staff
@@ -298,7 +298,7 @@ export default function UsersPanel() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
             <Button
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
               onClick={sendInvite}
               disabled={inviting || !inviteEmail.trim()}
             >

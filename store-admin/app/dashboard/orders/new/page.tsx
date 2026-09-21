@@ -191,13 +191,13 @@ export default function NewOrderPage() {
                 <div className="flex gap-2 mb-4">
                   <button
                     onClick={() => { setIsNewCustomer(false); setSelectedCustomer(null); setCustomerSearch(''); setSavedAddresses([]); setSelectedSavedId(null) }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${!isNewCustomer ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${!isNewCustomer ? 'border-[#7c3aed] bg-[#7c3aed]/5 text-[#7c3aed]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
                   >
                     Existing
                   </button>
                   <button
                     onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerSearch(''); setSavedAddresses([]); setSelectedSavedId(null) }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${isNewCustomer ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${isNewCustomer ? 'border-[#7c3aed] bg-[#7c3aed]/5 text-[#7c3aed]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
                   >
                     <UserPlus className="w-3 h-3 inline mr-1" />
                     New
@@ -216,9 +216,9 @@ export default function NewOrderPage() {
                     </div>
                   </div>
                 ) : selectedCustomer ? (
-                  <div className="flex items-center gap-3 p-3 bg-[#6366f1]/5 rounded-xl border border-[#6366f1]/20">
-                    <div className="w-8 h-8 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-[#6366f1]">{(selectedCustomer.name ?? selectedCustomer.phone ?? '?').charAt(0).toUpperCase()}</span>
+                  <div className="flex items-center gap-3 p-3 bg-[#7c3aed]/5 rounded-xl border border-[#7c3aed]/20">
+                    <div className="w-8 h-8 rounded-full bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-[#7c3aed]">{(selectedCustomer.name ?? selectedCustomer.phone ?? '?').charAt(0).toUpperCase()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900">{selectedCustomer.name ?? '—'}</p>
@@ -241,8 +241,8 @@ export default function NewOrderPage() {
                         {customerResults.map(c => (
                           <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustomerSearch('') }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors">
-                            <div className="w-7 h-7 rounded-full bg-[#6366f1]/10 flex items-center justify-center flex-shrink-0">
-                              <span className="text-[10px] font-bold text-[#6366f1]">{(c.name ?? c.phone ?? '?').charAt(0).toUpperCase()}</span>
+                            <div className="w-7 h-7 rounded-full bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0">
+                              <span className="text-[10px] font-bold text-[#7c3aed]">{(c.name ?? c.phone ?? '?').charAt(0).toUpperCase()}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-gray-900 truncate">{c.name ?? '—'}</p>
@@ -286,12 +286,12 @@ export default function NewOrderPage() {
                                   country: sa.country ?? 'India',
                                 })
                               }}
-                              className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-colors ${active ? 'border-[#6366f1] bg-[#6366f1]/5' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                              className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-colors ${active ? 'border-[#7c3aed] bg-[#7c3aed]/5' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                             >
-                              <MapPin className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${active ? 'text-[#6366f1]' : 'text-gray-400'}`} />
+                              <MapPin className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${active ? 'text-[#7c3aed]' : 'text-gray-400'}`} />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
-                                  {sa.label && <span className={`text-xs font-semibold ${active ? 'text-[#6366f1]' : 'text-gray-700'}`}>{sa.label}</span>}
+                                  {sa.label && <span className={`text-xs font-semibold ${active ? 'text-[#7c3aed]' : 'text-gray-700'}`}>{sa.label}</span>}
                                   {sa.is_default && <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">Default</span>}
                                 </div>
                                 <p className="text-xs text-gray-500 truncate">{line}</p>
@@ -375,7 +375,7 @@ export default function NewOrderPage() {
                           <button
                             onClick={() => addToCart(p)}
                             disabled={!p.in_stock}
-                            className="flex items-center gap-1 text-xs font-semibold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                            className="flex items-center gap-1 text-xs font-semibold text-[#7c3aed] bg-[#7c3aed]/10 hover:bg-[#7c3aed]/20 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                           >
                             <Plus className="w-3 h-3" /> Add
                           </button>
@@ -404,7 +404,7 @@ export default function NewOrderPage() {
                             {quantity === 1 ? <Trash2 className="w-3 h-3 text-red-400" /> : <Minus className="w-3 h-3 text-gray-600" />}
                           </button>
                           <span className="w-5 text-center text-sm font-semibold text-gray-900">{quantity}</span>
-                          <button onClick={() => updateQty(product.id, 1)} className="w-7 h-7 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] flex items-center justify-center transition-colors">
+                          <button onClick={() => updateQty(product.id, 1)} className="w-7 h-7 rounded-lg bg-[#7c3aed] hover:bg-[#6d28d9] flex items-center justify-center transition-colors">
                             <Plus className="w-3 h-3 text-white" />
                           </button>
                         </div>
@@ -431,7 +431,7 @@ export default function NewOrderPage() {
                         <button
                           key={m}
                           onClick={() => setPaymentMethod(m)}
-                          className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${paymentMethod === m ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                          className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${paymentMethod === m ? 'border-[#7c3aed] bg-[#7c3aed]/5 text-[#7c3aed]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
                         >
                           {m === 'COD' ? 'Cash on Delivery' : 'Online'}
                         </button>
@@ -447,12 +447,12 @@ export default function NewOrderPage() {
                       placeholder="Call before delivery…"
                       value={notes}
                       onChange={e => setNotes(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-[#6366f1] resize-none"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-[#7c3aed] resize-none"
                     />
                   </div>
 
                   <Button
-                    className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white h-11"
+                    className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-11"
                     disabled={!canPlace}
                     onClick={() => setConfirmOpen(true)}
                   >
@@ -502,7 +502,7 @@ export default function NewOrderPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
               onClick={placeOrder}
               disabled={submitting}
             >

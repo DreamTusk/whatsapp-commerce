@@ -193,7 +193,7 @@ export default function OrderDetailPage() {
     return (
       <div className="text-center py-40 text-gray-400">
         <p className="text-lg font-medium">Order not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-sm text-[#6366f1] hover:underline">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-sm text-[#7c3aed] hover:underline">Go back</button>
       </div>
     )
   }
@@ -249,7 +249,7 @@ export default function OrderDetailPage() {
                 </Button>
                 {nextLabel && (
                   <Button
-                    className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+                    className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
                     onClick={handleAdvance}
                     disabled={isAdvancing}
                   >
@@ -407,7 +407,7 @@ export default function OrderDetailPage() {
                         href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm text-[#6366f1] hover:underline font-medium"
+                        className="inline-flex items-center gap-1.5 text-sm text-[#7c3aed] hover:underline font-medium"
                       >
                         <MapPin className="w-3.5 h-3.5" /> View on map
                       </a>
@@ -499,7 +499,7 @@ export default function OrderDetailPage() {
                                 href={shipment.tracking_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm text-[#6366f1] hover:underline font-medium"
+                                className="inline-flex items-center gap-1.5 text-sm text-[#7c3aed] hover:underline font-medium"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" /> Track package
                               </a>
@@ -592,7 +592,7 @@ export default function OrderDetailPage() {
               Cancel
             </Button>
             <Button
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
               onClick={handleAddShipment}
               disabled={isAddingShipment || !shipmentForm.carrier_name.trim() || !shipmentForm.tracking_id.trim()}
             >

@@ -11,7 +11,7 @@ interface Customization {
 }
 
 const PRESETS = [
-  { label: 'Indigo',   primary: '#6366f1', header: '#1e1e2e' },
+  { label: 'Indigo',   primary: '#7c3aed', header: '#1e1e2e' },
   { label: 'Emerald',  primary: '#10b981', header: '#064e3b' },
   { label: 'Rose',     primary: '#f43f5e', header: '#1c0a0e' },
   { label: 'Amber',    primary: '#f59e0b', header: '#1c1400' },
@@ -20,8 +20,8 @@ const PRESETS = [
 ]
 
 export default function ThemePanel() {
-  const [form, setForm] = useState<Customization>({ primary_color: '#6366f1', header_color: '#1e1e2e' })
-  const [savedForm, setSavedForm] = useState<Customization>({ primary_color: '#6366f1', header_color: '#1e1e2e' })
+  const [form, setForm] = useState<Customization>({ primary_color: '#7c3aed', header_color: '#1e1e2e' })
+  const [savedForm, setSavedForm] = useState<Customization>({ primary_color: '#7c3aed', header_color: '#1e1e2e' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -128,7 +128,7 @@ export default function ThemePanel() {
                 type="text"
                 value={form[key]}
                 onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                className="flex-1 text-sm font-mono border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="flex-1 text-sm font-mono border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
               />
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function ThemePanel() {
         <button
           onClick={save}
           disabled={saving || !isDirty}
-          className="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-[#6366f1] hover:bg-[#4f52d8] disabled:opacity-60 transition-colors"
+          className="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-[#7c3aed] hover:bg-[#4f52d8] disabled:opacity-60 transition-colors"
         >
           {saving ? 'Saving…' : 'Save Theme'}
         </button>

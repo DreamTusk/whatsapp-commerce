@@ -7,6 +7,8 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../shared/email.service';
 import { buildCriteriaWhere } from '../../utils/collection-criteria';
+import { Plan, BillingCycle } from '@prisma/client';
+import { planAmount, billingPeriod, getPlanUsage } from '../../utils/plan';
 
 @Injectable()
 export class StoreService {
@@ -43,7 +45,7 @@ export class StoreService {
     catalogId: string | null; address: string | null; logo: string | null;
     favicon: string | null;
     minOrderAmount: number; deliveryRadius: number | null; isActive: boolean;
-    isPickupEnabled: boolean; isHomeDeliveryEnabled: boolean;
+    isPickupEnabled: boolean; isHomeDeliveryEnabled: boolean; plan: Plan;
     createdAt: Date; updatedAt: Date;
     StoreCustomization?: any;
   }) {
@@ -61,6 +63,7 @@ export class StoreService {
       is_active: store.isActive,
       is_pickup_enabled: store.isPickupEnabled,
       is_home_delivery_enabled: store.isHomeDeliveryEnabled,
+      plan: store.plan,
       created_at: store.createdAt,
       updated_at: store.updatedAt,
       customization: this.formatCustomization(store.StoreCustomization ?? null),
@@ -181,7 +184,7 @@ export class StoreService {
     body: {
       name: string; phone: string; domain: string; address?: string;
       min_order_amount?: string; delivery_radius?: string; logo_media_id?: string;
-      favicon_media_id?: string;
+      favicon_media_id?: string; plan?: string; is_paid?: boolean; billing_cycle?: string;
     },
   ) {
     const existingUserStore = await this.prisma.userStore.findFirst({ where: { userId } });
@@ -190,6 +193,21 @@ export class StoreService {
     const { name, phone, domain } = body;
     if (!name || !phone || !domain) {
       throw new BadRequestException('name, phone and domain are required');
+    }
+
+    if (body.plan && !Object.values(Plan).includes(body.plan as Plan)) {
+      throw new BadRequestException(`plan must be one of: ${Object.values(Plan).join(', ')}`);
+    }
+
+    const plan = (body.plan as Plan) || 'BASIC';
+    const isPaid = body.is_paid === true;
+    if (isPaid) {
+      if (plan === 'CUSTOM') {
+        throw new BadRequestException('Custom plan pricing is not supported yet');
+      }
+      if (!body.billing_cycle || !Object.values(BillingCycle).includes(body.billing_cycle as BillingCycle)) {
+        throw new BadRequestException(`billing_cycle must be one of: ${Object.values(BillingCycle).join(', ')}`);
+      }
     }
 
     const phoneExists = await this.prisma.store.findUnique({ where: { phone } });
@@ -220,10 +238,26 @@ export class StoreService {
         favicon: faviconUrl,
         minOrderAmount: body.min_order_amount ? parseFloat(body.min_order_amount) : 0,
         deliveryRadius: body.delivery_radius ? parseFloat(body.delivery_radius) : null,
+        plan,
         StoreCustomization: { create: {} },
       },
       include: { StoreCustomization: true },
     });
+
+    if (isPaid) {
+      const billingCycle = body.billing_cycle as BillingCycle;
+      const { startDate, endDate } = billingPeriod(billingCycle);
+      await this.prisma.storeSubscription.create({
+        data: {
+          storeId: store.id,
+          plan,
+          billingCycle,
+          amount: planAmount(plan as 'BASIC' | 'PRO', billingCycle),
+          startDate,
+          endDate,
+        },
+      });
+    }
 
     await this.prisma.userStore.create({
       data: { userId, storeId: store.id, role: 'OWNER' },
@@ -247,6 +281,34 @@ export class StoreService {
     if (!userStore) throw new NotFoundException('No store found');
 
     return { store: this.formatStore(userStore.Store) };
+  }
+
+  async getPlanDetails(userId: string) {
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId }, select: { plan: true } });
+    const [usage, subscriptions] = await Promise.all([
+      getPlanUsage(this.prisma, userStore.storeId, store!.plan),
+      this.prisma.storeSubscription.findMany({
+        where: { storeId: userStore.storeId },
+        orderBy: { startDate: 'desc' },
+      }),
+    ]);
+
+    return {
+      plan: store!.plan,
+      usage,
+      subscriptions: subscriptions.map((s) => ({
+        id: s.id,
+        plan: s.plan,
+        billing_cycle: s.billingCycle,
+        amount: s.amount,
+        start_date: s.startDate,
+        end_date: s.endDate,
+        created_at: s.createdAt,
+      })),
+    };
   }
 
   async getCustomization(userId: string) {

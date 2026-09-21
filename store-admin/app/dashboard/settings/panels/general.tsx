@@ -160,13 +160,13 @@ export default function GeneralPanel() {
         <div className="space-y-2">
           <Label className="text-sm font-medium text-gray-700">Logo</Label>
           <label className="flex items-center gap-4 cursor-pointer group w-fit">
-            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#7c3aed] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
               {currentLogo ? (
                 <img src={currentLogo} alt="logo" className="w-full h-full object-cover" />
               ) : (
                 <div className="flex flex-col items-center gap-1">
-                  <Store className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                  <Store className="w-5 h-5 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
+                  <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
                 </div>
               )}
             </div>
@@ -180,13 +180,13 @@ export default function GeneralPanel() {
         <div className="space-y-2">
           <Label className="text-sm font-medium text-gray-700">Favicon</Label>
           <label className="flex items-center gap-4 cursor-pointer group w-fit">
-            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
+            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#7c3aed] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0">
               {currentFavicon ? (
                 <img src={currentFavicon} alt="favicon" className="w-full h-full object-cover" />
               ) : (
                 <div className="flex flex-col items-center gap-1">
-                  <Store className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                  <Store className="w-5 h-5 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
+                  <ImagePlus className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
                 </div>
               )}
             </div>
@@ -231,7 +231,7 @@ export default function GeneralPanel() {
 
       <div className="flex justify-end pt-2">
         <Button
-          className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-10 px-6"
+          className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-10 px-6"
           onClick={handleSave}
           disabled={isSaving || isUploading}
         >

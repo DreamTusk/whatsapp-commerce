@@ -181,7 +181,7 @@ export default function EditProductPage() {
       <div className="text-center py-40 text-gray-400">
         <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
         <p className="text-lg font-medium">Product not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-base text-[#6366f1] hover:underline">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-base text-[#7c3aed] hover:underline">Go back</button>
       </div>
     )
   }
@@ -197,7 +197,7 @@ export default function EditProductPage() {
             <Button variant="outline" className="h-9 px-4 text-sm text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" onClick={() => setConfirmDelete(true)} disabled={isDeleting}>
               Delete
             </Button>
-            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+            <Button className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-9 px-4 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
               {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
               {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Update'}
             </Button>
@@ -316,7 +316,7 @@ export default function EditProductPage() {
                 {newImagePreviews.map((preview, i) => (
                   <div
                     key={`new-${i}`}
-                    className="relative aspect-square rounded-xl overflow-hidden border-2 border-dashed border-[#6366f1]/40 bg-gray-50 group"
+                    className="relative aspect-square rounded-xl overflow-hidden border-2 border-dashed border-[#7c3aed]/40 bg-gray-50 group"
                   >
                     <img src={preview} alt="" className="w-full h-full object-cover opacity-80" />
                     <button
@@ -330,9 +330,9 @@ export default function EditProductPage() {
                 ))}
 
                 {/* Add more images */}
-                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#6366f1] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors bg-gray-50 hover:bg-[#6366f1]/5 group">
-                  <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
-                  <span className="text-xs text-gray-400 group-hover:text-[#6366f1] transition-colors">Add</span>
+                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#7c3aed] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors bg-gray-50 hover:bg-[#7c3aed]/5 group">
+                  <ImagePlus className="w-5 h-5 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
+                  <span className="text-xs text-gray-400 group-hover:text-[#7c3aed] transition-colors">Add</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="hidden" onChange={handleImagesChange} />
                 </label>
               </div>
@@ -341,7 +341,7 @@ export default function EditProductPage() {
                 <p className="text-xs text-gray-400">Hover image — ★ sets primary · ✕ removes · JPEG, PNG, WebP, AVIF · Max 10 MB</p>
               )}
               {newImagePreviews.length > 0 && (
-                <p className="text-xs text-[#6366f1]/60">Dashed = will upload on save</p>
+                <p className="text-xs text-[#7c3aed]/60">Dashed = will upload on save</p>
               )}
             </div>
 
@@ -390,7 +390,7 @@ export default function EditProductPage() {
             <Button variant="outline" className="h-9 px-4 text-sm text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" onClick={() => setConfirmDelete(true)} disabled={isDeleting}>
               Delete
             </Button>
-            <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
+            <Button className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-9 px-6 text-sm" onClick={handleSave} disabled={isSaving || isUploading}>
               {(isSaving || isUploading) && <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />}
               {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Update'}
             </Button>

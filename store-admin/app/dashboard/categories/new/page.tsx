@@ -88,15 +88,15 @@ export default function NewCategoryPage() {
               </Label>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-4 cursor-pointer group w-fit">
-                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
+                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#7c3aed] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
                     {imagePreview ? (
                       <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
                     ) : (
-                      <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                      <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700 group-hover:text-[#6366f1] transition-colors">
+                    <p className="text-sm font-medium text-gray-700 group-hover:text-[#7c3aed] transition-colors">
                       {imagePreview ? 'Change image' : 'Upload image'}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
@@ -156,7 +156,7 @@ export default function NewCategoryPage() {
 
             <div className="border-t border-gray-50 pt-1">
               <Button
-                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11"
+                className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white w-full h-11"
                 onClick={handleSave}
                 disabled={isSaving || isUploading}
               >

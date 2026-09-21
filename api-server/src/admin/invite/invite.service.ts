@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../shared/email.service';
 import { Role } from '@prisma/client';
 import * as crypto from 'crypto';
+import { assertStaffLimit } from '../../utils/plan';
 
 const INVITE_EXPIRY_DAYS = 3;
 
@@ -27,6 +28,11 @@ export class InviteService {
 
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
+
+    if (role === 'STAFF') {
+      const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId }, select: { plan: true } });
+      await assertStaffLimit(this.prisma, userStore.storeId, store!.plan);
+    }
 
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {

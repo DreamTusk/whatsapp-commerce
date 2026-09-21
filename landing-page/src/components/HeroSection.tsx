@@ -23,19 +23,16 @@ export function HeroSection() {
       <div className="absolute -top-16 right-[-80px] w-96 h-96 bg-primary-container/10 blur-3xl -z-10 pointer-events-none rounded-full" />
 
       <div className="max-w-[80rem] mx-auto px-4 md:px-6 lg:px-8 flex flex-col items-center text-center">
-        {/* Eyebrow Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-surface-container border border-outline-variant/60 shadow-sm mb-6">
-          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-            Modern Commerce Platform
-          </span>
-        </div>
-
-        {/* Main Headline */}
         <h1 className="font-[var(--font-plus-jakarta)] text-4xl md:text-[56px] md:leading-[64px] font-bold text-on-surface max-w-4xl tracking-tight">
-          Build an online store your{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary-container">
-            customers will love.
+          <span className="sr-only">Build an online store your customers will love.</span>
+          <span aria-hidden="true">
+            <AnimatedWords text={HEADLINE_PART_1} />{" "}
+            <AnimatedWords
+              text={HEADLINE_PART_2}
+              startIndex={countLetters(HEADLINE_PART_1)}
+              className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary-container"
+            />
+            <span className="hero-cursor inline-block w-[3px] md:w-1 h-[0.75em] bg-primary ml-1 align-middle rounded-sm" />
           </span>
         </h1>
 
@@ -357,6 +354,56 @@ export function HeroSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+const LETTER_STEP = 0.035;
+
+const HEADLINE_PART_1 = "Build an online store your";
+const HEADLINE_PART_2 = "customers will love.";
+
+function countLetters(text: string) {
+  return text.replace(/\s/g, "").length;
+}
+
+function AnimatedWords({
+  text,
+  startIndex = 0,
+  className = "",
+}: {
+  text: string;
+  startIndex?: number;
+  className?: string;
+}) {
+  let index = startIndex;
+  const words = text.split(" ");
+
+  return (
+    <>
+      {words.map((word, wordIdx) => {
+        const isLastWord = wordIdx === words.length - 1;
+        const letters = word.split("").map((char, charIdx) => {
+          const delay = index * LETTER_STEP;
+          index += 1;
+          return (
+            <span
+              key={charIdx}
+              className={["hero-letter", className].join(" ")}
+              style={{ animationDelay: delay + "s" }}
+            >
+              {char}
+            </span>
+          );
+        });
+
+        return (
+          <span key={wordIdx}>
+            <span className="inline-block whitespace-nowrap">{letters}</span>
+            {isLastWord ? null : " "}
+          </span>
+        );
+      })}
+    </>
   );
 }
 

@@ -107,7 +107,7 @@ export default function ShipmentEditPage() {
     return (
       <div className="text-center py-40 text-gray-400">
         <p className="text-lg font-medium">Shipment not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-sm text-[#6366f1] hover:underline">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-sm text-[#7c3aed] hover:underline">Go back</button>
       </div>
     )
   }
@@ -145,7 +145,7 @@ export default function ShipmentEditPage() {
                 <span className="text-sm text-gray-400">Order</span>
                 <button
                   onClick={() => router.push(`/dashboard/orders/${shipment.order.id}`)}
-                  className="text-sm font-semibold text-[#6366f1] hover:underline"
+                  className="text-sm font-semibold text-[#7c3aed] hover:underline"
                 >
                   {shipment.order.order_number}
                 </button>
@@ -211,7 +211,7 @@ export default function ShipmentEditPage() {
                     href={form.tracking_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-[#6366f1] hover:underline mt-1.5"
+                    className="inline-flex items-center gap-1 text-xs text-[#7c3aed] hover:underline mt-1.5"
                   >
                     <ExternalLink className="w-3 h-3" /> Test link
                   </a>
@@ -221,7 +221,7 @@ export default function ShipmentEditPage() {
 
             <div className="flex justify-end mt-5">
               <Button
-                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+                className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white"
                 onClick={handleSave}
                 disabled={isSaving || !form.carrier_name.trim() || !form.tracking_id.trim()}
               >

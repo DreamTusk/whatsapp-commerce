@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { FileService } from '../../shared/file.service';
 import { MediaEntity, BucketType } from '@prisma/client';
+import { assertProductLimit } from '../../utils/plan';
 
 const productInclude = {
   Brand: { select: { id: true, name: true } },
@@ -122,6 +123,9 @@ export class ProductsService {
     if (!body.selling_price) {
       throw new BadRequestException('selling_price is required');
     }
+
+    const store = await this.prisma.store.findUnique({ where: { id: storeId }, select: { plan: true } });
+    await assertProductLimit(this.prisma, storeId, store!.plan);
 
     const category = await this.prisma.category.findFirst({ where: { id: body.category_id, storeId } });
     if (!category) throw new NotFoundException('Category not found');

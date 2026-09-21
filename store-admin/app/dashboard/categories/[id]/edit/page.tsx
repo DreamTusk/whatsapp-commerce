@@ -113,7 +113,7 @@ export default function EditCategoryPage() {
     return (
       <div className="text-center py-40 text-gray-400">
         <p className="text-lg font-medium">Category not found</p>
-        <button onClick={() => router.back()} className="mt-3 text-sm text-[#6366f1] hover:underline">Go back</button>
+        <button onClick={() => router.back()} className="mt-3 text-sm text-[#7c3aed] hover:underline">Go back</button>
       </div>
     )
   }
@@ -138,7 +138,7 @@ export default function EditCategoryPage() {
           <h1 className="text-2xl font-bold text-gray-900">Edit category</h1>
           {isActive && (
             <Button
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white gap-2"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white gap-2"
               onClick={() => router.push(`/dashboard/products/new?category_id=${id}`)}
             >
               <Plus className="w-4 h-4" /> Add product
@@ -159,17 +159,17 @@ export default function EditCategoryPage() {
               </Label>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-4 cursor-pointer group w-fit">
-                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#6366f1] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
+                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 group-hover:border-[#7c3aed] flex items-center justify-center overflow-hidden transition-colors flex-shrink-0 bg-gray-50">
                     {imagePreview ? (
                       <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
                     ) : !removeImage && currentImage ? (
                       <img src={currentImage} alt="current" className="w-full h-full object-cover" />
                     ) : (
-                      <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#6366f1] transition-colors" />
+                      <ImagePlus className="w-6 h-6 text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700 group-hover:text-[#6366f1] transition-colors">
+                    <p className="text-sm font-medium text-gray-700 group-hover:text-[#7c3aed] transition-colors">
                       {imagePreview || (!removeImage && currentImage) ? 'Change image' : 'Upload image'}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5MB</p>
@@ -227,7 +227,7 @@ export default function EditCategoryPage() {
 
             <div className="border-t border-gray-50 pt-1">
               <Button
-                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full h-11"
+                className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white w-full h-11"
                 onClick={handleSave}
                 disabled={isSaving || isUploading}
               >
