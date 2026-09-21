@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import ProductCard from '@/components/product-card'
+import SubcategoryList from '@/components/subcategory-list'
 import type { Product, Category } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
@@ -30,7 +31,9 @@ export default async function ProductsPage({ searchParams }: Props) {
     products = prodData.products
   } catch { /* backend unavailable */ }
 
-  const activeCategory = categories.find(c => c.id === categoryId)
+  const parentCategory = categories.find(c => c.id === categoryId || c.children?.some(ch => ch.id === categoryId))
+  const activeSubCategory = parentCategory?.children?.find(ch => ch.id === categoryId)
+  const activeCategory = activeSubCategory ?? parentCategory
 
   return (
     <main>
@@ -57,7 +60,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           </Link>
 
           {categories.map(cat => {
-            const active = categoryId === cat.id
+            const active = parentCategory?.id === cat.id
             const imgSrc = cat.image_url
               ? (cat.image_url.startsWith('http') ? cat.image_url : `${API_URL}${cat.image_url}`)
               : null
@@ -109,6 +112,11 @@ export default async function ProductsPage({ searchParams }: Props) {
               </Link>
             )}
           </div>
+
+          {/* Sub-categories — shown when the active category has them */}
+          {parentCategory?.children && parentCategory.children.length > 0 && (
+            <SubcategoryList parentCategory={parentCategory} activeSubCategory={activeSubCategory} />
+          )}
 
           {/* Products grid */}
           {products.length === 0 ? (
