@@ -10,6 +10,30 @@ import { buildCriteriaWhere } from '../../utils/collection-criteria';
 import { Plan, BillingCycle } from '@prisma/client';
 import { planAmount, billingPeriod, getPlanUsage } from '../../utils/plan';
 
+// Keep in sync with RESERVED_SUBDOMAINS in store-admin/app/create-store/page.tsx
+const RESERVED_SUBDOMAINS = new Set([
+  // environments
+  'test', 'testing', 'tests', 'qa', 'uat', 'sit',
+  'dev', 'develop', 'development', 'devel',
+  'stage', 'staging', 'stg', 'preprod', 'pre-prod', 'prod', 'production', 'live',
+  'demo', 'sandbox', 'beta', 'alpha', 'preview', 'canary', 'local', 'localhost',
+  // infra
+  'api', 'app', 'apps', 'admin', 'administrator', 'dashboard', 'console', 'panel', 'portal',
+  'cdn', 'static', 'assets', 'media', 'img', 'images', 'files', 'upload', 'uploads', 'storage',
+  'db', 'redis', 'cache', 'internal', 'intranet', 'vpn', 'proxy', 'gateway',
+  'git', 'ci', 'jenkins', 'status', 'monitor', 'metrics', 'logs',
+  // mail / dns
+  'mail', 'email', 'smtp', 'imap', 'pop', 'pop3', 'mx', 'webmail',
+  'ns', 'ns1', 'ns2', 'dns', 'ftp', 'sftp', 'autodiscover', 'autoconfig',
+  // auth
+  'auth', 'login', 'logout', 'signin', 'signup', 'register', 'sso', 'oauth',
+  'account', 'accounts', 'user', 'users', 'password', 'reset', 'verify',
+  // brand / business
+  'www', 'help', 'support', 'docs', 'blog', 'about', 'contact', 'careers',
+  'billing', 'pay', 'payment', 'payments', 'checkout', 'invoice', 'shop', 'store',
+  'legal', 'terms', 'privacy', 'security', 'abuse', 'root', 'system', 'official',
+]);
+
 @Injectable()
 export class StoreService {
   constructor(
@@ -91,6 +115,13 @@ export class StoreService {
       include: { Media: { select: { url: true } } },
     },
   };
+
+  private assertDomainNotReserved(domain: string) {
+    const match = /^([a-z0-9-]+)\.dreambiz\.app$/i.exec(domain.trim());
+    if (match && RESERVED_SUBDOMAINS.has(match[1].toLowerCase())) {
+      throw new BadRequestException(`"${match[1]}" is a reserved subdomain and cannot be used`);
+    }
+  }
 
   async getStoreInfo(domain: string) {
     if (!domain) throw new BadRequestException('Missing x-store-domain header');
@@ -209,6 +240,8 @@ export class StoreService {
         throw new BadRequestException(`billing_cycle must be one of: ${Object.values(BillingCycle).join(', ')}`);
       }
     }
+
+    this.assertDomainNotReserved(domain);
 
     const phoneExists = await this.prisma.store.findUnique({ where: { phone } });
     if (phoneExists) throw new ConflictException('Phone number already in use');
@@ -377,6 +410,8 @@ export class StoreService {
   ) {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
+
+    if (body.domain !== undefined) this.assertDomainNotReserved(body.domain);
 
     let logoUrl: string | undefined = undefined;
     if (body.logo_media_id) {
