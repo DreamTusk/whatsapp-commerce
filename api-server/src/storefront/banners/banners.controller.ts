@@ -1,5 +1,7 @@
-import { Controller, Get, Headers } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import type { Store } from '@prisma/client';
 import { StorefrontBannersService } from './banners.service';
+import { CurrentStore } from '../../common/decorators/current-store.decorator';
 
 @Controller('storefront/banners')
 export class StorefrontBannersController {
@@ -7,7 +9,7 @@ export class StorefrontBannersController {
 
   // GET /api/storefront/banners
   @Get()
-  listBanners(@Headers('x-store-domain') domain: string) {
-    return this.bannersService.listBanners(domain);
+  listBanners(@CurrentStore() store: Store) {
+    return this.bannersService.listBanners(store.id);
   }
 }

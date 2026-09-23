@@ -15,6 +15,30 @@ import { apiErrorMessage } from '@/lib/utils'
 
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_STORE_DOMAIN ?? 'dreambiz.app'
 
+// Keep in sync with RESERVED_SUBDOMAINS in api-server/src/admin/store/store.service.ts
+const RESERVED_SUBDOMAINS = new Set([
+  // environments
+  'test', 'testing', 'tests', 'qa', 'uat', 'sit',
+  'dev', 'develop', 'development', 'devel',
+  'stage', 'staging', 'stg', 'preprod', 'pre-prod', 'prod', 'production', 'live',
+  'demo', 'sandbox', 'beta', 'alpha', 'preview', 'canary', 'local', 'localhost',
+  // infra
+  'api', 'app', 'apps', 'admin', 'administrator', 'dashboard', 'console', 'panel', 'portal',
+  'cdn', 'static', 'assets', 'media', 'img', 'images', 'files', 'upload', 'uploads', 'storage',
+  'db', 'redis', 'cache', 'internal', 'intranet', 'vpn', 'proxy', 'gateway',
+  'git', 'ci', 'jenkins', 'status', 'monitor', 'metrics', 'logs',
+  // mail / dns
+  'mail', 'email', 'smtp', 'imap', 'pop', 'pop3', 'mx', 'webmail',
+  'ns', 'ns1', 'ns2', 'dns', 'ftp', 'sftp', 'autodiscover', 'autoconfig',
+  // auth
+  'auth', 'login', 'logout', 'signin', 'signup', 'register', 'sso', 'oauth',
+  'account', 'accounts', 'user', 'users', 'password', 'reset', 'verify',
+  // brand / business
+  'www', 'help', 'support', 'docs', 'blog', 'about', 'contact', 'careers',
+  'billing', 'pay', 'payment', 'payments', 'checkout', 'invoice', 'shop', 'store',
+  'legal', 'terms', 'privacy', 'security', 'abuse', 'root', 'system', 'official',
+])
+
 const PLAN_OPTIONS = [
   { value: 'BASIC', label: 'Basic' },
   { value: 'PRO', label: 'Pro' },
@@ -63,6 +87,7 @@ export default function CreateStorePage() {
     if (phone.trim().length < 7) errs.phone = 'Enter a valid phone number'
     if (!slug || slug.length < 2) errs.slug = 'Subdomain must be at least 2 characters'
     if (!/^[a-z0-9-]+$/.test(slug)) errs.slug = 'Only lowercase letters, numbers, and hyphens allowed'
+    if (RESERVED_SUBDOMAINS.has(slug)) errs.slug = 'This subdomain is reserved, please choose another'
     return errs
   }
 
