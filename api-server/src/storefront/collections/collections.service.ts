@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { buildCriteriaWhere } from '../../utils/collection-criteria';
 
@@ -14,7 +14,7 @@ export class StorefrontCollectionsService {
   constructor(private prisma: PrismaService) {}
 
   private formatProduct(p: any) {
-    const media = (p.ProductMedia ?? []);
+    const media = p.ProductMedia ?? [];
     const primary = media.find((pm: any) => pm.isPrimary) ?? media[0] ?? null;
     return {
       id: p.id,
@@ -30,15 +30,9 @@ export class StorefrontCollectionsService {
     };
   }
 
-  async getCollection(domain: string, collectionId: string) {
-    if (!domain) throw new BadRequestException('Missing x-store-domain header');
-
-    const store = await this.prisma.store.findUnique({ where: { domain } });
-    if (!store) throw new NotFoundException('Store not found');
-    if (!store.isActive) throw new BadRequestException('Store is not active');
-
+  async getCollection(storeId: string, collectionId: string) {
     const collection = await this.prisma.collection.findFirst({
-      where: { id: collectionId, storeId: store.id, isActive: true },
+      where: { id: collectionId, storeId, isActive: true },
     });
     if (!collection) throw new NotFoundException('Collection not found');
 
@@ -52,7 +46,7 @@ export class StorefrontCollectionsService {
       products = cp.map(({ Product }) => this.formatProduct(Product));
     } else {
       const ps = await this.prisma.product.findMany({
-        where: buildCriteriaWhere(collection.criteria, store.id),
+        where: buildCriteriaWhere(collection.criteria, storeId),
         orderBy: { createdAt: 'desc' },
         include: productMediaInclude,
       });

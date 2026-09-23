@@ -1,5 +1,7 @@
-import { Controller, Get, Headers } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import type { Store } from '@prisma/client';
 import { StorefrontCategoriesService } from './categories.service';
+import { CurrentStore } from '../../common/decorators/current-store.decorator';
 
 @Controller('storefront/categories')
 export class StorefrontCategoriesController {
@@ -7,7 +9,7 @@ export class StorefrontCategoriesController {
 
   // GET /api/storefront/categories
   @Get()
-  listCategories(@Headers('x-store-domain') domain: string) {
-    return this.categoriesService.listCategories(domain);
+  listCategories(@CurrentStore() store: Store) {
+    return this.categoriesService.listCategories(store.id);
   }
 }
