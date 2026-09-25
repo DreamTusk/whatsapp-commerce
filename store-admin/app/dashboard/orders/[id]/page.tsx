@@ -62,6 +62,10 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = {
   REFUNDED: 'Refunded',
 }
 
+function isUnpaidOnline(order: { payment: { method: string; status: string } | null }) {
+  return order.payment?.method === 'ONLINE' && order.payment?.status === 'PENDING'
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -221,6 +225,11 @@ export default function OrderDetailPage() {
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLORS[status]}`}>
                 {STATUS_DISPLAY[status]}
               </span>
+              {isUnpaidOnline(order) && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-600">
+                  Unpaid
+                </span>
+              )}
               {order.source === 'MANUAL' && (
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
                   Manual
@@ -465,8 +474,8 @@ export default function OrderDetailPage() {
                     <p className="text-sm font-semibold text-gray-900">
                       {order.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}
                     </p>
-                    <p className={`text-sm font-semibold ${PAYMENT_STATUS_COLORS[order.payment.status] ?? 'text-gray-500'}`}>
-                      {PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status}
+                    <p className={`text-sm font-semibold ${isUnpaidOnline(order) ? 'text-red-500' : (PAYMENT_STATUS_COLORS[order.payment.status] ?? 'text-gray-500')}`}>
+                      {isUnpaidOnline(order) ? 'Payment not completed' : (PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status)}
                     </p>
                     {order.payment.paid_at && (
                       <p className="text-xs text-gray-400 pt-1">{formatDate(order.payment.paid_at)}</p>

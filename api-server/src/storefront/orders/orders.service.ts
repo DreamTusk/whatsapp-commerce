@@ -342,6 +342,54 @@ export class StorefrontOrdersService {
     };
   }
 
+  async retryPayment(customerId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+      include: { Payment: true },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    if (!order.Payment || order.Payment.method !== PaymentMethod.ONLINE) {
+      throw new BadRequestException('This order does not use online payment');
+    }
+    if (order.Payment.status === PaymentStatus.PAID) {
+      throw new BadRequestException('This order is already paid');
+    }
+    if (order.status === OrderStatus.CANCELLED) {
+      throw new BadRequestException('This order has been cancelled');
+    }
+
+    const razorpayProvider = await this.paymentProviders.getActiveProvider(
+      order.storeId,
+      'RAZORPAY',
+    );
+    if (!razorpayProvider) {
+      throw new BadRequestException('Payment provider not configured');
+    }
+
+    const razorpay = new Razorpay({
+      key_id: razorpayProvider.keyId,
+      key_secret: razorpayProvider.keySecret,
+    });
+
+    const amountPaise = Math.round(order.totalAmount * 100);
+    const rzpOrder = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: order.orderNumber,
+    });
+
+    await this.prisma.payment.update({
+      where: { orderId: order.id },
+      data: { razorpayOrderId: rzpOrder.id, status: PaymentStatus.PENDING },
+    });
+
+    return {
+      razorpay_order_id: rzpOrder.id,
+      razorpay_key_id: razorpayProvider.keyId,
+      amount_paise: amountPaise,
+    };
+  }
+
   async verifyPayment(
     customerId: string,
     orderId: string,

@@ -35,6 +35,10 @@ const STATUS_DISPLAY: Record<OrderStatus, string> = {
   CANCELLED: 'Cancelled',
 }
 
+function isUnpaidOnline(order: Order) {
+  return order.payment?.method === 'ONLINE' && order.payment?.status === 'PENDING'
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
@@ -144,9 +148,10 @@ export default function OrdersPage() {
                         <p className={`text-base font-medium ${
                           order.payment.status === 'PAID' ? 'text-green-600'
                           : order.payment.status === 'FAILED' ? 'text-red-500'
+                          : isUnpaidOnline(order) ? 'text-red-500'
                           : 'text-yellow-600'
                         }`}>
-                          {order.payment.status}
+                          {isUnpaidOnline(order) ? 'Payment pending' : order.payment.status}
                         </p>
                       </div>
                     ) : (
@@ -154,9 +159,16 @@ export default function OrdersPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-base font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status as OrderStatus]}`}>
-                      {STATUS_DISPLAY[order.status as OrderStatus]}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`text-base font-medium px-2.5 py-1 rounded-full w-fit ${STATUS_COLORS[order.status as OrderStatus]}`}>
+                        {STATUS_DISPLAY[order.status as OrderStatus]}
+                      </span>
+                      {isUnpaidOnline(order) && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 w-fit">
+                          Unpaid
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 hidden xl:table-cell">
                     <p className="text-sm text-gray-700">{order.created_by ?? '—'}</p>

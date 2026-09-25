@@ -41,6 +41,16 @@ export class StorefrontOrdersController {
     );
   }
 
+  // POST /api/storefront/orders/:id/retry-payment
+  @Post(':id/retry-payment')
+  @HttpCode(HttpStatus.OK)
+  retryPayment(
+    @CurrentCustomer() customer: { customerId: string },
+    @Param('id') id: string,
+  ) {
+    return this.ordersService.retryPayment(customer.customerId, id);
+  }
+
   // POST /api/storefront/orders/:id/verify-payment
   @Post(':id/verify-payment')
   @HttpCode(HttpStatus.OK)

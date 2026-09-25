@@ -7,7 +7,7 @@ import { useCart } from '@/contexts/cart'
 import { useAuth } from '@/contexts/auth'
 import { clientFetch } from '@/lib/client-api'
 import { getGuestCart, updateGuestQty, type GuestCartItem } from '@/lib/guest-cart'
-import { X, ChevronRight, Plus } from "@deemlol/next-icons"
+import { X, ChevronRight, Plus, Trash } from "@deemlol/next-icons"
 import type { Cart, CustomerAddress } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
@@ -138,6 +138,9 @@ export default function CartDrawer() {
 
   const items = cart?.items ?? []
   const subtotal = cart?.total ?? 0
+  const hasOutOfStock = isAuthenticated
+    ? items.some(i => !i.product.in_stock)
+    : guestItems.some(i => !i.in_stock)
 
   return (
     <>
@@ -215,6 +218,13 @@ export default function CartDrawer() {
                         disabled={!item.in_stock}
                         onClick={() => guestUpdateQtyLocal(item.product_id, item.quantity + 1)}
                         className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:opacity-40 text-base leading-none">+</button>
+                      <button
+                        onClick={() => guestUpdateQtyLocal(item.product_id, 0)}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 transition-colors"
+                        aria-label="Remove item"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -295,6 +305,14 @@ export default function CartDrawer() {
                       className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 text-base leading-none"
                     >
                       +
+                    </button>
+                    <button
+                      disabled={updating === item.product.id}
+                      onClick={() => updateQty(item.product.id, 0)}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-40"
+                      aria-label="Remove item"
+                    >
+                      <Trash className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -400,10 +418,15 @@ export default function CartDrawer() {
         {/* Footer — Guest checkout */}
         {!isAuthenticated && guestItems.length > 0 && (
           <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100 bg-white">
-            <p className="text-xs text-gray-400 text-center mb-2">Sign in to place your order</p>
+            {hasOutOfStock ? (
+              <p className="text-xs text-red-500 font-medium text-center mb-2">Remove out-of-stock items to continue</p>
+            ) : (
+              <p className="text-xs text-gray-400 text-center mb-2">Sign in to place your order</p>
+            )}
             <button
               onClick={handleGuestCheckout}
-              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm"
+              disabled={hasOutOfStock}
+              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm disabled:opacity-40"
             >
               <span>Sign in &amp; Checkout</span>
               <ChevronRight className="w-4 h-4" />
@@ -414,9 +437,13 @@ export default function CartDrawer() {
         {/* Footer — Authenticated checkout */}
         {isAuthenticated && items.length > 0 && (
           <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100 bg-white">
+            {hasOutOfStock && (
+              <p className="text-xs text-red-500 font-medium text-center mb-2">Remove out-of-stock items to continue</p>
+            )}
             <button
               onClick={handleCheckout}
-              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm"
+              disabled={hasOutOfStock}
+              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm disabled:opacity-40"
             >
               <span>Proceed to Checkout</span>
               <div className="flex items-center gap-2">

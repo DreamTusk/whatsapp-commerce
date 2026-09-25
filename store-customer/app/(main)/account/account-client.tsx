@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
+import { loadRazorpayScript } from '@/lib/razorpay'
 import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink, ShoppingBag, CheckCircle } from "@deemlol/next-icons"
 
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
@@ -40,6 +41,9 @@ const TRACKING_STEPS = [
   { status: 'DELIVERED', label: 'Delivered', Icon: Package },
 ]
 const TRACKING_ORDER: Record<string, number> = { NEW: 0, CONFIRMED: 1, OUT_FOR_DELIVERY: 2, DELIVERED: 3, CANCELLED: -1 }
+function isUnpaidOnline(o: Order) {
+  return o.payment?.method === 'ONLINE' && o.payment?.status === 'PENDING' && o.status !== 'CANCELLED'
+}
 const CANCEL_REASONS = ['Changed my mind', 'Ordered by mistake', 'Found a better price', 'Delivery taking too long', 'Other']
 const BUBBLE_COLORS = [
   'bg-orange-100 text-orange-600', 'bg-red-100 text-red-600', 'bg-yellow-100 text-yellow-700',
@@ -97,6 +101,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [orderAgainLoading, setOrderAgainLoading] = useState<string | null>(null)
+  const [payAgainLoading, setPayAgainLoading] = useState<string | null>(null)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedOrderLoading, setSelectedOrderLoading] = useState(false)
@@ -223,6 +228,61 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         await clientFetch('/api/storefront/cart', { method: 'POST', body: JSON.stringify({ product_id: item.product_id }) })
       await cartRefresh(); openCart()
     } catch { /* ignore */ } finally { setOrderAgainLoading(null) }
+  }
+
+  async function payAgain(order: Order) {
+    setPayAgainLoading(order.id)
+    try {
+      const data = await clientFetch<{
+        razorpay_order_id: string
+        razorpay_key_id: string
+        amount_paise: number
+      }>(`/api/storefront/orders/${order.id}/retry-payment`, { method: 'POST' })
+
+      const loaded = await loadRazorpayScript()
+      if (!loaded) {
+        alert('Failed to load payment gateway. Please try again.')
+        setPayAgainLoading(null)
+        return
+      }
+
+      const rzp = new (window as any).Razorpay({
+        key: data.razorpay_key_id,
+        amount: data.amount_paise,
+        currency: 'INR',
+        order_id: data.razorpay_order_id,
+        name: storeName ?? 'Store',
+        description: 'Order payment',
+        prefill: { contact: customer?.phone || undefined },
+        theme: { color: '#6366f1' },
+        handler: async (response: {
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          razorpay_signature: string
+        }) => {
+          try {
+            const d = await clientFetch<{ order: Order }>(`/api/storefront/orders/${order.id}/verify-payment`, {
+              method: 'POST',
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            })
+            setOrders(prev => prev.map(o => o.id === order.id ? d.order : o))
+          } catch {
+            alert('Payment verification failed. Please contact support with your order ID.')
+          } finally {
+            setPayAgainLoading(null)
+          }
+        },
+        modal: { ondismiss: () => setPayAgainLoading(null) },
+      })
+      rzp.open()
+    } catch (e: unknown) {
+      alert((e as { error?: string })?.error ?? 'Failed to start payment')
+      setPayAgainLoading(null)
+    }
   }
 
   async function removeFromWishlist(productId: string) {
@@ -487,10 +547,10 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                       <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
                     </div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className={`flex items-center gap-1.5 text-sm font-semibold ${STATUS_COLOR[order.status] ?? 'text-gray-500'}`}>
+                      <span className={`flex items-center gap-1.5 text-sm font-semibold ${isUnpaidOnline(order) ? 'text-red-500' : (STATUS_COLOR[order.status] ?? 'text-gray-500')}`}>
                         {order.status === 'DELIVERED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                         {order.status === 'CANCELLED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                        {STATUS_LABEL[order.status] ?? order.status}
+                        {isUnpaidOnline(order) ? 'Payment pending' : (STATUS_LABEL[order.status] ?? order.status)}
                       </span>
                       <p className="text-sm font-bold text-gray-900">₹{order.total_amount}</p>
                     </div>
@@ -499,11 +559,19 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                         View details
                         <ChevronRight className="w-3 h-3" />
                       </span>
-                      <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
-                        className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl btn-primary-outline disabled:opacity-50"
-                      >
-                        {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
-                      </button>
+                      {isUnpaidOnline(order) ? (
+                        <button onClick={() => payAgain(order)} disabled={payAgainLoading === order.id}
+                          className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl btn-primary-filled disabled:opacity-50"
+                        >
+                          {payAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-t-transparent border-white rounded-full animate-spin inline-block" /> Processing…</span> : 'Pay Again'}
+                        </button>
+                      ) : (
+                        <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
+                          className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl btn-primary-outline disabled:opacity-50"
+                        >
+                          {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -620,7 +688,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
 
   // ── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
   const desktopSidebar = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <div className="flex items-center gap-3 px-5 py-5">
         <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
           <span className="text-base font-bold text-white leading-none">{initial}</span>
@@ -655,7 +723,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         </div>
       </div>
       {storeName && (
-        <div className="mt-auto px-5 pb-5">
+        <div className="px-5 pt-8 pb-5">
           <p className="text-2xl font-bold text-gray-300 text-center">{storeName}</p>
         </div>
       )}
@@ -781,8 +849,8 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                     <p className="font-bold text-gray-900 text-lg leading-tight">{o.order_number}</p>
                     <p className="text-xs text-gray-400 mt-1">{formatDateTime(o.created_at)}</p>
                   </div>
-                  <span className={`mt-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex-shrink-0 ${isCancelled ? 'bg-red-50 text-red-500' : o.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : 'bg-gray-50 c-primary'}`}>
-                    {STATUS_LABEL[o.status] ?? o.status}
+                  <span className={`mt-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex-shrink-0 ${isCancelled ? 'bg-red-50 text-red-500' : isUnpaidOnline(o) ? 'bg-red-50 text-red-500' : o.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : 'bg-gray-50 c-primary'}`}>
+                    {isUnpaidOnline(o) ? 'Payment pending' : (STATUS_LABEL[o.status] ?? o.status)}
                   </span>
                 </div>
               </div>
@@ -827,10 +895,17 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Payment</p>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-700">{o.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}</p>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${o.payment.status === 'PAID' ? 'bg-green-50 text-green-600' : o.payment.status === 'FAILED' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'}`}>
-                      {o.payment.status === 'PENDING' ? 'Pay on delivery' : o.payment.status}
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${o.payment.status === 'PAID' ? 'bg-green-50 text-green-600' : o.payment.status === 'FAILED' ? 'bg-red-50 text-red-500' : o.payment.method === 'ONLINE' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'}`}>
+                      {o.payment.status === 'PENDING' ? (o.payment.method === 'ONLINE' ? 'Payment pending' : 'Pay on delivery') : o.payment.status}
                     </span>
                   </div>
+                  {isUnpaidOnline(o) && (
+                    <button onClick={() => payAgain(o)} disabled={payAgainLoading === o.id}
+                      className="w-full mt-3 text-sm font-semibold py-2.5 rounded-xl btn-primary-filled disabled:opacity-50"
+                    >
+                      {payAgainLoading === o.id ? <span className="flex items-center justify-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent border-white rounded-full animate-spin inline-block" /> Processing…</span> : 'Pay Again'}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -956,20 +1031,28 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                         </div>
                       ))}
                     </div>
-                    <span className={`flex items-center gap-1.5 text-sm font-semibold mb-1 ${STATUS_COLOR[order.status] ?? 'text-gray-500'}`}>
+                    <span className={`flex items-center gap-1.5 text-sm font-semibold mb-1 ${isUnpaidOnline(order) ? 'text-red-500' : (STATUS_COLOR[order.status] ?? 'text-gray-500')}`}>
                       {order.status === 'DELIVERED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                       {order.status === 'CANCELLED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                      {STATUS_LABEL[order.status] ?? order.status}
+                      {isUnpaidOnline(order) ? 'Payment pending' : (STATUS_LABEL[order.status] ?? order.status)}
                     </span>
                     <p className="text-xs text-gray-400">Order placed {formatDate(order.created_at)}</p>
                   </div>
                   <div className="relative z-10 flex flex-col items-end justify-center gap-3 flex-shrink-0">
                     <p className="font-bold text-gray-900 text-base">₹{order.total_amount}</p>
-                    <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
-                      className="text-sm font-semibold px-5 py-2.5 rounded-xl btn-primary-outline disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
-                    </button>
+                    {isUnpaidOnline(order) ? (
+                      <button onClick={() => payAgain(order)} disabled={payAgainLoading === order.id}
+                        className="text-sm font-semibold px-5 py-2.5 rounded-xl btn-primary-filled disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {payAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent border-white rounded-full animate-spin inline-block" /> Processing…</span> : 'Pay Again'}
+                      </button>
+                    ) : (
+                      <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
+                        className="text-sm font-semibold px-5 py-2.5 rounded-xl btn-primary-outline disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1089,8 +1172,8 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       </div>
 
       {/* ── Desktop ── */}
-      <div className="hidden lg:flex page-x gap-6 pt-8 pb-16 min-h-[calc(100vh-70px)] items-stretch">
-        <div className="w-[240px] flex-shrink-0 rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ backgroundColor: '#F8F9FA' }}>
+      <div className="hidden lg:flex page-x gap-6 pt-8 pb-16 min-h-[calc(100vh-70px)] items-start">
+        <div className="w-[240px] flex-shrink-0 min-h-[70vh] sticky top-[var(--store-header-h)] max-h-[calc(100vh-var(--store-header-h))] overflow-y-auto rounded-2xl border border-gray-100 shadow-sm" style={{ backgroundColor: '#F8F9FA' }}>
           {desktopSidebar}
         </div>
         <div className="flex-1 min-w-0 rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ backgroundColor: '#F8F9FA' }}>

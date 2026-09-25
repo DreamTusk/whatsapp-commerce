@@ -6,23 +6,13 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
+import { loadRazorpayScript } from '@/lib/razorpay'
 import type { Cart, Order, Store } from '@/types'
 import { Check, X, MapPin, CreditCard, Smartphone, Truck, House } from "@deemlol/next-icons"
 
 type LocationState = 'idle' | 'requesting' | 'granted' | 'denied'
 type PaymentMethod = 'COD' | 'ONLINE'
 type DeliveryType = 'PICKUP' | 'HOME_DELIVERY'
-
-function loadRazorpayScript(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if ((window as any).Razorpay) { resolve(true); return }
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
-  })
-}
 
 function buildAddress(doorNo: string, street: string, city: string, state: string, country: string, pincode: string): string {
   const line1 = [doorNo, street].filter(Boolean).join(', ')
@@ -151,6 +141,10 @@ export default function CheckoutClient() {
 
   function handlePlaceOrderClick() {
     if (!cart || cart.items.length === 0) return
+    if (cart.items.some(i => !i.product.in_stock)) {
+      setError('Remove out-of-stock items from your cart to place the order')
+      return
+    }
     if (deliveryType === 'HOME_DELIVERY') {
       const combined = buildAddress(doorNo, street, city, addrState, country, pincode)
       if (!combined.trim()) { setError('Delivery address is required'); return }
@@ -292,6 +286,7 @@ export default function CheckoutClient() {
   }
 
   const items = cart?.items ?? []
+  const hasOutOfStockItems = items.some(i => !i.product.in_stock)
 
   if (items.length === 0) {
     return (
@@ -504,6 +499,9 @@ export default function CheckoutClient() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800 truncate">{item.product.name}</p>
               <p className="text-xs text-gray-400 mt-0.5">Qty {item.quantity}</p>
+              {!item.product.in_stock && (
+                <p className="text-xs text-red-500 font-medium mt-0.5">Out of stock — remove to continue</p>
+              )}
             </div>
             <p className="text-sm font-semibold text-gray-900 flex-shrink-0">₹{item.product.selling_price * item.quantity}</p>
           </div>
@@ -582,8 +580,8 @@ export default function CheckoutClient() {
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
-        <button onClick={handlePlaceOrderClick}
-          className="hidden lg:block w-full btn-primary-filled font-semibold py-4 rounded-xl text-sm shadow-sm">
+        <button onClick={handlePlaceOrderClick} disabled={hasOutOfStockItems}
+          className="hidden lg:block w-full btn-primary-filled font-semibold py-4 rounded-xl text-sm shadow-sm disabled:opacity-40">
           {paymentMethod === 'ONLINE' ? `Pay ₹${cart?.total ?? 0} online` : `Place order · ₹${cart?.total ?? 0}`}
         </button>
       </div>
@@ -595,8 +593,8 @@ export default function CheckoutClient() {
             <p className="text-xs text-gray-400">Total</p>
             <p className="text-lg font-bold text-gray-900">₹{cart?.total ?? 0}</p>
           </div>
-          <button onClick={handlePlaceOrderClick}
-            className="flex-1 btn-primary-filled font-semibold py-3.5 rounded-xl text-sm">
+          <button onClick={handlePlaceOrderClick} disabled={hasOutOfStockItems}
+            className="flex-1 btn-primary-filled font-semibold py-3.5 rounded-xl text-sm disabled:opacity-40">
             {paymentMethod === 'ONLINE' ? 'Pay online' : 'Place order'}
           </button>
         </div>
