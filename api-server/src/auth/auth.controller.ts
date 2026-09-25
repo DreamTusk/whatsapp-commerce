@@ -94,4 +94,8 @@ export class AuthController {
   ) {
     return this.authService.acceptInvite(body.token, body.name, body.password, authHeader);
   }
+
+
+
+ 
 }

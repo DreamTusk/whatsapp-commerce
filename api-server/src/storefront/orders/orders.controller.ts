@@ -41,6 +41,16 @@ export class StorefrontOrdersController {
     );
   }
 
+  // POST /api/storefront/orders/:id/retry-payment
+  @Post(':id/retry-payment')
+  @HttpCode(HttpStatus.OK)
+  retryPayment(
+    @CurrentCustomer() customer: { customerId: string },
+    @Param('id') id: string,
+  ) {
+    return this.ordersService.retryPayment(customer.customerId, id);
+  }
+
   // POST /api/storefront/orders/:id/verify-payment
   @Post(':id/verify-payment')
   @HttpCode(HttpStatus.OK)
@@ -66,6 +76,15 @@ export class StorefrontOrdersController {
     @Body() body: { reason?: string },
   ) {
     return this.ordersService.cancelOrder(customer.customerId, id, body.reason);
+  }
+
+  // GET /api/storefront/orders/:id/reorder
+  @Get(':id/reorder')
+  getReorderPreview(
+    @CurrentCustomer() customer: { customerId: string; storeId: string },
+    @Param('id') id: string,
+  ) {
+    return this.ordersService.getReorderPreview(customer.customerId, customer.storeId, id);
   }
 
   // GET /api/storefront/orders/:id

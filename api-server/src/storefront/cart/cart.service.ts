@@ -80,6 +80,14 @@ export class CartService {
     });
     if (!existing || existing.storeId !== storeId) throw new NotFoundException('Cart item not found');
 
+    if (quantity > existing.quantity) {
+      const product = await this.prisma.product.findUnique({
+        where: { id: productId },
+        select: { inStock: true },
+      });
+      if (!product?.inStock) throw new BadRequestException('Product is out of stock');
+    }
+
     const item = await this.prisma.cartItem.update({
       where: { customerId_productId: { customerId, productId } },
       data: { quantity },

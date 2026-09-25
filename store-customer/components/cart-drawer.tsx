@@ -7,14 +7,14 @@ import { useCart } from '@/contexts/cart'
 import { useAuth } from '@/contexts/auth'
 import { clientFetch } from '@/lib/client-api'
 import { getGuestCart, updateGuestQty, type GuestCartItem } from '@/lib/guest-cart'
-import { X, ChevronRight, Plus } from "@deemlol/next-icons"
+import { X, ChevronRight, Plus, Trash } from "@deemlol/next-icons"
 import type { Cart, CustomerAddress } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export default function CartDrawer() {
   const { isOpen, closeCart, selectedAddress, setSelectedAddress } = useCartDrawer()
-  const { refresh: refreshCount, syncGuestCart } = useCart()
+  const { refresh: refreshCount, syncGuestCart, setFromItems } = useCart()
   const { isAuthenticated, requireAuth } = useAuth()
   const router = useRouter()
 
@@ -22,6 +22,7 @@ export default function CartDrawer() {
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(false)
   const [updating, setUpdating] = useState<string | null>(null)
+  const [cartError, setCartError] = useState<string | null>(null)
   const [addresses, setAddresses] = useState<CustomerAddress[]>([])
   const [showAddressPicker, setShowAddressPicker] = useState(false)
   const [loadingAddresses, setLoadingAddresses] = useState(false)
@@ -34,12 +35,13 @@ export default function CartDrawer() {
     try {
       const data = await clientFetch<Cart>('/api/storefront/cart')
       setCart(data)
+      setFromItems(data.items)
     } catch {
       setCart(null)
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, setFromItems])
 
   const fetchAddresses = useCallback(async () => {
     if (!isAuthenticated) return
@@ -84,6 +86,7 @@ export default function CartDrawer() {
 
   async function updateQty(productId: string, qty: number) {
     setUpdating(productId)
+    setCartError(null)
     try {
       if (qty === 0) {
         await clientFetch(`/api/storefront/cart/${productId}`, { method: 'DELETE' })
@@ -93,12 +96,20 @@ export default function CartDrawer() {
           body: JSON.stringify({ quantity: qty }),
         })
       }
+      await fetchCart() // also syncs the shared cart count via setFromItems
+    } catch (err: any) {
+      setCartError(err?.error ?? 'Something went wrong')
       await fetchCart()
-      refreshCount()
-    } catch { /* silent */ } finally {
+    } finally {
       setUpdating(null)
     }
   }
+
+  useEffect(() => {
+    if (!cartError) return
+    const t = setTimeout(() => setCartError(null), 3000)
+    return () => clearTimeout(t)
+  }, [cartError])
 
   function pickAddress(addr: CustomerAddress) {
     const sel: SelectedAddress = { id: addr.id, label: addr.label, door_no: addr.door_no, street: addr.street, address: addr.address, city: addr.city, state: addr.state, country: addr.country, pincode: addr.pincode, latitude: addr.latitude, longitude: addr.longitude }
@@ -127,6 +138,9 @@ export default function CartDrawer() {
 
   const items = cart?.items ?? []
   const subtotal = cart?.total ?? 0
+  const hasOutOfStock = isAuthenticated
+    ? items.some(i => !i.product.in_stock)
+    : guestItems.some(i => !i.in_stock)
 
   return (
     <>
@@ -192,13 +206,25 @@ export default function CartDrawer() {
                       <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
                       <p className="text-xs text-gray-400 mt-0.5">₹{item.selling_price} each</p>
                       <p className="text-sm font-bold text-gray-900 mt-0.5">₹{item.selling_price * item.quantity}</p>
+                      {!item.in_stock && (
+                        <p className="text-xs text-red-500 font-medium mt-0.5">Out of stock</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button onClick={() => guestUpdateQtyLocal(item.product_id, item.quantity - 1)}
                         className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors text-base leading-none">−</button>
                       <span className="w-5 text-center text-sm font-semibold text-gray-900">{item.quantity}</span>
-                      <button onClick={() => guestUpdateQtyLocal(item.product_id, item.quantity + 1)}
-                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors text-base leading-none">+</button>
+                      <button
+                        disabled={!item.in_stock}
+                        onClick={() => guestUpdateQtyLocal(item.product_id, item.quantity + 1)}
+                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:opacity-40 text-base leading-none">+</button>
+                      <button
+                        onClick={() => guestUpdateQtyLocal(item.product_id, 0)}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 transition-colors"
+                        aria-label="Remove item"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -228,6 +254,11 @@ export default function CartDrawer() {
             </div>
           ) : (
             <div className="px-4 pt-3 pb-4 space-y-3">
+              {cartError && (
+                <div className="text-xs font-medium text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                  {cartError}
+                </div>
+              )}
               {/* Cart items */}
               {items.map(item => (
                 <div key={item.id} className="flex items-center gap-3 py-2">
@@ -252,6 +283,9 @@ export default function CartDrawer() {
                       <p className="text-sm font-bold text-gray-900 mt-0.5">
                         ₹{item.product.selling_price * item.quantity}
                       </p>
+                      {!item.product.in_stock && (
+                        <p className="text-xs text-red-500 font-medium mt-0.5">Out of stock</p>
+                      )}
                     </div>
                   </button>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -266,11 +300,19 @@ export default function CartDrawer() {
                       {updating === item.product.id ? '…' : item.quantity}
                     </span>
                     <button
-                      disabled={updating === item.product.id}
+                      disabled={updating === item.product.id || !item.product.in_stock}
                       onClick={() => updateQty(item.product.id, item.quantity + 1)}
                       className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 text-base leading-none"
                     >
                       +
+                    </button>
+                    <button
+                      disabled={updating === item.product.id}
+                      onClick={() => updateQty(item.product.id, 0)}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-40"
+                      aria-label="Remove item"
+                    >
+                      <Trash className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -376,10 +418,15 @@ export default function CartDrawer() {
         {/* Footer — Guest checkout */}
         {!isAuthenticated && guestItems.length > 0 && (
           <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100 bg-white">
-            <p className="text-xs text-gray-400 text-center mb-2">Sign in to place your order</p>
+            {hasOutOfStock ? (
+              <p className="text-xs text-red-500 font-medium text-center mb-2">Remove out-of-stock items to continue</p>
+            ) : (
+              <p className="text-xs text-gray-400 text-center mb-2">Sign in to place your order</p>
+            )}
             <button
               onClick={handleGuestCheckout}
-              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm"
+              disabled={hasOutOfStock}
+              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm disabled:opacity-40"
             >
               <span>Sign in &amp; Checkout</span>
               <ChevronRight className="w-4 h-4" />
@@ -390,9 +437,13 @@ export default function CartDrawer() {
         {/* Footer — Authenticated checkout */}
         {isAuthenticated && items.length > 0 && (
           <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100 bg-white">
+            {hasOutOfStock && (
+              <p className="text-xs text-red-500 font-medium text-center mb-2">Remove out-of-stock items to continue</p>
+            )}
             <button
               onClick={handleCheckout}
-              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm"
+              disabled={hasOutOfStock}
+              className="w-full flex items-center justify-between btn-primary-filled font-semibold py-3.5 px-5 rounded-2xl text-sm disabled:opacity-40"
             >
               <span>Proceed to Checkout</span>
               <div className="flex items-center gap-2">
