@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
@@ -28,6 +28,8 @@ export default function CheckoutClient() {
   const { refresh: refreshCount } = useCart()
   const { selectedAddress } = useCartDrawer()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const reorderOrderId = searchParams.get('reorder')
 
   const [cart, setCart] = useState<Cart | null>(null)
   const [store, setStore] = useState<Store | null>(null)
@@ -60,7 +62,9 @@ export default function CheckoutClient() {
     if (!isAuthenticated) { setLoading(false); return }
     try {
       const [cartData, storeData] = await Promise.all([
-        clientFetch<Cart>('/api/storefront/cart'),
+        reorderOrderId
+          ? clientFetch<Cart>(`/api/storefront/orders/${reorderOrderId}/reorder`)
+          : clientFetch<Cart>('/api/storefront/cart'),
         clientFetch<{ store: Store }>('/api/storefront/store'),
       ])
       setCart(cartData)
@@ -70,7 +74,7 @@ export default function CheckoutClient() {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, reorderOrderId])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -486,6 +490,9 @@ export default function CheckoutClient() {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Order summary</p>
+        {reorderOrderId && (
+          <p className="text-xs text-gray-400 mt-1">Reordering items from a previous order — your cart is unaffected.</p>
+        )}
       </div>
       <div className="divide-y divide-gray-50">
         {items.map(item => (

@@ -10,6 +10,7 @@ interface CartContextValue {
   items: Record<string, number>
   refresh: () => Promise<void>
   syncGuestCart: () => Promise<void>
+  setFromItems: (items: { quantity: number; product: { id: string } }[]) => void
 }
 
 const CartContext = createContext<CartContextValue>({
@@ -17,6 +18,7 @@ const CartContext = createContext<CartContextValue>({
   items: {},
   refresh: async () => {},
   syncGuestCart: async () => {},
+  setFromItems: () => {},
 })
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -47,6 +49,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await refreshFromDb()
   }, [isAuthenticated, refreshFromDb])
 
+  const setFromItems = useCallback((items: { quantity: number; product: { id: string } }[]) => {
+    setCount(items.reduce((sum, i) => sum + i.quantity, 0))
+    const map: Record<string, number> = {}
+    for (const i of items) map[i.product.id] = i.quantity
+    setItems(map)
+  }, [])
+
   const syncGuestCart = useCallback(async () => {
     const items = getGuestCart()
     if (items.length === 0) return
@@ -72,7 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, initialized])
 
   return (
-    <CartContext.Provider value={{ count, items, refresh, syncGuestCart }}>
+    <CartContext.Provider value={{ count, items, refresh, syncGuestCart, setFromItems }}>
       {children}
     </CartContext.Provider>
   )

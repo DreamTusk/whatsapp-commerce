@@ -78,6 +78,15 @@ export class StorefrontOrdersController {
     return this.ordersService.cancelOrder(customer.customerId, id, body.reason);
   }
 
+  // GET /api/storefront/orders/:id/reorder
+  @Get(':id/reorder')
+  getReorderPreview(
+    @CurrentCustomer() customer: { customerId: string; storeId: string },
+    @Param('id') id: string,
+  ) {
+    return this.ordersService.getReorderPreview(customer.customerId, customer.storeId, id);
+  }
+
   // GET /api/storefront/orders/:id
   @Get(':id')
   getOrder(

@@ -14,7 +14,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export default function CartDrawer() {
   const { isOpen, closeCart, selectedAddress, setSelectedAddress } = useCartDrawer()
-  const { refresh: refreshCount, syncGuestCart } = useCart()
+  const { refresh: refreshCount, syncGuestCart, setFromItems } = useCart()
   const { isAuthenticated, requireAuth } = useAuth()
   const router = useRouter()
 
@@ -35,12 +35,13 @@ export default function CartDrawer() {
     try {
       const data = await clientFetch<Cart>('/api/storefront/cart')
       setCart(data)
+      setFromItems(data.items)
     } catch {
       setCart(null)
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, setFromItems])
 
   const fetchAddresses = useCallback(async () => {
     if (!isAuthenticated) return
@@ -95,8 +96,7 @@ export default function CartDrawer() {
           body: JSON.stringify({ quantity: qty }),
         })
       }
-      await fetchCart()
-      refreshCount()
+      await fetchCart() // also syncs the shared cart count via setFromItems
     } catch (err: any) {
       setCartError(err?.error ?? 'Something went wrong')
       await fetchCart()

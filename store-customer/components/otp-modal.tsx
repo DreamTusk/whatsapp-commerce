@@ -24,6 +24,8 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
   const [otp, setOtp] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const [error, setError] = useState('')
   const [pendingToken, setPendingToken] = useState('')
   const [pendingCustomer, setPendingCustomer] = useState<Customer | null>(null)
@@ -40,6 +42,7 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
       setError('')
       setPendingToken('')
       setPendingCustomer(null)
+      setResendCooldown(0)
       setTimeout(() => phoneRef.current?.focus(), 50)
     }
   }, [open])
@@ -48,6 +51,12 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
     if (step === 'otp') setTimeout(() => otpRef.current?.focus(), 50)
     if (step === 'name') setTimeout(() => nameRef.current?.focus(), 50)
   }, [step])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
 
   async function handleSendOtp() {
     if (!phone.trim()) { setError('Enter your phone number'); return }
@@ -59,10 +68,30 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
         body: JSON.stringify({ phone: phone.trim() }),
       })
       setStep('otp')
+      setResendCooldown(30)
     } catch (e: unknown) {
       setError((e as { error?: string })?.error ?? 'Failed to send OTP')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleResendOtp() {
+    if (resendCooldown > 0 || resending) return
+    setResending(true)
+    setError('')
+    try {
+      await clientFetch('/api/storefront/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ phone: phone.trim() }),
+      })
+      setOtp('')
+      setResendCooldown(30)
+      setTimeout(() => otpRef.current?.focus(), 50)
+    } catch (e: unknown) {
+      setError((e as { error?: string })?.error ?? 'Failed to resend OTP')
+    } finally {
+      setResending(false)
     }
   }
 
@@ -190,10 +219,11 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
               {loading ? 'Verifying…' : 'Verify & continue'}
             </button>
             <button
-              onClick={() => { setStep('phone'); setOtp(''); setError('') }}
-              className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              onClick={handleResendOtp}
+              disabled={resendCooldown > 0 || resending}
+              className="w-full text-sm text-gray-500 hover:text-gray-700 disabled:text-gray-300 transition-colors"
             >
-              Change phone number
+              {resending ? 'Resending…' : resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
             </button>
           </div>
         )}
