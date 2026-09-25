@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader, MapPin } from '@deemlol/next-icons'
+import { ArrowLeft, Loader, MapPin, Phone, Mail } from '@deemlol/next-icons'
 import api from '@/lib/api'
 
 interface Address {
@@ -79,10 +79,7 @@ export default function CustomerDetailPage() {
               {(customer.name ?? customer.phone ?? '?').charAt(0).toUpperCase()}
             </span>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">{customer.name ?? <span className="text-gray-400 font-normal">No name</span>}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{customer.phone ?? customer.email ?? '—'}</p>
-          </div>
+          <h1 className="text-xl font-bold text-gray-900">{customer.name ?? <span className="text-gray-400 font-normal">No name</span>}</h1>
         </div>
       </div>
 
@@ -99,6 +96,43 @@ export default function CustomerDetailPage() {
               <p className="text-base font-semibold text-gray-900">{s.value}</p>
             </div>
           ))}
+        </div>
+
+        {/* Contact Information */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-50">
+            <p className="text-sm font-semibold text-gray-900">Contact Information</p>
+          </div>
+          {!customer.phone && !customer.email ? (
+            <div className="px-5 py-8 text-center">
+              <p className="text-sm text-gray-400">No contact details on file</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {customer.phone && (
+                <div className="px-5 py-4 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-4 h-4 text-[#7c3aed]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Phone</p>
+                    <p className="text-sm text-gray-900">{customer.phone}</p>
+                  </div>
+                </div>
+              )}
+              {customer.email && (
+                <div className="px-5 py-4 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 text-[#7c3aed]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Email</p>
+                    <p className="text-sm text-gray-900">{customer.email}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Addresses */}
