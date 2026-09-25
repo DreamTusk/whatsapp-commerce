@@ -66,6 +66,13 @@ export default function ProductDetailClient({
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
   const [cartLoading, setCartLoading] = useState(false)
+  const [cartError, setCartError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!cartError) return
+    const t = setTimeout(() => setCartError(null), 3000)
+    return () => clearTimeout(t)
+  }, [cartError])
 
   const cartQty = cartItems[productId] ?? 0
   const [wishlisted, setWishlisted] = useState(false)
@@ -110,12 +117,16 @@ export default function ProductDetailClient({
   }
 
   async function handleIncrease() {
+    if (!inStock) { setCartError('Product is out of stock'); return }
     if (!isAuthenticated) { updateGuestQty(productId, cartQty + 1); await refresh(); return }
     setCartLoading(true)
     try {
       await clientFetch(`/api/storefront/cart/${productId}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty + 1 }) })
       await refresh()
-    } catch { /* silent */ } finally { setCartLoading(false) }
+    } catch (err: any) {
+      setCartError(err?.error ?? 'Something went wrong')
+      await refresh()
+    } finally { setCartLoading(false) }
   }
 
   async function handleDecrease() {
@@ -352,6 +363,9 @@ export default function ProductDetailClient({
 
         {/* Fixed bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg px-4 py-3 z-40 flex flex-col gap-2">
+          {cartError && (
+            <p className="text-xs font-medium text-red-500 text-center">{cartError}</p>
+          )}
           {cartQty > 0 ? (
             <>
               <CartStepper className="w-full h-[52px]" />
@@ -434,9 +448,13 @@ export default function ProductDetailClient({
 
             {/* Right: info */}
             <div className="flex flex-col gap-5">
-              {inStock && (
+              {inStock ? (
                 <span className="self-start text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-3 py-1 rounded-full">
                   In stock
+                </span>
+              ) : (
+                <span className="self-start text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1 rounded-full">
+                  Out of stock
                 </span>
               )}
 
@@ -470,6 +488,9 @@ export default function ProductDetailClient({
 
               {/* Buttons */}
               <div className="flex flex-col gap-3">
+                {cartError && (
+                  <p className="text-xs font-medium text-red-500">{cartError}</p>
+                )}
                 {cartQty > 0 ? (
                   <>
                     <CartStepper className="w-full h-[56px]" />

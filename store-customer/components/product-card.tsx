@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
@@ -41,7 +41,14 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist()
   const [loading, setLoading] = useState(false)
   const [added, setAdded] = useState(false)
+  const [cardError, setCardError] = useState<string | null>(null)
   const cartQty = cartItems[p.id] ?? 0
+
+  useEffect(() => {
+    if (!cardError) return
+    const t = setTimeout(() => setCardError(null), 3000)
+    return () => clearTimeout(t)
+  }, [cardError])
 
   const hasDiscount = p.original_price != null && p.original_price > p.selling_price
   const discountPct = hasDiscount
@@ -72,12 +79,16 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
   }
 
   async function handleIncrease() {
+    if (!p.in_stock) { setCardError('Out of stock'); return }
     if (!isAuthenticated) { updateGuestQty(p.id, cartQty + 1); await refresh(); return }
     setLoading(true)
     try {
       await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty + 1 }) })
       await refresh()
-    } catch { /* silent */ } finally { setLoading(false) }
+    } catch (err: any) {
+      setCardError(err?.error ?? 'Something went wrong')
+      await refresh()
+    } finally { setLoading(false) }
   }
 
   async function handleDecrease() {
@@ -161,6 +172,10 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
             <span className="text-[10px] sm:text-xs text-gray-400 line-through">₹{p.original_price}</span>
           )}
         </div>
+
+        {cardError && (
+          <p className="text-[10px] font-medium text-red-500 -mt-1">{cardError}</p>
+        )}
 
         {cartQty > 0 ? (
           <div className="relative z-20 mt-auto w-full h-[40px] sm:h-[46px] flex items-center justify-between rounded-lg border-primary border overflow-hidden [font-family:var(--font-instrument-sans)]">

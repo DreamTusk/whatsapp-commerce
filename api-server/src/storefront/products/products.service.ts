@@ -60,7 +60,7 @@ export class StorefrontProductsService {
       });
       categoryFilter =
         children.length > 0
-          ? { categoryId: { in: children.map((c) => c.id) } }
+          ? { categoryId: { in: [category_id, ...children.map((c) => c.id)] } }
           : { categoryId: category_id };
     }
 
