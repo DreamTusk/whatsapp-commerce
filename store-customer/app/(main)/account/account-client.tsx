@@ -101,6 +101,13 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [orderAgainLoading, setOrderAgainLoading] = useState<string | null>(null)
+  const [orderAgainMessage, setOrderAgainMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!orderAgainMessage) return
+    const t = setTimeout(() => setOrderAgainMessage(null), 4000)
+    return () => clearTimeout(t)
+  }, [orderAgainMessage])
   const [payAgainLoading, setPayAgainLoading] = useState<string | null>(null)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -224,10 +231,28 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   async function orderAgain(order: Order) {
     setOrderAgainLoading(order.id)
     try {
-      for (const item of order.items)
-        await clientFetch('/api/storefront/cart', { method: 'POST', body: JSON.stringify({ product_id: item.product_id }) })
-      await cartRefresh(); openCart()
-    } catch { /* ignore */ } finally { setOrderAgainLoading(null) }
+      const results = await Promise.allSettled(
+        order.items.map(item =>
+          clientFetch('/api/storefront/cart', { method: 'POST', body: JSON.stringify({ product_id: item.product_id }) })
+        )
+      )
+      const failed = order.items.filter((_, i) => results[i].status === 'rejected')
+      const addedCount = order.items.length - failed.length
+
+      if (addedCount > 0) {
+        await cartRefresh()
+        if (failed.length === 0) openCart()
+      }
+
+      if (failed.length > 0) {
+        const names = failed.map(i => i.product_name).join(', ')
+        setOrderAgainMessage(
+          addedCount > 0
+            ? `${names} ${failed.length === 1 ? 'is' : 'are'} out of stock and could not be added. The rest of the order was added to your cart.`
+            : `${names} ${failed.length === 1 ? 'is' : 'are'} out of stock and could not be added.`
+        )
+      }
+    } finally { setOrderAgainLoading(null) }
   }
 
   async function payAgain(order: Order) {
@@ -529,6 +554,11 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         <>
           {mobileBackHeader('Orders')}
           <div className="pb-24">
+            {orderAgainMessage && (
+              <div className="mx-4 mt-3 text-xs font-medium text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                {orderAgainMessage}
+              </div>
+            )}
             {ordersLoading ? (
               <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
             ) : orders.length === 0 ? (
@@ -1007,6 +1037,11 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   ) : (
     <div className="flex flex-col h-full p-4 gap-3">
       <div className="bg-white rounded-xl p-4 flex-1 overflow-auto">
+        {orderAgainMessage && (
+          <div className="mb-3 text-xs font-medium text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+            {orderAgainMessage}
+          </div>
+        )}
         {ordersLoading ? (
           <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
         ) : orders.length === 0 ? (
