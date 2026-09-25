@@ -5,14 +5,15 @@ import {
   Patch,
   Body,
   Param,
-  Headers,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import type { Store } from '@prisma/client';
 import { StorefrontOrdersService } from './orders.service';
 import { CustomerAuthGuard } from '../../common/guards/customer-auth.guard';
 import { CurrentCustomer } from '../../common/decorators/current-customer.decorator';
+import { CurrentStore } from '../../common/decorators/current-store.decorator';
 
 @Controller('storefront/orders')
 @UseGuards(CustomerAuthGuard)
@@ -29,10 +30,15 @@ export class StorefrontOrdersController {
   @Post()
   placeOrder(
     @CurrentCustomer() customer: { customerId: string; storeId: string },
-    @Headers('x-store-domain') domain: string,
+    @CurrentStore() store: Store,
     @Body() body: any,
   ) {
-    return this.ordersService.placeOrder(customer.customerId, customer.storeId, domain, body);
+    return this.ordersService.placeOrder(
+      customer.customerId,
+      customer.storeId,
+      store,
+      body,
+    );
   }
 
   // POST /api/storefront/orders/:id/verify-payment
@@ -41,7 +47,12 @@ export class StorefrontOrdersController {
   verifyPayment(
     @CurrentCustomer() customer: { customerId: string },
     @Param('id') id: string,
-    @Body() body: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string },
+    @Body()
+    body: {
+      razorpay_order_id: string;
+      razorpay_payment_id: string;
+      razorpay_signature: string;
+    },
   ) {
     return this.ordersService.verifyPayment(customer.customerId, id, body);
   }

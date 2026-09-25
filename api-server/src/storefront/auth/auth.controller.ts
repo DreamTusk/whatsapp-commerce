@@ -4,14 +4,15 @@ import {
   Post,
   Put,
   Body,
-  Headers,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import type { Store } from '@prisma/client';
 import { StorefrontAuthService } from './auth.service';
 import { CustomerAuthGuard } from '../../common/guards/customer-auth.guard';
 import { CurrentCustomer } from '../../common/decorators/current-customer.decorator';
+import { CurrentStore } from '../../common/decorators/current-store.decorator';
 
 @Controller('storefront/auth')
 export class StorefrontAuthController {
@@ -19,28 +20,25 @@ export class StorefrontAuthController {
 
   // GET /api/storefront/auth/methods
   @Get('methods')
-  getMethods(@Headers('x-store-domain') domain: string) {
-    return this.authService.getMethods(domain);
+  getMethods(@CurrentStore() store: Store) {
+    return this.authService.getMethods(store);
   }
 
   // POST /api/storefront/auth/send-otp
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
-  sendOtp(
-    @Headers('x-store-domain') domain: string,
-    @Body() body: { phone: string },
-  ) {
-    return this.authService.sendOtp(domain, body.phone);
+  sendOtp(@CurrentStore() store: Store, @Body() body: { phone: string }) {
+    return this.authService.sendOtp(store, body.phone);
   }
 
   // POST /api/storefront/auth/verify-otp
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   verifyOtp(
-    @Headers('x-store-domain') domain: string,
+    @CurrentStore() store: Store,
     @Body() body: { phone: string; otp: string },
   ) {
-    return this.authService.verifyOtp(domain, body.phone, body.otp);
+    return this.authService.verifyOtp(store, body.phone, body.otp);
   }
 
   // GET /api/storefront/auth/me
@@ -57,7 +55,11 @@ export class StorefrontAuthController {
     @CurrentCustomer() customer: { customerId: string },
     @Body() body: { name: string; email?: string },
   ) {
-    return this.authService.updateProfile(customer.customerId, body.name, body.email);
+    return this.authService.updateProfile(
+      customer.customerId,
+      body.name,
+      body.email,
+    );
   }
 
   // POST /api/storefront/auth/logout

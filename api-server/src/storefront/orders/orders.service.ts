@@ -1,6 +1,15 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { OrderStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Store,
+} from '@prisma/client';
 import { generateOrderNumber } from '../../utils/order-number';
 import { PaymentProvidersService } from '../../admin/payment-providers/payment-providers.service';
 import { createHmac } from 'crypto';
@@ -12,7 +21,10 @@ const orderInclude = {
       Product: {
         select: {
           ProductMedia: {
-            orderBy: [{ isPrimary: 'desc' as const }, { sortOrder: 'asc' as const }],
+            orderBy: [
+              { isPrimary: 'desc' as const },
+              { sortOrder: 'asc' as const },
+            ],
             take: 1,
             include: { Media: { select: { url: true, thumbnailUrl: true } } },
           },
@@ -61,7 +73,11 @@ export class StorefrontOrdersService {
       updated_at: o.updatedAt,
       items: o.OrderItem.map((i: any) => this.formatOrderItem(i)),
       payment: o.Payment
-        ? { method: o.Payment.method, status: o.Payment.status, paid_at: o.Payment.paidAt }
+        ? {
+            method: o.Payment.method,
+            status: o.Payment.status,
+            paid_at: o.Payment.paidAt,
+          }
         : null,
       shipments: (o.OrderShipment ?? []).map((s: any) => ({
         id: s.id,
@@ -91,18 +107,33 @@ export class StorefrontOrdersService {
     return { order: this.formatOrder(order) };
   }
 
-  async placeOrder(customerId: string, storeId: string, domain: string, body: any) {
-    if (!domain) throw new BadRequestException('x-store-domain header required');
-
-    const store = await this.prisma.store.findUnique({ where: { domain } });
-    if (!store || store.id !== storeId) throw new NotFoundException('Store not found');
-    if (!store.isActive) throw new BadRequestException('Store is not active');
+  async placeOrder(
+    customerId: string,
+    storeId: string,
+    store: Store,
+    body: any,
+  ) {
+    if (store.id !== storeId) throw new NotFoundException('Store not found');
 
     const {
-      items, address_id, address, notes, alt_phone, name,
-      door_no, street, city, state, country, pincode,
-      payment_method = 'COD', latitude, longitude,
-      delivery_type = 'HOME_DELIVERY', expected_pickup_time, delivery_notes,
+      items,
+      address_id,
+      address,
+      notes,
+      alt_phone,
+      name,
+      door_no,
+      street,
+      city,
+      state,
+      country,
+      pincode,
+      payment_method = 'COD',
+      latitude,
+      longitude,
+      delivery_type = 'HOME_DELIVERY',
+      expected_pickup_time,
+      delivery_notes,
     } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -115,29 +146,59 @@ export class StorefrontOrdersService {
       throw new BadRequestException('Pickup is not enabled for this store');
     }
 
-    const method = payment_method.toUpperCase() === 'ONLINE' ? PaymentMethod.ONLINE : PaymentMethod.COD;
+    const method =
+      payment_method.toUpperCase() === 'ONLINE'
+        ? PaymentMethod.ONLINE
+        : PaymentMethod.COD;
 
     let razorpayProvider: { keyId: string; keySecret: string } | null = null;
     if (method === PaymentMethod.ONLINE) {
-      razorpayProvider = await this.paymentProviders.getActiveProvider(storeId, 'RAZORPAY');
+      razorpayProvider = await this.paymentProviders.getActiveProvider(
+        storeId,
+        'RAZORPAY',
+      );
       if (!razorpayProvider) {
-        throw new BadRequestException('Online payments are not configured for this store');
+        throw new BadRequestException(
+          'Online payments are not configured for this store',
+        );
       }
     }
 
-    let deliveryAddress: any = { address, doorNo: door_no, street, city, state, country, pincode, latitude, longitude };
+    let deliveryAddress: any = {
+      address,
+      doorNo: door_no,
+      street,
+      city,
+      state,
+      country,
+      pincode,
+      latitude,
+      longitude,
+    };
 
     if (!isPickup) {
       if (address_id) {
-        const saved = await this.prisma.customerAddress.findFirst({ where: { id: address_id, customerId, storeId } });
+        const saved = await this.prisma.customerAddress.findFirst({
+          where: { id: address_id, customerId, storeId },
+        });
         if (!saved) throw new NotFoundException('Saved address not found');
         deliveryAddress = {
-          address: saved.address, doorNo: saved.doorNo, street: saved.street,
-          city: saved.city, state: saved.state, country: saved.country,
-          pincode: saved.pincode, latitude: saved.latitude, longitude: saved.longitude,
+          address: saved.address,
+          doorNo: saved.doorNo,
+          street: saved.street,
+          city: saved.city,
+          state: saved.state,
+          country: saved.country,
+          pincode: saved.pincode,
+          latitude: saved.latitude,
+          longitude: saved.longitude,
         };
       }
-      if (!deliveryAddress.address && !deliveryAddress.street && !deliveryAddress.city) {
+      if (
+        !deliveryAddress.address &&
+        !deliveryAddress.street &&
+        !deliveryAddress.city
+      ) {
         throw new BadRequestException('address or address_id is required');
       }
     }
@@ -152,7 +213,8 @@ export class StorefrontOrdersService {
     }
 
     const outOfStock = products.find((p) => !p.inStock);
-    if (outOfStock) throw new BadRequestException(`"${outOfStock.name}" is out of stock`);
+    if (outOfStock)
+      throw new BadRequestException(`"${outOfStock.name}" is out of stock`);
 
     const orderItemsData = items.map((item: any) => {
       const product = products.find((p) => p.id === item.product_id)!;
@@ -165,15 +227,21 @@ export class StorefrontOrdersService {
       };
     });
 
-    const totalAmount = orderItemsData.reduce((sum: number, i: any) => sum + i.subtotal, 0);
+    const totalAmount = orderItemsData.reduce(
+      (sum: number, i: any) => sum + i.subtotal,
+      0,
+    );
 
     if (store.minOrderAmount > 0 && totalAmount < store.minOrderAmount) {
-      throw new BadRequestException(`Minimum order amount is ₹${store.minOrderAmount}`);
+      throw new BadRequestException(
+        `Minimum order amount is ₹${store.minOrderAmount}`,
+      );
     }
 
     let order: any;
     for (let attempt = 0; attempt < 5; attempt++) {
-      if (attempt > 0) await new Promise((r) => setTimeout(r, 50 + Math.random() * 150));
+      if (attempt > 0)
+        await new Promise((r) => setTimeout(r, 50 + Math.random() * 150));
       const orderNumber = await generateOrderNumber(this.prisma, storeId);
       try {
         const customerRecord = await this.prisma.customer.findUnique({
@@ -184,24 +252,41 @@ export class StorefrontOrdersService {
 
         order = await this.prisma.order.create({
           data: {
-            orderNumber, customerId, storeId, totalAmount,
+            orderNumber,
+            customerId,
+            storeId,
+            totalAmount,
             status: OrderStatus.NEW,
             source: 'CUSTOMER',
             createdBy,
             deliveryType: isPickup ? 'PICKUP' : 'HOME_DELIVERY',
-            expectedPickupTime: isPickup && expected_pickup_time ? new Date(expected_pickup_time) : null,
+            expectedPickupTime:
+              isPickup && expected_pickup_time
+                ? new Date(expected_pickup_time)
+                : null,
             deliveryNotes: delivery_notes?.trim() || null,
             address: isPickup ? null : (deliveryAddress.address ?? null),
             notes: notes ?? null,
-            altPhone: typeof alt_phone === 'string' && alt_phone.trim() ? alt_phone.trim() : null,
-            doorNo: isPickup ? null : (deliveryAddress.doorNo?.trim() || null),
-            street: isPickup ? null : (deliveryAddress.street?.trim() || null),
-            city: isPickup ? null : (deliveryAddress.city?.trim() || null),
-            state: isPickup ? null : (deliveryAddress.state?.trim() || null),
-            country: isPickup ? null : (deliveryAddress.country?.trim() || null),
-            pincode: isPickup ? null : (deliveryAddress.pincode?.trim() || null),
-            latitude: isPickup ? null : (typeof deliveryAddress.latitude === 'number' ? deliveryAddress.latitude : null),
-            longitude: isPickup ? null : (typeof deliveryAddress.longitude === 'number' ? deliveryAddress.longitude : null),
+            altPhone:
+              typeof alt_phone === 'string' && alt_phone.trim()
+                ? alt_phone.trim()
+                : null,
+            doorNo: isPickup ? null : deliveryAddress.doorNo?.trim() || null,
+            street: isPickup ? null : deliveryAddress.street?.trim() || null,
+            city: isPickup ? null : deliveryAddress.city?.trim() || null,
+            state: isPickup ? null : deliveryAddress.state?.trim() || null,
+            country: isPickup ? null : deliveryAddress.country?.trim() || null,
+            pincode: isPickup ? null : deliveryAddress.pincode?.trim() || null,
+            latitude: isPickup
+              ? null
+              : typeof deliveryAddress.latitude === 'number'
+                ? deliveryAddress.latitude
+                : null,
+            longitude: isPickup
+              ? null
+              : typeof deliveryAddress.longitude === 'number'
+                ? deliveryAddress.longitude
+                : null,
             OrderItem: { create: orderItemsData },
             Payment: { create: { method, status: PaymentStatus.PENDING } },
           },
@@ -214,10 +299,14 @@ export class StorefrontOrdersService {
       }
     }
 
-    if (!order) throw new BadRequestException('Failed to generate order number');
+    if (!order)
+      throw new BadRequestException('Failed to generate order number');
 
     if (name?.trim()) {
-      await this.prisma.customer.update({ where: { id: customerId }, data: { name: name.trim() } });
+      await this.prisma.customer.update({
+        where: { id: customerId },
+        data: { name: name.trim() },
+      });
     }
 
     await this.prisma.cartItem.deleteMany({ where: { customerId, storeId } });
@@ -256,12 +345,18 @@ export class StorefrontOrdersService {
   async verifyPayment(
     customerId: string,
     orderId: string,
-    body: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string },
+    body: {
+      razorpay_order_id: string;
+      razorpay_payment_id: string;
+      razorpay_signature: string;
+    },
   ) {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      throw new BadRequestException('razorpay_order_id, razorpay_payment_id and razorpay_signature are required');
+      throw new BadRequestException(
+        'razorpay_order_id, razorpay_payment_id and razorpay_signature are required',
+      );
     }
 
     const order = await this.prisma.order.findFirst({
@@ -269,23 +364,37 @@ export class StorefrontOrdersService {
       include: { Payment: true },
     });
     if (!order) throw new NotFoundException('Order not found');
-    if (!order.Payment) throw new BadRequestException('Payment record not found');
+    if (!order.Payment)
+      throw new BadRequestException('Payment record not found');
 
     // Idempotency — already verified
     if (order.Payment.status === PaymentStatus.PAID) {
-      return { order: this.formatOrder({ ...order, OrderItem: await this.prisma.orderItem.findMany({ where: { orderId } }) }) };
+      return {
+        order: this.formatOrder({
+          ...order,
+          OrderItem: await this.prisma.orderItem.findMany({
+            where: { orderId },
+          }),
+        }),
+      };
     }
 
     // Verify Razorpay signature
-    const razorpayProvider = await this.paymentProviders.getActiveProvider(order.storeId, 'RAZORPAY');
-    if (!razorpayProvider) throw new BadRequestException('Payment provider not configured');
+    const razorpayProvider = await this.paymentProviders.getActiveProvider(
+      order.storeId,
+      'RAZORPAY',
+    );
+    if (!razorpayProvider)
+      throw new BadRequestException('Payment provider not configured');
 
     const expectedSignature = createHmac('sha256', razorpayProvider.keySecret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
-      throw new BadRequestException('Payment verification failed — invalid signature');
+      throw new BadRequestException(
+        'Payment verification failed — invalid signature',
+      );
     }
 
     // Mark payment as paid and confirm order
@@ -308,7 +417,9 @@ export class StorefrontOrdersService {
   }
 
   async cancelOrder(customerId: string, orderId: string, reason?: string) {
-    const order = await this.prisma.order.findFirst({ where: { id: orderId, customerId } });
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+    });
     if (!order) throw new NotFoundException('Order not found');
     if (!['NEW', 'CONFIRMED'].includes(order.status)) {
       throw new BadRequestException('Order cannot be cancelled at this stage');

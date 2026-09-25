@@ -1,22 +1,16 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class StorefrontBannersService {
   constructor(private prisma: PrismaService) {}
 
-  async listBanners(domain: string) {
-    if (!domain) throw new BadRequestException('Missing x-store-domain header');
-
-    const store = await this.prisma.store.findUnique({ where: { domain } });
-    if (!store) throw new NotFoundException('Store not found');
-    if (!store.isActive) throw new BadRequestException('Store is not active');
-
+  async listBanners(storeId: string) {
     const now = new Date();
 
     const banners = await this.prisma.banner.findMany({
       where: {
-        storeId: store.id,
+        storeId,
         isActive: true,
         AND: [
           { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },

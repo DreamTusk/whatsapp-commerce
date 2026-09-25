@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Store } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SmsService } from '../../shared/sms.service';
 import * as crypto from 'crypto';
@@ -20,27 +21,21 @@ export class StorefrontAuthService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async getStore(domain: string) {
-    if (!domain) throw new BadRequestException('x-store-domain header required');
-    const store = await this.prisma.store.findUnique({ where: { domain } });
-    if (!store) throw new NotFoundException('Store not found');
-    if (!store.isActive) throw new BadRequestException('Store is not active');
-    return store;
-  }
-
-  private formatCustomer(c: { id: string; name: string | null; phone: string | null; email: string | null }) {
+  private formatCustomer(c: {
+    id: string;
+    name: string | null;
+    phone: string | null;
+    email: string | null;
+  }) {
     return { id: c.id, name: c.name, phone: c.phone, email: c.email };
   }
 
-  async getMethods(domain: string) {
-    const store = await this.getStore(domain);
+  async getMethods(store: Store) {
     return { methods: store.customerAuthMethods };
   }
 
-  async sendOtp(domain: string, phone: string) {
+  async sendOtp(store: Store, phone: string) {
     if (!phone) throw new BadRequestException('phone is required');
-
-    const store = await this.getStore(domain);
 
     await this.prisma.customerOtp.updateMany({
       where: { phone, storeId: store.id, isUsed: false },
@@ -59,20 +54,28 @@ export class StorefrontAuthService {
     return { message: 'OTP sent successfully' };
   }
 
-  async verifyOtp(domain: string, phone: string, otp: string) {
-    if (!phone || !otp) throw new BadRequestException('phone and otp are required');
-
-    const store = await this.getStore(domain);
+  async verifyOtp(store: Store, phone: string, otp: string) {
+    if (!phone || !otp)
+      throw new BadRequestException('phone and otp are required');
 
     const devBypass = process.env.NODE_ENV !== 'production' && otp === '123456';
 
     if (!devBypass) {
       const otpRecord = await this.prisma.customerOtp.findFirst({
-        where: { phone, storeId: store.id, otp, isUsed: false, expiresAt: { gt: new Date() } },
+        where: {
+          phone,
+          storeId: store.id,
+          otp,
+          isUsed: false,
+          expiresAt: { gt: new Date() },
+        },
       });
       if (!otpRecord) throw new BadRequestException('Invalid or expired OTP');
 
-      await this.prisma.customerOtp.update({ where: { id: otpRecord.id }, data: { isUsed: true } });
+      await this.prisma.customerOtp.update({
+        where: { id: otpRecord.id },
+        data: { isUsed: true },
+      });
     }
 
     const existingCustomer = await this.prisma.customer.findUnique({
@@ -102,7 +105,9 @@ export class StorefrontAuthService {
   }
 
   async getMe(customerId: string) {
-    const customer = await this.prisma.customer.findUnique({ where: { id: customerId } });
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: customerId },
+    });
     if (!customer) throw new NotFoundException('Customer not found');
     return { customer: this.formatCustomer(customer) };
   }
