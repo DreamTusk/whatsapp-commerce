@@ -249,11 +249,16 @@ export class StorefrontOrdersService {
         };
       }
       if (
-        !deliveryAddress.address &&
-        !deliveryAddress.street &&
-        !deliveryAddress.city
+        !deliveryAddress.doorNo?.trim() ||
+        !deliveryAddress.street?.trim() ||
+        !deliveryAddress.city?.trim() ||
+        !deliveryAddress.state?.trim() ||
+        !deliveryAddress.country?.trim() ||
+        !deliveryAddress.pincode?.trim()
       ) {
-        throw new BadRequestException('address or address_id is required');
+        throw new BadRequestException(
+          'A complete delivery address (door no, street, city, state, country, pincode) is required',
+        );
       }
     }
 
@@ -319,7 +324,7 @@ export class StorefrontOrdersService {
                 ? new Date(expected_pickup_time)
                 : null,
             deliveryNotes: delivery_notes?.trim() || null,
-            address: isPickup ? null : (deliveryAddress.address ?? null),
+            address: isPickup ? null : (deliveryAddress.address?.trim() || null),
             notes: notes ?? null,
             altPhone:
               typeof alt_phone === 'string' && alt_phone.trim()

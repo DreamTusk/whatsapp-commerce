@@ -7,8 +7,9 @@ import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
 import { loadRazorpayScript } from '@/lib/razorpay'
-import type { Cart, Order, Store } from '@/types'
-import { Check, X, MapPin, CreditCard, Smartphone, Truck, House } from "@deemlol/next-icons"
+import PickupTimePicker from '@/components/pickup-time-picker'
+import type { Cart, CustomerAddress, Order, Store } from '@/types'
+import { Check, X, MapPin, CreditCard, Smartphone, Truck, House, Plus } from "@deemlol/next-icons"
 
 type LocationState = 'idle' | 'requesting' | 'granted' | 'denied'
 type PaymentMethod = 'COD' | 'ONLINE'
@@ -26,7 +27,7 @@ const inputSmCls = 'w-full h-10 px-3 rounded-xl border border-gray-200 text-sm t
 export default function CheckoutClient() {
   const { isAuthenticated, customer, requireAuth, updateCustomer } = useAuth()
   const { refresh: refreshCount } = useCart()
-  const { selectedAddress } = useCartDrawer()
+  const { selectedAddress, setSelectedAddress } = useCartDrawer()
   const router = useRouter()
   const searchParams = useSearchParams()
   const reorderOrderId = searchParams.get('reorder')
@@ -58,6 +59,11 @@ export default function CheckoutClient() {
   const [longitude, setLongitude] = useState<number | null>(null)
   const [locationState, setLocationState] = useState<LocationState>('idle')
 
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([])
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
+  const [showAddressPicker, setShowAddressPicker] = useState(false)
+  const [saveAddress, setSaveAddress] = useState(true)
+
   const fetchData = useCallback(async () => {
     if (!isAuthenticated) { setLoading(false); return }
     try {
@@ -77,6 +83,32 @@ export default function CheckoutClient() {
   }, [isAuthenticated, reorderOrderId])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  const fetchAddresses = useCallback(async () => {
+    if (!isAuthenticated) return
+    setLoadingAddresses(true)
+    try {
+      const data = await clientFetch<{ addresses: CustomerAddress[] }>('/api/storefront/addresses')
+      setAddresses(data.addresses)
+      return data.addresses
+    } catch {
+      setAddresses([])
+      return []
+    } finally {
+      setLoadingAddresses(false)
+    }
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    fetchAddresses().then(addrs => {
+      if (!addrs?.length || selectedAddress) return
+      const def = addrs.find(a => a.is_default) ?? addrs[0]
+      if (def) {
+        setSelectedAddress({ id: def.id, label: def.label, door_no: def.door_no, street: def.street, address: def.address, city: def.city, state: def.state, country: def.country, pincode: def.pincode, latitude: def.latitude, longitude: def.longitude })
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (!store) return
@@ -143,6 +175,40 @@ export default function CheckoutClient() {
     )
   }
 
+  function pickAddress(addr: CustomerAddress) {
+    setSelectedAddress({ id: addr.id, label: addr.label, door_no: addr.door_no, street: addr.street, address: addr.address, city: addr.city, state: addr.state, country: addr.country, pincode: addr.pincode, latitude: addr.latitude, longitude: addr.longitude })
+    setShowAddressPicker(false)
+  }
+
+  function startNewAddress() {
+    setSelectedAddress(null)
+    setDoorNo(''); setStreet(''); setCity(''); setAddrState(''); setCountry(''); setPincode('')
+    setLatitude(null); setLongitude(null); setLocationState('idle')
+    setShowAddressPicker(false)
+  }
+
+  function normalizeAddressFields(a: { door_no?: string | null; street?: string | null; city?: string | null; state?: string | null; country?: string | null; pincode?: string | null }) {
+    return [a.door_no, a.street, a.city, a.state, a.country, a.pincode]
+      .map(v => (v ?? '').trim().toLowerCase())
+      .join('|')
+  }
+
+  function isDuplicateOfSavedAddress() {
+    const current = normalizeAddressFields({ door_no: doorNo, street, city, state: addrState, country, pincode })
+    return addresses.some(a => normalizeAddressFields(a) === current)
+  }
+
+  function missingAddressFields() {
+    const missing: string[] = []
+    if (!doorNo.trim()) missing.push('door/flat no.')
+    if (!street.trim()) missing.push('street')
+    if (!city.trim()) missing.push('city')
+    if (!addrState.trim()) missing.push('state')
+    if (!country.trim()) missing.push('country')
+    if (!pincode.trim()) missing.push('pincode')
+    return missing
+  }
+
   function handlePlaceOrderClick() {
     if (!cart || cart.items.length === 0) return
     if (cart.items.some(i => !i.product.in_stock)) {
@@ -150,8 +216,8 @@ export default function CheckoutClient() {
       return
     }
     if (deliveryType === 'HOME_DELIVERY') {
-      const combined = buildAddress(doorNo, street, city, addrState, country, pincode)
-      if (!combined.trim()) { setError('Delivery address is required'); return }
+      const missing = missingAddressFields()
+      if (missing.length > 0) { setError(`Please fill in: ${missing.join(', ')}`); return }
     }
     setError('')
     setConfirmOpen(true)
@@ -195,6 +261,29 @@ export default function CheckoutClient() {
         method: 'POST',
         body: JSON.stringify(body),
       })
+
+      if (deliveryType === 'HOME_DELIVERY' && saveAddress && !selectedAddress && !isDuplicateOfSavedAddress()) {
+        try {
+          await clientFetch('/api/storefront/addresses', {
+            method: 'POST',
+            body: JSON.stringify({
+              address: combined,
+              door_no: doorNo.trim(),
+              street: street.trim(),
+              city: city.trim(),
+              state: addrState.trim(),
+              country: country.trim(),
+              pincode: pincode.trim(),
+              latitude: latitude ?? undefined,
+              longitude: longitude ?? undefined,
+              is_default: addresses.length === 0,
+            }),
+          })
+          fetchAddresses()
+        } catch {
+          // Saving the address for next time is best-effort — the order itself already succeeded.
+        }
+      }
 
       setConfirmOpen(false)
 
@@ -344,21 +433,68 @@ export default function CheckoutClient() {
 
   const addressSection = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-      {/* Pre-filled badge */}
-      {selectedAddress && (
-        <div className="flex items-center gap-2.5 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
-          <span className="text-base flex-shrink-0">
-            {selectedAddress.label === 'House' ? '🏠' : selectedAddress.label === 'Work' ? '💼' : '📍'}
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold c-primary">{selectedAddress.label ?? 'Saved address'}</p>
-            <p className="text-xs text-gray-500 truncate">
-              {[selectedAddress.address, selectedAddress.city, selectedAddress.pincode].filter(Boolean).join(', ')}
-            </p>
-          </div>
-          <span className="text-[10px] font-semibold c-primary flex-shrink-0 bg-gray-100 px-2 py-0.5 rounded-full">Pre-filled</span>
+      {/* Saved addresses — switch between them */}
+      {addresses.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Saved addresses</p>
+          <button type="button" onClick={() => setShowAddressPicker(v => !v)}
+            className="text-xs c-primary font-semibold hover:opacity-70 transition-opacity">
+            {showAddressPicker ? 'Cancel' : 'Change'}
+          </button>
         </div>
       )}
+
+      {showAddressPicker ? (
+        <div className="space-y-2">
+          {loadingAddresses ? (
+            <div className="h-10 flex items-center">
+              <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin spinner-primary" />
+            </div>
+          ) : (
+            <>
+              {addresses.map(addr => (
+                <button
+                  key={addr.id}
+                  type="button"
+                  onClick={() => pickAddress(addr)}
+                  className={`w-full text-left p-3 rounded-xl border transition-colors ${selectedAddress?.id === addr.id ? 'border-primary bg-gray-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50'}`}
+                >
+                  {addr.label && (
+                    <p className="text-xs font-semibold text-gray-700 mb-0.5">{addr.label}</p>
+                  )}
+                  <p className="text-xs text-gray-500 leading-snug">
+                    {[addr.address, addr.street, addr.city, addr.pincode].filter(Boolean).join(', ')}
+                  </p>
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={startNewAddress}
+                className="w-full flex items-center gap-2 text-left p-3 rounded-xl border border-dashed border-primary c-primary text-xs font-medium hover:opacity-80 transition-opacity"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Enter a new address
+              </button>
+            </>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Pre-filled badge */}
+          {selectedAddress && (
+            <div className="flex items-center gap-2.5 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
+              <span className="text-base flex-shrink-0">
+                {selectedAddress.label === 'House' ? '🏠' : selectedAddress.label === 'Work' ? '💼' : '📍'}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold c-primary">{selectedAddress.label ?? 'Saved address'}</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {[selectedAddress.address, selectedAddress.city, selectedAddress.pincode].filter(Boolean).join(', ')}
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold c-primary flex-shrink-0 bg-gray-100 px-2 py-0.5 rounded-full">Pre-filled</span>
+            </div>
+          )}
 
       {/* Section label + location button */}
       <div className="flex items-center justify-between">
@@ -419,6 +555,20 @@ export default function CheckoutClient() {
         <input type="text" value={country} onChange={e => setCountry(e.target.value)}
           placeholder="India" className={inputSmCls} />
       </div>
+
+      {!selectedAddress && !isDuplicateOfSavedAddress() && (
+        <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={saveAddress}
+            onChange={e => setSaveAddress(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+          />
+          <span className="text-xs font-medium text-gray-600">Save this address for future orders</span>
+        </label>
+      )}
+        </>
+      )}
     </div>
   )
 
@@ -455,11 +605,10 @@ export default function CheckoutClient() {
         <label className="text-xs font-medium text-gray-500 block mb-1.5">
           Expected pickup time <span className="text-gray-300 font-normal">(optional)</span>
         </label>
-        <input
-          type="datetime-local"
-          min={minPickupTime}
+        <PickupTimePicker
           value={expectedPickupTime}
-          onChange={e => setExpectedPickupTime(e.target.value)}
+          onChange={setExpectedPickupTime}
+          minDate={new Date(minPickupTime)}
           className={inputSmCls}
         />
         <p className="text-[11px] text-gray-400 mt-1">Only future times allowed.</p>

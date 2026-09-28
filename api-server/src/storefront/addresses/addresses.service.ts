@@ -5,6 +5,21 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class AddressesService {
   constructor(private prisma: PrismaService) {}
 
+  private assertCompleteAddress(body: any) {
+    if (
+      !body.door_no?.trim() ||
+      !body.street?.trim() ||
+      !body.city?.trim() ||
+      !body.state?.trim() ||
+      !body.country?.trim() ||
+      !body.pincode?.trim()
+    ) {
+      throw new BadRequestException(
+        'door_no, street, city, state, country and pincode are all required',
+      );
+    }
+  }
+
   private formatAddress(a: any) {
     return {
       id: a.id,
@@ -33,9 +48,7 @@ export class AddressesService {
   }
 
   async createAddress(customerId: string, storeId: string, body: any) {
-    if (!body.address && !body.street && !body.city) {
-      throw new BadRequestException('At least one of address, street, or city is required');
-    }
+    this.assertCompleteAddress(body);
 
     if (body.is_default) {
       await this.prisma.customerAddress.updateMany({
@@ -70,6 +83,8 @@ export class AddressesService {
       where: { id: addressId, customerId, storeId },
     });
     if (!existing) throw new NotFoundException('Address not found');
+
+    this.assertCompleteAddress(body);
 
     if (body.is_default && !existing.isDefault) {
       await this.prisma.customerAddress.updateMany({
