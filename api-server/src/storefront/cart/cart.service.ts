@@ -62,14 +62,12 @@ export class CartService {
       ? await this.prisma.cartItem.update({
           where: { customerId_productId: { customerId, productId: product_id } },
           data: { quantity: existing.quantity + quantity },
-          include: { Product: { include: productMediaInclude } },
         })
       : await this.prisma.cartItem.create({
           data: { customerId, productId: product_id, storeId, quantity },
-          include: { Product: { include: productMediaInclude } },
         });
 
-    return { item: this.formatItem(item) };
+    return { item: { id: item.id, quantity: item.quantity } };
   }
 
   async updateQuantity(customerId: string, storeId: string, productId: string, quantity: number) {
@@ -91,10 +89,9 @@ export class CartService {
     const item = await this.prisma.cartItem.update({
       where: { customerId_productId: { customerId, productId } },
       data: { quantity },
-      include: { Product: { include: productMediaInclude } },
     });
 
-    return { item: this.formatItem(item) };
+    return { item: { id: item.id, quantity: item.quantity } };
   }
 
   async removeItem(customerId: string, storeId: string, productId: string) {

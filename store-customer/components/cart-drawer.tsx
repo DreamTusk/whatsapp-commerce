@@ -6,6 +6,7 @@ import { useCartDrawer, type SelectedAddress } from '@/contexts/cart-drawer'
 import { useCart } from '@/contexts/cart'
 import { useAuth } from '@/contexts/auth'
 import { clientFetch } from '@/lib/client-api'
+import { useDebouncedCartMutation } from '@/lib/use-debounced-cart-mutation'
 import { getGuestCart, updateGuestQty, type GuestCartItem } from '@/lib/guest-cart'
 import { X, ChevronRight, Plus, Trash } from "@deemlol/next-icons"
 import type { Cart, CustomerAddress } from '@/types'
@@ -14,14 +15,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3010'
 
 export default function CartDrawer() {
   const { isOpen, closeCart, selectedAddress, setSelectedAddress } = useCartDrawer()
-  const { refresh: refreshCount, syncGuestCart, setFromItems } = useCart()
+  const { refresh: refreshCount, syncGuestCart, setFromItems, setQty } = useCart()
   const { isAuthenticated, requireAuth } = useAuth()
   const router = useRouter()
+  const scheduleCartUpdate = useDebouncedCartMutation()
 
   const [guestItems, setGuestItems] = useState<GuestCartItem[]>([])
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(false)
-  const [updating, setUpdating] = useState<string | null>(null)
   const [cartError, setCartError] = useState<string | null>(null)
   const [addresses, setAddresses] = useState<CustomerAddress[]>([])
   const [showAddressPicker, setShowAddressPicker] = useState(false)
@@ -84,25 +85,23 @@ export default function CartDrawer() {
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
-  async function updateQty(productId: string, qty: number) {
-    setUpdating(productId)
+  function updateQty(productId: string, qty: number) {
+    if (!cart) return
     setCartError(null)
-    try {
-      if (qty === 0) {
-        await clientFetch(`/api/storefront/cart/${productId}`, { method: 'DELETE' })
-      } else {
-        await clientFetch(`/api/storefront/cart/${productId}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ quantity: qty }),
-        })
-      }
-      await fetchCart() // also syncs the shared cart count via setFromItems
-    } catch (err: any) {
+
+    // Optimistic — updates instantly; the actual PATCH/DELETE is debounced so a
+    // burst of taps sends one network call instead of one per tap.
+    const items = qty <= 0
+      ? cart.items.filter(i => i.product.id !== productId)
+      : cart.items.map(i => i.product.id === productId ? { ...i, quantity: qty } : i)
+    const total = items.reduce((sum, i) => sum + i.product.selling_price * i.quantity, 0)
+    setCart({ ...cart, items, total })
+    setQty(productId, qty)
+
+    scheduleCartUpdate(productId, qty, (err: any) => {
       setCartError(err?.error ?? 'Something went wrong')
-      await fetchCart()
-    } finally {
-      setUpdating(null)
-    }
+      fetchCart()
+    })
   }
 
   useEffect(() => {
@@ -290,26 +289,24 @@ export default function CartDrawer() {
                   </button>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
-                      disabled={updating === item.product.id}
                       onClick={() => updateQty(item.product.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 text-base leading-none"
+                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors text-base leading-none"
                     >
                       −
                     </button>
                     <span className="w-5 text-center text-sm font-semibold text-gray-900">
-                      {updating === item.product.id ? '…' : item.quantity}
+                      {item.quantity}
                     </span>
                     <button
-                      disabled={updating === item.product.id || !item.product.in_stock}
+                      disabled={!item.product.in_stock}
                       onClick={() => updateQty(item.product.id, item.quantity + 1)}
                       className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:opacity-70 transition-colors disabled:opacity-40 text-base leading-none"
                     >
                       +
                     </button>
                     <button
-                      disabled={updating === item.product.id}
                       onClick={() => updateQty(item.product.id, 0)}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-40"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 transition-colors"
                       aria-label="Remove item"
                     >
                       <Trash className="w-4 h-4" />

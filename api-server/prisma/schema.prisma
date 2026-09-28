@@ -55,6 +55,7 @@ model CartItem {
   Store      Store    @relation(fields: [storeId], references: [id])
 
   @@unique([customerId, productId])
+  @@index([customerId, storeId])
 }
 
 model Category {

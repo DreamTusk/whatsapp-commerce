@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
+import { useDebouncedCartMutation } from '@/lib/use-debounced-cart-mutation'
 import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
 import { ChevronLeft, ChevronRight, ShoppingCart, Check, Trash, Heart } from "@deemlol/next-icons"
 import type { Product, ProductImage } from '@/types'
@@ -51,8 +52,9 @@ export default function ProductDetailClient({
 }: Props) {
   const router = useRouter()
   const { isAuthenticated, requireAuth } = useAuth()
-  const { refresh, items: cartItems } = useCart()
+  const { refresh, items: cartItems, setQty } = useCart()
   const { openCart } = useCartDrawer()
+  const scheduleCartUpdate = useDebouncedCartMutation()
 
   const primaryIdx = images.findIndex(i => i.is_primary)
   const [activeIdx, setActiveIdx] = useState(primaryIdx >= 0 ? primaryIdx : 0)
@@ -63,9 +65,7 @@ export default function ProductDetailClient({
   const prev = () => setActiveIdx(i => (i - 1 + images.length) % images.length)
   const next = () => setActiveIdx(i => (i + 1) % images.length)
 
-  const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
-  const [cartLoading, setCartLoading] = useState(false)
   const [cartError, setCartError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -91,64 +91,50 @@ export default function ProductDetailClient({
     ? Math.round((1 - sellingPrice / originalPrice) * 100)
     : null
 
-  async function addToCart() {
+  function addToCart() {
     if (!isAuthenticated) {
       addToGuestCart({
         product_id: productId, name: productName, image_url: productImage,
         selling_price: sellingPrice, original_price: originalPrice, in_stock: inStock,
       })
-      await refresh()
+      refresh()
       setAdded(true)
       setTimeout(() => setAdded(false), 2000)
       return
     }
-    setAdding(true)
-    try {
-      await clientFetch('/api/storefront/cart', {
-        method: 'POST',
-        body: JSON.stringify({ product_id: productId }),
-      })
-      await refresh()
-      setAdded(true)
-      setTimeout(() => setAdded(false), 2000)
-    } catch { /* silent */ } finally {
-      setAdding(false)
-    }
+    setQty(productId, 1)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+    clientFetch('/api/storefront/cart', {
+      method: 'POST',
+      body: JSON.stringify({ product_id: productId }),
+    }).catch(() => { setQty(productId, 0); setAdded(false) })
   }
 
-  async function handleIncrease() {
+  function handleIncrease() {
     if (!inStock) { setCartError('Product is out of stock'); return }
-    if (!isAuthenticated) { updateGuestQty(productId, cartQty + 1); await refresh(); return }
-    setCartLoading(true)
-    try {
-      await clientFetch(`/api/storefront/cart/${productId}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty + 1 }) })
-      await refresh()
-    } catch (err: any) {
+    if (!isAuthenticated) { updateGuestQty(productId, cartQty + 1); refresh(); return }
+    const next = cartQty + 1
+    setQty(productId, next)
+    scheduleCartUpdate(productId, next, (err: any) => {
       setCartError(err?.error ?? 'Something went wrong')
-      await refresh()
-    } finally { setCartLoading(false) }
+      refresh()
+    })
   }
 
-  async function handleDecrease() {
-    if (!isAuthenticated) { updateGuestQty(productId, cartQty - 1); await refresh(); return }
-    setCartLoading(true)
-    try {
-      if (cartQty <= 1) {
-        await clientFetch(`/api/storefront/cart/${productId}`, { method: 'DELETE' })
-      } else {
-        await clientFetch(`/api/storefront/cart/${productId}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty - 1 }) })
-      }
-      await refresh()
-    } catch { /* silent */ } finally { setCartLoading(false) }
+  function handleDecrease() {
+    const next = cartQty - 1
+    if (next <= 0) setAdded(false)
+    if (!isAuthenticated) { updateGuestQty(productId, next); refresh(); return }
+    setQty(productId, next)
+    scheduleCartUpdate(productId, next, () => refresh())
   }
 
-  async function removeFromCart() {
-    if (!isAuthenticated) { updateGuestQty(productId, 0); await refresh(); return }
-    setCartLoading(true)
-    try {
-      await clientFetch(`/api/storefront/cart/${productId}`, { method: 'DELETE' })
-      await refresh()
-    } catch { /* silent */ } finally { setCartLoading(false) }
+  function removeFromCart() {
+    setAdded(false)
+    if (!isAuthenticated) { updateGuestQty(productId, 0); refresh(); return }
+    setQty(productId, 0)
+    scheduleCartUpdate(productId, 0, () => refresh())
   }
 
   async function toggleWishlist() {
@@ -171,16 +157,16 @@ export default function ProductDetailClient({
 
   const CartStepper = ({ className }: { className?: string }) => (
     <div className={`flex items-center justify-between rounded-xl border-primary border overflow-hidden [font-family:var(--font-instrument-sans)] ${className}`}>
-      <button onClick={handleDecrease} disabled={cartLoading}
-        className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40 text-xl font-bold"
+      <button onClick={handleDecrease}
+        className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity text-xl font-bold"
       >
-        {cartLoading ? <div className="w-4 h-4 border border-t-transparent rounded-full animate-spin spinner-primary" /> : '−'}
+        −
       </button>
       <span className="text-base font-bold text-gray-900">{cartQty}</span>
-      <button onClick={handleIncrease} disabled={cartLoading || !inStock}
+      <button onClick={handleIncrease} disabled={!inStock}
         className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40 text-xl font-bold"
       >
-        {cartLoading ? <div className="w-4 h-4 border border-t-transparent rounded-full animate-spin spinner-primary" /> : '+'}
+        +
       </button>
     </div>
   )
@@ -194,15 +180,11 @@ export default function ProductDetailClient({
     ) : (
       <button
         onClick={addToCart}
-        disabled={adding || !inStock}
+        disabled={!inStock}
         className={`flex items-center justify-center gap-2 btn-primary-filled font-semibold rounded-xl text-sm ${className}`}
       >
-        {adding ? (
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <ShoppingCart className="w-4 h-4" />
-        )}
-        {inStock ? (adding ? 'Adding…' : 'Add to Cart') : 'Out of stock'}
+        <ShoppingCart className="w-4 h-4" />
+        {inStock ? 'Add to Cart' : 'Out of stock'}
       </button>
     )
   )
@@ -371,8 +353,7 @@ export default function ProductDetailClient({
               <CartStepper className="w-full h-[52px]" />
               <button
                 onClick={removeFromCart}
-                disabled={cartLoading}
-                className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors"
               >
                 <Trash className="w-4 h-4" />
                 Remove from cart
@@ -496,8 +477,7 @@ export default function ProductDetailClient({
                     <CartStepper className="w-full h-[56px]" />
                     <button
                       onClick={removeFromCart}
-                      disabled={cartLoading}
-                      className="w-full py-4 rounded-xl border border-rose-200 text-rose-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                      className="w-full py-4 rounded-xl border border-rose-200 text-rose-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
