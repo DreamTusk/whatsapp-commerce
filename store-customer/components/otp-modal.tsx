@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 import { clientFetch } from '@/lib/client-api'
 
 export interface Customer {
@@ -60,6 +61,7 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
 
   async function handleSendOtp() {
     if (!phone.trim()) { setError('Enter your phone number'); return }
+    if (!isValidPhoneNumber(phone.trim(), 'IN')) { setError('Enter a valid phone number'); return }
     setLoading(true)
     setError('')
     try {

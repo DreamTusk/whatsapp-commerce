@@ -35,8 +35,6 @@ export class StorefrontAuthService {
   }
 
   async sendOtp(store: Store, phone: string) {
-    if (!phone) throw new BadRequestException('phone is required');
-
     await this.prisma.customerOtp.updateMany({
       where: { phone, storeId: store.id, isUsed: false },
       data: { isUsed: true },
@@ -55,9 +53,6 @@ export class StorefrontAuthService {
   }
 
   async verifyOtp(store: Store, phone: string, otp: string) {
-    if (!phone || !otp)
-      throw new BadRequestException('phone and otp are required');
-
     const devBypass = process.env.NODE_ENV !== 'production' && otp === '123456';
 
     if (!devBypass) {

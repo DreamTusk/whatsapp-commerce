@@ -13,6 +13,8 @@ import { StorefrontAuthService } from './auth.service';
 import { CustomerAuthGuard } from '../../common/guards/customer-auth.guard';
 import { CurrentCustomer } from '../../common/decorators/current-customer.decorator';
 import { CurrentStore } from '../../common/decorators/current-store.decorator';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Controller('storefront/auth')
 export class StorefrontAuthController {
@@ -27,17 +29,14 @@ export class StorefrontAuthController {
   // POST /api/storefront/auth/send-otp
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
-  sendOtp(@CurrentStore() store: Store, @Body() body: { phone: string }) {
+  sendOtp(@CurrentStore() store: Store, @Body() body: SendOtpDto) {
     return this.authService.sendOtp(store, body.phone);
   }
 
   // POST /api/storefront/auth/verify-otp
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
-  verifyOtp(
-    @CurrentStore() store: Store,
-    @Body() body: { phone: string; otp: string },
-  ) {
+  verifyOtp(@CurrentStore() store: Store, @Body() body: VerifyOtpDto) {
     return this.authService.verifyOtp(store, body.phone, body.otp);
   }
 
