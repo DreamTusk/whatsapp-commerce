@@ -215,6 +215,7 @@ export default function CheckoutClient() {
       setError('Remove out-of-stock items from your cart to place the order')
       return
     }
+    if (!name.trim()) { setError('Please enter your name'); return }
     if (deliveryType === 'HOME_DELIVERY') {
       const missing = missingAddressFields()
       if (missing.length > 0) { setError(`Please fill in: ${missing.join(', ')}`); return }
@@ -411,7 +412,7 @@ export default function CheckoutClient() {
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Contact details</p>
       <div>
         <label className="text-sm font-medium text-gray-700 block mb-1.5">
-          Name <span className="text-xs font-normal text-gray-400">(optional)</span>
+          Name <span className="text-red-400">*</span>
         </label>
         <input type="text" value={name} onChange={e => setName(e.target.value)}
           placeholder="Your name" className={inputCls} />

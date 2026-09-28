@@ -194,6 +194,10 @@ export class StorefrontOrdersService {
       throw new BadRequestException('items array is required');
     }
 
+    if (!name?.trim()) {
+      throw new BadRequestException('name is required');
+    }
+
     const isPickup = delivery_type.toUpperCase() === 'PICKUP';
 
     if (isPickup && !store.isPickupEnabled) {
@@ -361,12 +365,10 @@ export class StorefrontOrdersService {
     if (!order)
       throw new BadRequestException('Failed to generate order number');
 
-    if (name?.trim()) {
-      await this.prisma.customer.update({
-        where: { id: customerId },
-        data: { name: name.trim() },
-      });
-    }
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: { name: name.trim() },
+    });
 
     await this.prisma.cartItem.deleteMany({
       where: { customerId, storeId, productId: { in: productIds } },

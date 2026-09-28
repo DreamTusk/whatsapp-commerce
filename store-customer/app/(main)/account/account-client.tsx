@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth'
 import { clientFetch } from '@/lib/client-api'
 import { loadRazorpayScript } from '@/lib/razorpay'
-import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink, ShoppingBag, CheckCircle } from "@deemlol/next-icons"
+import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink, ShoppingBag, CheckCircle, Clock, XCircle } from "@deemlol/next-icons"
 
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
@@ -986,6 +986,19 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   })() : null
 
   // Desktop orders
+  const orderStats = {
+    total: orders.length,
+    inTransit: orders.filter(o => o.status === 'CONFIRMED' || o.status === 'OUT_FOR_DELIVERY').length,
+    delivered: orders.filter(o => o.status === 'DELIVERED').length,
+    cancelled: orders.filter(o => o.status === 'CANCELLED').length,
+  }
+  const orderStatCards = [
+    { label: 'Total Orders', value: orderStats.total, Icon: Package, bg: 'bg-green-50', iconColor: 'text-green-600', arrowColor: 'text-green-400' },
+    { label: 'In Transit', value: orderStats.inTransit, Icon: Truck, bg: 'bg-blue-50', iconColor: 'text-blue-600', arrowColor: 'text-blue-400' },
+    { label: 'Delivered', value: orderStats.delivered, Icon: Clock, bg: 'bg-orange-50', iconColor: 'text-orange-500', arrowColor: 'text-orange-400' },
+    { label: 'Cancelled', value: orderStats.cancelled, Icon: XCircle, bg: 'bg-red-50', iconColor: 'text-red-500', arrowColor: 'text-red-400' },
+  ]
+
   const desktopOrdersPanel = selectedOrderId ? (
     <div className="flex flex-col h-full">
       {selectedOrderLoading ? (
@@ -995,14 +1008,55 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       )}
     </div>
   ) : (
-    <div className="flex flex-col h-full p-4 gap-3">
-      <div className="bg-white rounded-xl p-4 flex-1 overflow-auto">
+    <div className="flex flex-col sticky top-[var(--store-header-h)] h-[calc(100vh-var(--store-header-h)-4rem)]">
+      {/* Header */}
+      <div className="flex items-center gap-3 p-6 pb-5 flex-shrink-0">
+        <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+          <Package className="w-5 h-5 c-primary" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">My Orders</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Track, manage and view your orders</p>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-4 gap-3 px-6 pb-5 flex-shrink-0">
+        {orderStatCards.map(s => (
+          <div key={s.label} className={`${s.bg} rounded-2xl p-3.5 flex items-center justify-between gap-2 min-w-0`}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                <s.Icon className={`w-4 h-4 ${s.iconColor}`} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-gray-500 truncate">{s.label}</p>
+                <p className="text-lg font-bold text-gray-900">{s.value}</p>
+              </div>
+            </div>
+            <ChevronRight className={`w-4 h-4 flex-shrink-0 ${s.arrowColor}`} />
+          </div>
+        ))}
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+      <div className="bg-white rounded-xl p-4 min-h-full">
         {ordersLoading ? (
           <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-4xl mb-3">📦</p><p className="font-semibold text-gray-600">No orders yet</p>
-            <Link href="/products" className="mt-5 inline-block btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">Browse products</Link>
+          <div className="flex flex-col items-center justify-center text-center py-16 px-6">
+            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-5" style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.12) 0%, rgba(34,197,94,0) 70%)' }}>
+              <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center">
+                <Package className="w-8 h-8 text-amber-600" />
+              </div>
+            </div>
+            <p className="font-bold text-gray-900 text-lg mb-1.5">No orders yet</p>
+            <p className="text-sm text-gray-400 max-w-xs mb-6 leading-relaxed">Looks like you haven't placed any orders yet. Start shopping and bring fresh products to your doorstep!</p>
+            <Link href="/products" className="inline-flex items-center gap-2 btn-primary-filled font-semibold px-6 py-3 rounded-full text-sm">
+              <ShoppingCart className="w-4 h-4" />
+              Browse products
+              <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -1049,6 +1103,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   )
