@@ -1,6 +1,5 @@
 import {
   Injectable,
-  BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
@@ -20,12 +19,6 @@ export class InviteService {
   ) {}
 
   async createInvite(userId: string, email: string, role: string) {
-    if (!email || !role) throw new BadRequestException('email and role are required');
-    const validRoles = Object.values(Role);
-    if (!validRoles.includes(role as Role)) {
-      throw new BadRequestException(`role must be one of: ${validRoles.join(', ')}`);
-    }
-
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
 

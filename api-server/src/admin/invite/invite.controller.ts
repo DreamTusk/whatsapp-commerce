@@ -10,6 +10,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { InviteService } from './invite.service';
+import { CreateInviteDto } from './dto/create-invite.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -26,7 +27,7 @@ export class InviteController {
   @HttpCode(HttpStatus.CREATED)
   createInvite(
     @CurrentUser() user: { userId: string },
-    @Body() body: { email: string; role: string },
+    @Body() body: CreateInviteDto,
   ) {
     return this.inviteService.createInvite(user.userId, body.email, body.role);
   }

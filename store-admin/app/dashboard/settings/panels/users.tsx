@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { Search, Plus, MoreVertical } from '@deemlol/next-icons'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { StoreUser, StoreInvite } from '@/types'
 
 const INVITE_ROLES = [{ value: 'STAFF', label: 'Staff' }]
+const inviteEmailSchema = z.string().email('Enter a valid email')
 
 function roleLabel(role: string) {
   if (role === 'OWNER') return 'Owner'
@@ -33,6 +35,7 @@ export default function UsersPanel() {
 
   const [inviteOpen, setInviteOpen]   = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteEmailError, setInviteEmailError] = useState('')
   const [inviteRole, setInviteRole]   = useState('STAFF')
   const [inviting, setInviting]       = useState(false)
 
@@ -70,10 +73,17 @@ export default function UsersPanel() {
   )
 
   async function sendInvite() {
-    if (!inviteEmail.trim()) return
+    const email = inviteEmail.trim()
+    if (!email) return
+    const result = inviteEmailSchema.safeParse(email)
+    if (!result.success) {
+      setInviteEmailError(result.error.issues[0].message)
+      return
+    }
+    setInviteEmailError('')
     setInviting(true)
     try {
-      await api.post('/api/invite', { email: inviteEmail.trim(), role: inviteRole })
+      await api.post('/api/invite', { email, role: inviteRole })
       toast.success('Invite sent')
       setInviteEmail('')
       setInviteRole('STAFF')
@@ -267,7 +277,7 @@ export default function UsersPanel() {
       {/* Invite modal */}
       <Dialog
         open={inviteOpen}
-        onOpenChange={open => { setInviteOpen(open); if (!open) { setInviteEmail(''); setInviteRole('STAFF') } }}
+        onOpenChange={open => { setInviteOpen(open); if (!open) { setInviteEmail(''); setInviteEmailError(''); setInviteRole('STAFF') } }}
         disablePointerDismissal
       >
         <DialogContent>
@@ -281,9 +291,13 @@ export default function UsersPanel() {
                 type="email"
                 placeholder="staff@example.com"
                 value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
+                onChange={e => { setInviteEmail(e.target.value); setInviteEmailError('') }}
                 onKeyDown={e => e.key === 'Enter' && sendInvite()}
+                aria-invalid={!!inviteEmailError}
               />
+              {inviteEmailError && (
+                <p className="text-xs text-destructive">{inviteEmailError}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Role</Label>
