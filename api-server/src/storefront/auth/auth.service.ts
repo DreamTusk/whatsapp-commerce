@@ -9,6 +9,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SmsService } from '../../shared/sms.service';
 import * as crypto from 'crypto';
 
+const OTP_RESEND_COOLDOWN_SECONDS = 45;
+const MAX_OTP_SENDS_PER_HOUR = 5;
+const MAX_OTP_VERIFY_ATTEMPTS = 5;
+
 @Injectable()
 export class StorefrontAuthService {
   constructor(
@@ -35,6 +39,25 @@ export class StorefrontAuthService {
   }
 
   async sendOtp(store: Store, phone: string) {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentOtps = await this.prisma.customerOtp.findMany({
+      where: { phone, storeId: store.id, createdAt: { gte: oneHourAgo } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (recentOtps.length > 0) {
+      const secondsSinceLast = (Date.now() - recentOtps[0].createdAt.getTime()) / 1000;
+      if (secondsSinceLast < OTP_RESEND_COOLDOWN_SECONDS) {
+        throw new BadRequestException(
+          `Please wait ${Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - secondsSinceLast)}s before requesting another OTP`,
+        );
+      }
+    }
+
+    if (recentOtps.length >= MAX_OTP_SENDS_PER_HOUR) {
+      throw new BadRequestException('Too many OTP requests. Please try again later.');
+    }
+
     await this.prisma.customerOtp.updateMany({
       where: { phone, storeId: store.id, isUsed: false },
       data: { isUsed: true },
@@ -57,15 +80,29 @@ export class StorefrontAuthService {
 
     if (!devBypass) {
       const otpRecord = await this.prisma.customerOtp.findFirst({
-        where: {
-          phone,
-          storeId: store.id,
-          otp,
-          isUsed: false,
-          expiresAt: { gt: new Date() },
-        },
+        where: { phone, storeId: store.id, isUsed: false },
+        orderBy: { createdAt: 'desc' },
       });
-      if (!otpRecord) throw new BadRequestException('Invalid or expired OTP');
+
+      if (!otpRecord || otpRecord.expiresAt < new Date()) {
+        throw new BadRequestException('OTP expired. Please request a new one.');
+      }
+
+      if (otpRecord.attempts >= MAX_OTP_VERIFY_ATTEMPTS) {
+        await this.prisma.customerOtp.update({
+          where: { id: otpRecord.id },
+          data: { isUsed: true },
+        });
+        throw new BadRequestException('Too many incorrect attempts. Please request a new OTP.');
+      }
+
+      if (otpRecord.otp !== otp) {
+        await this.prisma.customerOtp.update({
+          where: { id: otpRecord.id },
+          data: { attempts: { increment: 1 } },
+        });
+        throw new BadRequestException('Invalid OTP. Please try again.');
+      }
 
       await this.prisma.customerOtp.update({
         where: { id: otpRecord.id },

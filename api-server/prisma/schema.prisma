@@ -161,9 +161,12 @@ model CustomerOtp {
   storeId   String
   otp       String
   isUsed    Boolean  @default(false)
+  attempts  Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
   Store     Store    @relation(fields: [storeId], references: [id])
+
+  @@index([phone, storeId])
 }
 
 model CustomerToken {

@@ -115,6 +115,8 @@ export default function OtpModal({ open, onClose, onSuccess, storeName }: Props)
       }
     } catch (e: unknown) {
       setError((e as { error?: string })?.error ?? 'Invalid OTP')
+      setOtp('')
+      setTimeout(() => otpRef.current?.focus(), 50)
     } finally {
       setLoading(false)
     }
