@@ -50,13 +50,7 @@ export class InviteService {
 
     const inviteLink = `${process.env.ADMIN_APP_URL || 'http://localhost:3011'}/accept-invite?token=${token}`;
 
-    console.log(`\n--- STAFF INVITE ---`);
-    console.log(`Store  : ${invite.Store.name}`);
-    console.log(`Email  : ${email}`);
-    console.log(`Role   : ${role}`);
-    console.log(`Link   : ${inviteLink}`);
-    console.log(`Expires: ${invite.expiresAt.toISOString()}`);
-    console.log(`--------------------\n`);
+    await this.emailService.sendInviteEmail(email, invite.Store.name, role, inviteLink);
 
     return {
       invite: {

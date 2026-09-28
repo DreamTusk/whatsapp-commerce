@@ -297,11 +297,7 @@ export class StoreService {
     });
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    await this.emailService.sendSimpleEmail(
-      user!.email,
-      'Store Created Successfully',
-      `Hi ${user!.name},\n\nYour store "${store.name}" has been created successfully.\n\nYou can now start adding products and categories.`,
-    );
+    await this.emailService.sendStoreCreatedEmail(user!.email, user!.name, store.name);
 
     return { store: this.formatStore(store) };
   }
@@ -411,6 +407,11 @@ export class StoreService {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
 
+    const existingStore = await this.prisma.store.findUnique({
+      where: { id: userStore.storeId },
+      select: { isActive: true },
+    });
+
     if (body.domain !== undefined) this.assertDomainNotReserved(body.domain);
 
     let logoUrl: string | undefined = undefined;
@@ -443,11 +444,16 @@ export class StoreService {
     });
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    await this.emailService.sendSimpleEmail(
-      user!.email,
-      'Store Updated',
-      `Hi ${user!.name},\n\nYour store "${store.name}" details have been updated successfully.`,
-    );
+    const activeChanged =
+      body.is_active !== undefined && (body.is_active === 'true') !== existingStore!.isActive;
+
+    if (activeChanged && body.is_active === 'true') {
+      await this.emailService.sendStoreActivatedEmail(user!.email, user!.name, store.name);
+    } else if (activeChanged && body.is_active === 'false') {
+      await this.emailService.sendStoreDeactivatedEmail(user!.email, user!.name, store.name);
+    } else {
+      await this.emailService.sendStoreUpdatedEmail(user!.email, user!.name, store.name);
+    }
 
     return { store: this.formatStore(store) };
   }

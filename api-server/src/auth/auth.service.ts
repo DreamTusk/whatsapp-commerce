@@ -87,11 +87,7 @@ export class AuthService {
     });
 
     const otp = await this.otpService.createOtp(user.id);
-    await this.emailService.sendSimpleEmail(
-      email,
-      'OTP for account verification',
-      `Hi ${user.name},\n\nYour OTP to verify your account is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nDo not share this with anyone.`,
-    );
+    await this.emailService.sendSignupOtpEmail(email, user.name, otp);
 
     return {
       access_token,
@@ -114,11 +110,7 @@ export class AuthService {
     });
 
     const otp = await this.otpService.createOtp(user.id);
-    await this.emailService.sendSimpleEmail(
-      email,
-      'OTP for account verification',
-      `Hi ${user.name},\n\nYour new OTP to verify your account is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nDo not share this with anyone.`,
-    );
+    await this.emailService.sendSignupOtpEmail(email, user.name, otp);
 
     return { message: 'OTP sent successfully' };
   }
@@ -156,11 +148,7 @@ export class AuthService {
     if (!user) throw new NotFoundException('No account found with this email');
 
     const otp = await this.otpService.createOtp(user.id);
-    await this.emailService.sendSimpleEmail(
-      email,
-      'Reset your password - OTP',
-      `Hi ${user.name},\n\nYour OTP to reset your password is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nIf you did not request this, ignore this email.`,
-    );
+    await this.emailService.sendForgotPasswordEmail(email, user.name, otp);
 
     return { message: 'OTP sent to your email' };
   }
