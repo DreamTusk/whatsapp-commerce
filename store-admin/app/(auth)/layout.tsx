@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { AuthGuard } from '@/components/auth-guard'
+import { AppGoogleOAuthProvider } from '@/components/auth/google-oauth-provider'
 import { Check } from '@deemlol/next-icons'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -48,7 +49,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Form panel */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white">
-        <div className="w-full max-w-md">{children}</div>
+        <div className="w-full max-w-md">
+          <AppGoogleOAuthProvider>{children}</AppGoogleOAuthProvider>
+        </div>
       </div>
     </div>
   )

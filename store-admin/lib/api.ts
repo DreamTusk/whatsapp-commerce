@@ -57,12 +57,33 @@ function forceLogout() {
   if (typeof window !== 'undefined') window.location.href = '/login'
 }
 
+// These endpoints are public credential checks, not authenticated requests —
+// a 401 from them means "wrong credentials", not "your session expired".
+// They must never trigger the refresh/force-logout redirect.
+const SESSIONLESS_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/signup',
+  '/api/auth/google',
+  '/api/auth/verify-user',
+  '/api/auth/resend-otp',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+]
+
+function isSessionlessAuthRequest(url?: string): boolean {
+  return !!url && SESSIONLESS_AUTH_PATHS.some((path) => url.includes(path))
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config
 
-    if (error.response?.status === 401 && !original._retry) {
+    if (
+      error.response?.status === 401 &&
+      !original._retry &&
+      !isSessionlessAuthRequest(original.url)
+    ) {
       original._retry = true
 
       if (!Cookies.get('refresh_token')) {

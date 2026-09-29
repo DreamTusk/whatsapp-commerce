@@ -58,6 +58,13 @@ export class AuthController {
     return this.authService.login(body.email, body.password);
   }
 
+  // POST /api/auth/google
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  googleLogin(@Body() body: { access_token: string }) {
+    return this.authService.googleLogin(body.access_token);
+  }
+
   // POST /api/auth/refresh
   @Post('refresh')
   @HttpCode(HttpStatus.OK)

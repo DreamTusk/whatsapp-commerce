@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Eye, EyeOff, Loader, ShieldOff } from '@deemlol/next-icons'
 import { MailWarning } from 'lucide-react'
 import { AuthBrandMark } from '@/components/auth/brand-mark'
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,6 +43,37 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) })
 
+  function applyAuthSession(session: {
+    access_token: string
+    refresh_token: string
+    user: { id: string; name: string; email: string }
+    role?: string | null
+    store?: unknown
+  }) {
+    auth.setTokens(session.access_token, session.refresh_token)
+    auth.setUser(session.user)
+    auth.setVerified(true)
+    if (session.role) auth.setRole(session.role)
+
+    if (session.store) {
+      router.push('/dashboard')
+    } else {
+      router.push('/create-store')
+    }
+  }
+
+  async function handleGoogleAccessToken(accessToken: string) {
+    try {
+      const res = await api.post('/api/auth/google', {
+        access_token: accessToken,
+      })
+      applyAuthSession(res.data)
+    } catch (err: unknown) {
+      const msg = apiErrorMessage(err, 'Google sign-in failed. Please try again.')
+      toast.error(msg)
+    }
+  }
+
   async function onSubmit(data: FormData) {
     try {
       const res = await api.post('/api/auth/login', {
@@ -49,16 +81,7 @@ export default function LoginPage() {
         password: data.password,
       })
 
-      auth.setTokens(res.data.access_token, res.data.refresh_token)
-      auth.setUser(res.data.user)
-      auth.setVerified(true)
-      if (res.data.role) auth.setRole(res.data.role)
-
-      if (res.data.store) {
-        router.push('/dashboard')
-      } else {
-        router.push('/create-store')
-      }
+      applyAuthSession(res.data)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: { message?: string; error?: string; is_verified?: boolean; user_id?: string; email?: string } } }
       const status  = axiosErr?.response?.status
@@ -163,6 +186,18 @@ export default function LoginPage() {
         <AuthBrandMark />
         <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
         <p className="text-sm text-gray-500">Sign in to your store dashboard</p>
+      </div>
+
+      {/* Google sign-in */}
+      <GoogleSignInButton
+        onAccessToken={handleGoogleAccessToken}
+        onError={() => toast.error('Google sign-in failed. Please try again.')}
+      />
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-gray-200" />
+        <span className="text-xs text-gray-400">or continue with email</span>
+        <div className="h-px flex-1 bg-gray-200" />
       </div>
 
       {/* Form */}
