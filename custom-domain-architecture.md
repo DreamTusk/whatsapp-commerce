@@ -2,39 +2,40 @@
 
 ## Goal
 
-Today every store gets a subdomain of the platform (`<slug>.dreambiz.app`), assigned at creation time in `store-admin/app/create-store/page.tsx`. This feature lets a store owner additionally connect their **own domain** (e.g. `bakehouse.com`) so their storefront (`store-customer`) resolves under it instead of the subdomain.
+Today every store gets a subdomain of the platform (`<slug>.dreambiz.app`), assigned at creation time in `store-admin/app/create-store/page.tsx`. This feature lets a store owner additionally connect their **own domain** (e.g. `bakehouse.com`) so their storefront (`store-customer`) resolves under it instead of, or alongside, the subdomain.
 
-No changes are needed in `store-customer` itself — `store-customer/middleware.ts` already resolves the tenant purely from the request `Host` header (forwarded as `x-store-domain`), and the backend already looks stores up by `Store.domain` (`String? @unique`, `api-server/prisma/schema.prisma:366`). This is entirely a backend + store-admin feature, plus one manual Cloudflare step per domain.
+`store-customer/middleware.ts` already resolves the tenant purely from the request `Host` header (forwarded as `x-store-domain`), and the backend already looks stores up by `Store.domain` (`String? @unique`, `api-server/prisma/schema.prisma:366`). No app-level routing logic needs to change — this is a backend + store-admin feature, plus Cloudflare configuration.
 
 ---
 
-## How subdomains are actually routed today (read this first)
+## How subdomains are routed today, and why this isn't a Pages/Workers custom-domain feature
 
-`store-customer` is deployed on Cloudflare Pages (`ci-cd-setup.md`), but `*.dreambiz.app` subdomains are **not** registered individually as Cloudflare Pages custom domains — Cloudflare Pages doesn't support wildcard custom domains at all. Instead, wildcard routing for `*.dreambiz.app` is handled by a **Cloudflare Worker Route** already set up on the zone. That means:
+`store-customer` is deployed as a **Cloudflare Worker** via the OpenNext adapter (`store-customer/wrangler.jsonc`, `"main": ".open-next/worker.js"` — same setup as `store-admin`, needed for full Next.js SSR since every request resolves a different tenant by domain). `*.dreambiz.app` subdomains are routed to it via a **Cloudflare Worker Route** already configured on the zone — not via Cloudflare Pages, and not via individually-registered Workers Custom Domains. (`ci-cd-setup.md` currently still describes `store-customer` as a Cloudflare Pages project — that's stale and should be corrected separately.)
 
-- Creating a new store on the platform subdomain (`newstore.dreambiz.app`) needs **no Cloudflare changes** — it's already covered by the wildcard route. This keeps working exactly as-is.
-- A store owner's **own external domain** (`bakehouse.com`) is not a subdomain of a zone you control, so it can't be covered by that wildcard route. Each one has to be registered individually as a Cloudflare Pages custom domain via the API (see below).
+Two mechanisms were considered and ruled out for external domains:
 
-Do not confuse the two mechanisms — this feature only adds the second one.
+- **Cloudflare Pages Custom Domains** — not applicable at all; `store-customer` isn't a Pages project.
+- **Cloudflare Workers Custom Domains** — requires the domain to be **a zone you already own** in your Cloudflare account for *any* hostname, even a subdomain (`"you cannot create a Custom Domain on... a zone you do not own"`). A store owner's external domain won't become your zone without them handing over their nameservers — too high a friction/trust ask to require of every store owner.
 
-## Cloudflare Pages custom domain limits (only applies to external domains)
+## The actual solution: Cloudflare for SaaS (Custom Hostnames)
 
-Custom domains are capped per Pages project, by the plan on the domain's zone:
+This is the product Cloudflare built specifically for this scenario, and it's the same mechanism used under the hood by most multi-tenant SaaS platforms that let customers bring their own domain (Vercel, Netlify, Shopify, Webflow, etc. all do some version of this). It lets a store owner's domain **stay on their own DNS provider** — they add one CNAME (plus a verification record), and Cloudflare terminates SSL and routes matching traffic to a **Fallback Origin** you control, which forwards to the `store-customer` Worker. No zone transfer required.
 
-| Plan | Custom domains / project | Price |
-|------|--------------------------|-------|
-| Free | 100 | $0 |
-| Pro | 250 | ~$20/mo (annual) or $25/mo (monthly) |
-| Business | 500 | higher |
+### One-time zone setup (dashboard, not code)
 
-This cap only counts stores that connect an **external** domain — it has no effect on subdomain-based stores (see above). Track how many stores have an active custom domain and upgrade the `dreambiz.app` zone to Pro well before hitting 100.
+1. Cloudflare Dashboard → the `dreambiz.app` zone → **SSL/TLS → Custom Hostnames** → **Enable** (requires a payment method on file even for the free tier — this is a non-Enterprise self-serve feature, not something available by default).
+2. Configure a **Fallback Origin** on that zone — a hostname (e.g. `fallback.dreambiz.app`) that's itself routed to the `store-customer` Worker. Every verified custom hostname's traffic gets proxied here.
+
+### Limits & pricing
+
+100 custom hostnames included per zone (Free/Pro/Business plans), then **$0.10 per additional hostname** — comfortable headroom, track usage but no near-term concern.
 
 ---
 
 ## Decisions to confirm before implementing
 
 1. **Fallback**: once a store's custom domain goes live, does `newstore.dreambiz.app` keep working (redirect or dual-serve), or does it stop resolving? Recommendation: keep both working — cheap to support since it's just two rows resolving to the same store, and avoids breaking bookmarks/links shared before the custom domain was connected.
-2. **Apex vs. `www`**: `bakehouse.com` (apex/bare) can only be a plain CNAME if the owner's DNS is on Cloudflare (CNAME flattening). If their DNS is elsewhere (GoDaddy, Namecheap, etc.), the bare apex may not support a CNAME at all. Decide whether to require `www.bakehouse.com` (always safe) and redirect the apex, or support both with a documented caveat.
+2. **Apex vs. `www`**: unlike a plain CNAME setup, Cloudflare for SaaS supports **Apex Proxying**, so bare apex domains (`bakehouse.com`, no `www`) can work without the owner transferring nameservers. Decide whether to support both apex and `www`, or simplify to one for a smaller support surface — this is no longer forced by a technical limitation, it's purely a product/support-burden choice.
 
 ---
 
@@ -45,10 +46,10 @@ Add fields to the `Store` model (around line 366) to track the custom domain sep
 ```prisma
 model Store {
   // ...existing fields
-  domain              String?  @unique   // stays the platform subdomain, e.g. newstore.dreambiz.app
+  domain               String?  @unique  // stays the platform subdomain, e.g. newstore.dreambiz.app
   customDomain         String?  @unique  // e.g. "bakehouse.com", null until requested
   customDomainStatus   String?           // "pending" | "active" | "failed" | null
-  cloudflareHostnameId String?           // id Cloudflare returns for the Pages Domain — needed to poll/delete it
+  cloudflareHostnameId String?           // Cloudflare's custom hostname id — needed to poll/delete it
 }
 ```
 
@@ -63,10 +64,11 @@ Run `npx prisma migrate dev --name add-store-custom-domain` after editing.
 Add to `api-server/.env.production` (not `.env.example` defaults — these must never be callable outside prod):
 
 ```
-CLOUDFLARE_API_TOKEN=...   # scoped to Cloudflare Pages: Edit
-CLOUDFLARE_ACCOUNT_ID=...
-CLOUDFLARE_PAGES_PROJECT=store-customer
+CLOUDFLARE_API_TOKEN=...   # Zone-level token, scoped to "SSL and Certificates: Edit" on the dreambiz.app zone only
+CLOUDFLARE_ZONE_ID=...     # the dreambiz.app zone's id (not an account id)
 ```
+
+This is a distinct credential from the `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` pair in each frontend app's `.env.deploy` (Account-level, used by `wrangler`/OpenNext to deploy the apps themselves) — different scope, different purpose, don't conflate the two.
 
 ### 2. Gate the feature to production
 
@@ -78,21 +80,21 @@ if (process.env.NODE_ENV !== 'production') {
 }
 ```
 
-This isn't just a UI hide — every store on staging/dev/local pointed at a shared Cloudflare account would otherwise burn through the same 100-domain cap during testing. For local testing of the flow itself, mock the Cloudflare client rather than hitting the real API.
+This isn't just a UI hide — every store on staging/dev/local pointed at the same zone would otherwise burn through the same hostname quota during testing. For local testing of the flow itself, mock the Cloudflare client rather than hitting the real API.
 
 ### 3. Cloudflare client wrapper
 
-New file, e.g. `api-server/src/shared/cloudflare.client.ts`, wrapping the Pages Domains API:
+New file, e.g. `api-server/src/shared/cloudflare.client.ts`, wrapping the Custom Hostnames API (zone-scoped, not account-scoped):
 
-- `addDomain(hostname: string)` → `POST /accounts/{account_id}/pages/projects/{project}/domains` — returns Cloudflare's hostname id + the DNS record (CNAME target) to show the owner.
-- `getDomainStatus(hostname: string)` → `GET /accounts/{account_id}/pages/projects/{project}/domains/{domain_name}` — returns verification/SSL status.
-- `removeDomain(hostname: string)` → `DELETE .../domains/{domain_name}`.
+- `addDomain(hostname: string)` → `POST /zones/{zone_id}/custom_hostnames`, body `{ hostname, ssl: { method: "http", type: "dv", bundle_method: "ubiquitous" } }` — returns Cloudflare's hostname id, `ownership_verification` (a TXT record to prove control), and `ssl.validation_records` (CNAME/TXT needed for the SSL cert to issue). Also tell the store owner to CNAME their domain at your fallback-origin hostname — that's what actually routes their traffic, separate from the verification records Cloudflare returns.
+- `getDomainStatus(hostname: string)` → `GET /zones/{zone_id}/custom_hostnames/{id}` — poll `status`/`ssl.status` until `active`.
+- `removeDomain(hostname: string)` → `DELETE /zones/{zone_id}/custom_hostnames/{id}`.
 
 ### 4. New endpoints (`api-server/src/admin/store/store.controller.ts`)
 
 Mirror the existing `PUT /api/store` (OWNER-only) pattern:
 
-- `POST /api/store/custom-domain` — body `{ domain }`. Validates format, checks uniqueness (same pattern as `createStore`'s domain check), calls `cloudflare.addDomain()`, stores `customDomain` + `cloudflareHostnameId` + `customDomainStatus: 'pending'`, returns the DNS record for store-admin to display.
+- `POST /api/store/custom-domain` — body `{ domain }`. Validates format, checks uniqueness (same pattern as `createStore`'s domain check), calls `cloudflare.addDomain()`, stores `customDomain` + `cloudflareHostnameId` + `customDomainStatus: 'pending'`, returns the CNAME target + verification records for store-admin to display.
 - `GET /api/store/custom-domain/status` — calls `cloudflare.getDomainStatus()`, updates `customDomainStatus`. When it flips to `active`, this is also where you decide (per the fallback decision above) whether to also start resolving `domain` lookups against `customDomain`.
 - `DELETE /api/store/custom-domain` — calls `cloudflare.removeDomain()`, clears the three fields.
 
@@ -143,7 +145,7 @@ One related gotcha worth flagging to whoever builds cart/session handling: cooki
 Follow the structure already used in `store-admin/app/dashboard/settings/panels/payments.tsx` (fetch config on mount → `isConfigured` boolean gates an empty state vs. a connected view → dialog-based add flow → per-action loading flags):
 
 1. **Empty state**: "Connect your own domain" button → opens a dialog with a single domain input.
-2. **Submit** → `POST /api/store/custom-domain` → show the returned CNAME record (host + target) with a copy button (reuse `store-admin/components/storefront-link.tsx`'s copy pattern).
+2. **Submit** → `POST /api/store/custom-domain` → show the CNAME target (their domain → your fallback-origin hostname) plus any verification record, with a copy button (reuse `store-admin/components/storefront-link.tsx`'s copy pattern).
 3. **Pending state**: poll `GET /api/store/custom-domain/status` (e.g. every 10–15s) until `active` or `failed`. The step-by-step layout in `store-admin/app/(auth)/verify-email/page.tsx` (status text + spinner + a manual "check again" action) is a good template for this waiting screen.
 4. **Active state**: show the connected domain (green/confirmed), with a "Remove" action calling the `DELETE` endpoint.
 5. **Failed state**: show the error, let them re-check DNS or start over.
@@ -156,11 +158,13 @@ Hide/disable the "Connect domain" action when the app isn't running against prod
 
 ## Rollout checklist
 
+- [ ] Enable SSL for SaaS on the `dreambiz.app` zone (dashboard, one-time, requires billing details) + configure a Fallback Origin pointed at the `store-customer` Worker
 - [ ] Migration: `customDomain`, `customDomainStatus`, `cloudflareHostnameId` on `Store`
-- [ ] `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_PAGES_PROJECT` in `api-server/.env.production` only
-- [ ] Cloudflare client wrapper + production-only guard on every endpoint that calls it
+- [ ] `CLOUDFLARE_API_TOKEN` (Zone → SSL and Certificates: Edit) / `CLOUDFLARE_ZONE_ID` in `api-server/.env.production` only
+- [ ] Cloudflare client wrapper (zone-scoped Custom Hostnames API) + production-only guard on every endpoint that calls it
 - [ ] `POST` / `GET status` / `DELETE` endpoints on `store.controller.ts`
 - [ ] Decide + implement fallback behavior (dual-resolve vs. replace)
-- [ ] Decide apex-vs-`www` handling and document it for store owners
+- [ ] Decide apex-vs-`www` handling (both are now supportable via Apex Proxying) and document it for store owners
 - [ ] Rebuild `domain.tsx` panel (connect → DNS instructions → poll → active/failed states)
-- [ ] Track custom-domain count; alert before nearing 100 (Free plan) and upgrade `dreambiz.app` zone to Pro if needed
+- [ ] Track custom-hostname count; alert before nearing 100 free-tier hostnames (then $0.10/hostname after)
+- [ ] Fix `ci-cd-setup.md`'s stale claim that `store-customer` is a Cloudflare Pages project
