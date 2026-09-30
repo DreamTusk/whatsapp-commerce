@@ -66,7 +66,8 @@ export class StoreService {
 
   private formatStore(store: {
     id: string; name: string; phone: string; domain: string | null;
-    catalogId: string | null; address: string | null; logo: string | null;
+    catalogId: string | null; address: string | null; supportEmail: string | null;
+    logo: string | null;
     favicon: string | null;
     minOrderAmount: number; deliveryRadius: number | null; isActive: boolean;
     isPickupEnabled: boolean; isHomeDeliveryEnabled: boolean; plan: Plan;
@@ -80,6 +81,7 @@ export class StoreService {
       domain: store.domain,
       catalog_id: store.catalogId,
       address: store.address,
+      support_email: store.supportEmail,
       logo: store.logo,
       favicon: store.favicon,
       min_order_amount: store.minOrderAmount,
@@ -399,6 +401,7 @@ export class StoreService {
     userId: string,
     body: {
       name?: string; phone?: string; domain?: string; address?: string;
+      support_email?: string;
       min_order_amount?: string; delivery_radius?: string; is_active?: string;
       is_pickup_enabled?: string; is_home_delivery_enabled?: string;
       logo_media_id?: string; favicon_media_id?: string;
@@ -413,6 +416,10 @@ export class StoreService {
     });
 
     if (body.domain !== undefined) this.assertDomainNotReserved(body.domain);
+
+    if (body.support_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.support_email.trim())) {
+      throw new BadRequestException('support_email must be a valid email address');
+    }
 
     let logoUrl: string | undefined = undefined;
     if (body.logo_media_id) {
@@ -433,6 +440,7 @@ export class StoreService {
         ...(body.phone && { phone: body.phone }),
         ...(body.domain !== undefined && { domain: body.domain }),
         ...(body.address !== undefined && { address: body.address }),
+        ...(body.support_email !== undefined && { supportEmail: body.support_email.trim() || null }),
         ...(logoUrl !== undefined && { logo: logoUrl }),
         ...(faviconUrl !== undefined && { favicon: faviconUrl }),
         ...(body.min_order_amount !== undefined && { minOrderAmount: parseFloat(body.min_order_amount) }),

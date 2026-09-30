@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader, ChevronRight, Plus } from '@deemlol/next-icons'
+import { Loader, ChevronRight, Plus, Printer, Download } from '@deemlol/next-icons'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import type { Order } from '@/types'
+import { isInvoiceAvailable, printInvoice, downloadInvoice } from '@/lib/print-invoice'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
@@ -118,7 +119,7 @@ export default function OrdersPage() {
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Total</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden lg:table-cell">Payment</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden xl:table-cell">Created by</th>
+                <th className="px-4 py-3 w-8"></th>
                 <th className="px-4 py-3 w-8"></th>
               </tr>
             </thead>
@@ -170,11 +171,25 @@ export default function OrdersPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 hidden xl:table-cell">
-                    <p className="text-sm text-gray-700">{order.created_by ?? '—'}</p>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${order.source === 'MANUAL' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
-                      {order.source === 'MANUAL' ? 'Manual' : 'Customer'}
-                    </span>
+                  <td className="px-4 py-3">
+                    {isInvoiceAvailable(order) && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); printInvoice(order.id) }}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Print invoice"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); downloadInvoice(order.id, order.order_number) }}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Download invoice"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <ChevronRight className="w-4 h-4 text-gray-300" />

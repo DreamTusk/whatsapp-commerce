@@ -12,6 +12,7 @@ export interface Store {
   logo: string | null
   favicon: string | null
   address: string | null
+  support_email: string | null
   min_order_amount: number
   delivery_radius: number | null
   is_active: boolean

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User, Truck, ExternalLink } from '@deemlol/next-icons'
+import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User, Truck, ExternalLink, Download } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
 import type { Order } from '@/types'
 import { apiErrorMessage } from '@/lib/utils'
+import { isInvoiceAvailable, printInvoice, downloadInvoice } from '@/lib/print-invoice'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
@@ -205,6 +206,7 @@ export default function OrderDetailPage() {
   const status = order.status as OrderStatus
   const canAct = status !== 'DELIVERED' && status !== 'CANCELLED'
   const nextLabel = STATUS_NEXT_LABEL[status]
+  const invoiceAvailable = isInvoiceAvailable(order)
 
 
   return (
@@ -239,6 +241,16 @@ export default function OrderDetailPage() {
             <p className="text-sm text-gray-400">{formatDate(order.created_at)}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {invoiceAvailable && (
+              <>
+                <Button variant="outline" onClick={() => printInvoice(order.id)}>
+                  Print invoice
+                </Button>
+                <Button variant="outline" onClick={() => downloadInvoice(order.id, order.order_number)}>
+                  <Download className="w-4 h-4 mr-1.5" /> Download
+                </Button>
+              </>
+            )}
             {order.shipments && order.shipments.length > 0 && (
               <Button
                 variant="outline"

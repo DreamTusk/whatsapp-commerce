@@ -14,6 +14,8 @@ import { generateOrderNumber } from '../../utils/order-number';
 import { PaymentProvidersService } from '../../admin/payment-providers/payment-providers.service';
 import { createHmac } from 'crypto';
 import Razorpay from 'razorpay';
+import { InvoiceService } from '../../shared/invoice.service';
+import { formatStoreUrl, formatDeliveryAddress } from '../../shared/invoice-template';
 
 const orderInclude = {
   OrderItem: {
@@ -41,6 +43,7 @@ export class StorefrontOrdersService {
   constructor(
     private prisma: PrismaService,
     private paymentProviders: PaymentProvidersService,
+    private invoiceService: InvoiceService,
   ) {}
 
   private formatOrderItem(item: any) {
@@ -105,6 +108,47 @@ export class StorefrontOrdersService {
     });
     if (!order) throw new NotFoundException('Order not found');
     return { order: this.formatOrder(order) };
+  }
+
+  async getInvoicePdf(customerId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+      include: {
+        Customer: { select: { name: true, phone: true, email: true } },
+        OrderItem: true,
+        Payment: true,
+        Store: { include: { StoreCustomization: true } },
+      },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+
+    this.invoiceService.assertInvoiceAvailable(order);
+
+    const buffer = await this.invoiceService.renderInvoicePdf({
+      orderNumber: order.orderNumber,
+      orderDate: order.createdAt,
+      storeName: order.Store.name,
+      storeLogo: order.Store.logo,
+      storePhone: order.Store.phone,
+      storeUrl: formatStoreUrl(order.Store.domain),
+      storeSupportEmail: order.Store.supportEmail,
+      primaryColor: order.Store.StoreCustomization?.primaryColor ?? '#6366f1',
+      customerName: order.Customer.name ?? order.Customer.phone ?? 'Customer',
+      customerPhone: order.Customer.phone ?? '',
+      customerEmail: order.Customer.email,
+      deliveryAddress: formatDeliveryAddress(order),
+      items: order.OrderItem.map((i) => ({
+        productName: i.productName,
+        quantity: i.quantity,
+        price: i.price,
+        subtotal: i.subtotal,
+      })),
+      totalAmount: order.totalAmount,
+      paymentMethod: order.Payment?.method ?? 'COD',
+      paymentStatus: order.Payment?.status ?? '',
+    });
+
+    return { buffer, filename: `invoice-${order.orderNumber}.pdf` };
   }
 
   // Cart-shaped preview for "Order Again" — re-checks live stock/price without

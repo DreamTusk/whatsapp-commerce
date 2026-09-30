@@ -6,9 +6,11 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrderStatus, OrderSource, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { generateOrderNumber } from '../../utils/order-number';
+import { InvoiceService } from '../../shared/invoice.service';
+import { formatStoreUrl, formatDeliveryAddress } from '../../shared/invoice-template';
 
 const orderInclude = {
-  Customer: { select: { name: true, phone: true } },
+  Customer: { select: { name: true, phone: true, email: true } },
   OrderItem: true,
   Payment: true,
   OrderShipment: { orderBy: { createdAt: 'desc' as const } },
@@ -16,7 +18,10 @@ const orderInclude = {
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private invoiceService: InvoiceService,
+  ) {}
 
   private formatOrderItem(item: {
     id: string; productId: string; productName: string;
@@ -84,7 +89,7 @@ export class OrdersService {
       cancelled_by: o.cancelledBy ?? null,
       created_at: o.createdAt,
       updated_at: o.updatedAt,
-      customer: { name: o.Customer.name, phone: o.Customer.phone },
+      customer: { name: o.Customer.name, phone: o.Customer.phone, email: o.Customer.email },
       items: o.OrderItem.map((i: any) => this.formatOrderItem(i)),
       payment: this.formatPayment(o.Payment),
       shipments: (o.OrderShipment ?? []).map((s: any) => this.formatShipment(s)),
@@ -118,6 +123,55 @@ export class OrdersService {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
     return userStore.storeId;
+  }
+
+  private async getOrderForInvoice(storeId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, storeId },
+      include: {
+        Customer: { select: { name: true, phone: true, email: true } },
+        OrderItem: true,
+        Payment: true,
+        Store: { include: { StoreCustomization: true } },
+      },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+
+    this.invoiceService.assertInvoiceAvailable(order);
+    return order;
+  }
+
+  private buildInvoiceData(order: Awaited<ReturnType<OrdersService['getOrderForInvoice']>>) {
+    return {
+      orderNumber: order.orderNumber,
+      orderDate: order.createdAt,
+      storeName: order.Store.name,
+      storeLogo: order.Store.logo,
+      storePhone: order.Store.phone,
+      storeUrl: formatStoreUrl(order.Store.domain),
+      storeSupportEmail: order.Store.supportEmail,
+      primaryColor: order.Store.StoreCustomization?.primaryColor ?? '#6366f1',
+      customerName: order.Customer.name ?? order.Customer.phone ?? 'Customer',
+      customerPhone: order.Customer.phone ?? '',
+      customerEmail: order.Customer.email,
+      deliveryAddress: formatDeliveryAddress(order),
+      items: order.OrderItem.map((i) => ({
+        productName: i.productName,
+        quantity: i.quantity,
+        price: i.price,
+        subtotal: i.subtotal,
+      })),
+      totalAmount: order.totalAmount,
+      paymentMethod: order.Payment?.method ?? 'COD',
+      paymentStatus: order.Payment?.status ?? '',
+    };
+  }
+
+  async getInvoicePdf(userId: string, orderId: string) {
+    const storeId = await this.getStoreId(userId);
+    const order = await this.getOrderForInvoice(storeId, orderId);
+    const buffer = await this.invoiceService.renderInvoicePdf(this.buildInvoiceData(order));
+    return { buffer, filename: `invoice-${order.orderNumber}.pdf` };
   }
 
   async createManualOrder(userId: string, body: {

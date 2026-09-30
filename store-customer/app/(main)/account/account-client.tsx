@@ -678,7 +678,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
 
   // ── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
   const desktopSidebar = (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 py-5">
         <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
           <span className="text-base font-bold text-white leading-none">{initial}</span>
@@ -713,7 +713,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         </div>
       </div>
       {storeName && (
-        <div className="px-5 pt-8 pb-5">
+        <div className="px-5 pt-8 pb-5 mt-auto">
           <p className="text-2xl font-bold text-gray-300 text-center">{storeName}</p>
         </div>
       )}
@@ -1008,7 +1008,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       )}
     </div>
   ) : (
-    <div className="flex flex-col sticky top-[var(--store-header-h)] h-[calc(100vh-var(--store-header-h)-4rem)]">
+    <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-3 p-6 pb-5 flex-shrink-0">
         <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -1059,7 +1059,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {orders.map(order => (
               <div key={order.id} className="relative border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
                 <button onClick={() => selectOrder(order.id)} className="absolute inset-0 rounded-2xl" aria-label={`View order ${order.order_number}`} />
@@ -1217,11 +1217,11 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       </div>
 
       {/* ── Desktop ── */}
-      <div className="hidden lg:flex page-x gap-6 pt-8 pb-16 min-h-[calc(100vh-70px)] items-start">
-        <div className="w-[240px] flex-shrink-0 min-h-[70vh] sticky top-[var(--store-header-h)] max-h-[calc(100vh-var(--store-header-h))] overflow-y-auto rounded-2xl border border-gray-100 shadow-sm" style={{ backgroundColor: '#F8F9FA' }}>
+      <div className="hidden lg:flex page-x gap-6 pt-8 pb-6 items-start">
+        <div className="w-[240px] flex-shrink-0 sticky top-[var(--store-header-h)] h-[95vh] overflow-y-auto rounded-2xl border border-gray-100 shadow-sm" style={{ backgroundColor: '#F8F9FA' }}>
           {desktopSidebar}
         </div>
-        <div className="flex-1 min-w-0 rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ backgroundColor: '#F8F9FA' }}>
+        <div className="flex-1 min-w-0 sticky top-[var(--store-header-h)] h-[95vh] rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ backgroundColor: '#F8F9FA' }}>
           {tab === 'profile' && desktopProfilePanel}
           {tab === 'orders' && desktopOrdersPanel}
           {tab === 'addresses' && desktopAddressesPanel}

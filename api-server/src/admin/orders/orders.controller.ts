@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   Patch,
+  StreamableFile,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -50,6 +51,19 @@ export class OrdersController {
     @Param('id') id: string,
   ) {
     return this.ordersService.getOrder(user.userId, id);
+  }
+
+  // GET /api/orders/:id/invoice
+  @Get(':id/invoice')
+  async getInvoice(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+  ) {
+    const { buffer, filename } = await this.ordersService.getInvoicePdf(user.userId, id);
+    return new StreamableFile(buffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   // PUT /api/orders/:id/status

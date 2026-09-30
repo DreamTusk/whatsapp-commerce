@@ -370,6 +370,7 @@ model Store {
   domain                String?                @unique
   catalogId             String?
   address               String?
+  supportEmail          String?
   logo                  String?
   favicon               String?
   minOrderAmount        Float                  @default(0)

@@ -8,6 +8,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  StreamableFile,
 } from '@nestjs/common';
 import type { Store } from '@prisma/client';
 import { StorefrontOrdersService } from './orders.service';
@@ -94,5 +95,18 @@ export class StorefrontOrdersController {
     @Param('id') id: string,
   ) {
     return this.ordersService.getOrder(customer.customerId, id);
+  }
+
+  // GET /api/storefront/orders/:id/invoice
+  @Get(':id/invoice')
+  async getInvoice(
+    @CurrentCustomer() customer: { customerId: string },
+    @Param('id') id: string,
+  ) {
+    const { buffer, filename } = await this.ordersService.getInvoicePdf(customer.customerId, id);
+    return new StreamableFile(buffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 }
