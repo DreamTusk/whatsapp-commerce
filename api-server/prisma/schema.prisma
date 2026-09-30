@@ -368,6 +368,9 @@ model Store {
   name                  String
   phone                 String                 @unique
   domain                String?                @unique
+  customDomain          String?                @unique
+  customDomainStatus    String?
+  cloudflareHostnameId  String?
   catalogId             String?
   address               String?
   supportEmail          String?

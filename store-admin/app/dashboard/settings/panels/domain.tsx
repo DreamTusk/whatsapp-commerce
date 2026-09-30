@@ -2,46 +2,386 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Globe, Loader } from '@deemlol/next-icons'
+import { Globe, Loader, Copy, Check, ExternalLink, Trash, AlertTriangle, RefreshCw } from '@deemlol/next-icons'
 import api from '@/lib/api'
 import StorefrontLink from '@/components/storefront-link'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { apiErrorMessage } from '@/lib/utils'
 import type { Store as StoreType } from '@/types'
+
+// Wired to the real POST/GET-status/DELETE endpoints in
+// api-server/src/admin/store/store.controller.ts. They're gated to
+// production only (see custom-domain-architecture.md) — calling these
+// against a non-production api-server returns a 403.
+
+type CustomDomainState = 'none' | 'pending' | 'active' | 'failed'
+
+// Cloudflare's exact verification_data/validation_data shape hasn't been
+// confirmed against a live call yet (no real credentials during development)
+// — kept generic and rendered as raw key/value pairs rather than assuming
+// specific field names that might not match reality.
+type VerificationData = Record<string, unknown> | null
+
+function CopyRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    navigator.clipboard.writeText(value)
+    setCopied(true)
+    toast.success(`${label} copied`)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+        <p className="text-xs font-mono text-gray-700 flex-1 truncate">{value}</p>
+        <button onClick={handleCopy} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+          {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Mirrors the backend's own gate (api-server checks NODE_ENV !== 'production'
+// before touching Cloudflare) — Next.js inlines process.env.NODE_ENV into the
+// client bundle at build time, so this is safe to read directly here.
+const isProductionEnv = process.env.NODE_ENV === 'production'
 
 export default function DomainPanel() {
   const [store, setStore] = useState<StoreType | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Custom domain
+  const [customState, setCustomState] = useState<CustomDomainState>('none')
+  const [customDomain, setCustomDomain] = useState('')
+  const [verification, setVerification] = useState<VerificationData>(null)
+  const [dnsTarget, setDnsTarget] = useState('')
+  const [checking, setChecking] = useState(false)
+
+  // Connect dialog
+  const [connectOpen, setConnectOpen] = useState(false)
+  const [domainInput, setDomainInput] = useState('')
+  const [connecting, setConnecting] = useState(false)
+
+  // Remove confirm
+  const [removeOpen, setRemoveOpen] = useState(false)
+  const [removing, setRemoving] = useState(false)
+
+  // Cancel setup confirm
+  const [cancelSetupOpen, setCancelSetupOpen] = useState(false)
+
   useEffect(() => {
     api.get('/api/store')
-      .then(res => setStore(res.data.store))
+      .then(res => {
+        const s: StoreType = res.data.store
+        setStore(s)
+        if (s.custom_domain) {
+          setCustomDomain(s.custom_domain)
+          setCustomState(s.custom_domain_status === 'active' ? 'active' : 'pending')
+        }
+      })
       .catch(() => toast.error('Failed to load store'))
       .finally(() => setLoading(false))
   }, [])
 
-  return (
-    <div className="bg-white rounded-sm border border-gray-100 shadow-sm p-6">
-      <div className="flex items-center gap-3 mb-1">
-        <Globe className="w-5 h-5 text-gray-400" />
-        <h2 className="text-base font-semibold text-gray-900">Domain</h2>
-      </div>
-      <p className="text-sm text-gray-400 mb-8">Manage your store's custom domain settings.</p>
+  // If we loaded into a pending domain, fetch its DNS record once so the
+  // pending card isn't empty on first render.
+  useEffect(() => {
+    if (isProductionEnv && customState === 'pending' && !verification && !dnsTarget) handleCheckStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customState])
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader className="w-5 h-5 animate-spin text-gray-400" />
+  async function handleConnect() {
+    const base = domainInput.trim().toLowerCase().replace(/^www\./, '')
+    if (!base) { toast.error('Enter a domain'); return }
+    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(base)) { toast.error('Enter a valid domain, e.g. freshmart.com'); return }
+
+    setConnecting(true)
+    try {
+      const res = await api.post('/api/store/custom-domain', { domain: base })
+      setCustomDomain(res.data.custom_domain)
+      setDnsTarget(res.data.dns_target ?? '')
+      setVerification(res.data.verification ?? null)
+      setCustomState(res.data.custom_domain_status === 'active' ? 'active' : 'pending')
+      setConnectOpen(false)
+      setDomainInput('')
+      toast.success('Domain added — verify DNS to activate')
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to connect domain'))
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  async function handleCheckStatus() {
+    setChecking(true)
+    try {
+      const res = await api.get('/api/store/custom-domain/status')
+      setCustomDomain(res.data.custom_domain)
+      setDnsTarget(res.data.dns_target ?? '')
+      setVerification(res.data.verification ?? null)
+      if (res.data.custom_domain_status === 'active') {
+        setCustomState('active')
+        toast.success('Domain verified and connected')
+      } else {
+        setCustomState('pending')
+      }
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to check domain status'))
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  async function handleRemove() {
+    setRemoving(true)
+    try {
+      await api.delete('/api/store/custom-domain')
+      setCustomState('none')
+      setCustomDomain('')
+      setVerification(null)
+      setDnsTarget('')
+      setRemoveOpen(false)
+      setCancelSetupOpen(false)
+      toast.success('Custom domain removed')
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to remove domain'))
+    } finally {
+      setRemoving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* ── Platform subdomain (unchanged, always works) ── */}
+      <div className="bg-white rounded-sm border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-1">
+          <Globe className="w-5 h-5 text-gray-400" />
+          <h2 className="text-base font-semibold text-gray-900">Domain</h2>
         </div>
-      ) : store?.domain ? (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700">Your store is live at</p>
-          <StorefrontLink domain={store.domain} />
-          <p className="text-xs text-gray-400 pt-2">Changing your custom domain isn't supported yet — contact support if you need this updated.</p>
+        <p className="text-sm text-gray-400 mb-6">Manage your store's domain settings.</p>
+
+        {store?.domain ? (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">Your store is live at</p>
+            <StorefrontLink domain={store.domain} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-300">
+            <Globe className="w-12 h-12" />
+            <p className="text-sm font-medium text-gray-400">No domain set for this store</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Custom domain ── */}
+      <div className="bg-white rounded-sm border border-gray-100 shadow-sm p-6">
+        <div className="mb-5">
+          <h2 className="text-base font-semibold text-gray-900">Custom domain</h2>
+          <p className="text-sm text-gray-400 mt-0.5">Connect your own domain so customers see your brand, not dreambiz.app.</p>
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-300">
-          <Globe className="w-12 h-12" />
-          <p className="text-sm font-medium text-gray-400">No domain set for this store</p>
-        </div>
-      )}
+
+        {/* Every action here (connect/check/remove) is rejected by the backend
+            outside production — mirror that in the UI instead of showing a
+            live-looking panel that 403s on every click. */}
+        {!isProductionEnv && (
+          <div className="flex flex-col items-center justify-center py-16 gap-2 text-gray-300 text-center">
+            <Globe className="w-12 h-12" />
+            <p className="text-sm font-medium text-gray-400">Custom domains are only available in production</p>
+            <p className="text-xs text-gray-300 max-w-xs">This environment can't reach the real Cloudflare account, so connecting a domain here isn't possible.</p>
+          </div>
+        )}
+
+        {isProductionEnv && customState === 'none' && (
+          <div className="border border-gray-100 bg-gray-50 rounded-xl p-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                <Globe className="w-5 h-5 text-gray-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">No custom domain connected</p>
+                <p className="text-xs text-gray-400 mt-0.5">e.g. yourbrand.com</p>
+              </div>
+            </div>
+            <Button className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white h-9 px-4 text-sm" onClick={() => setConnectOpen(true)}>
+              Connect domain
+            </Button>
+          </div>
+        )}
+
+        {isProductionEnv && customState === 'pending' && (
+          <div className="border border-amber-100 bg-amber-50/40 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Loader className="w-4 h-4 animate-spin text-amber-500" />
+                <p className="text-sm font-semibold text-gray-900">Verifying {customDomain}</p>
+              </div>
+              <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Pending</span>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">
+              Add this record at your domain's DNS provider (GoDaddy, Namecheap, Cloudflare, etc). It can take a few minutes to a few hours to take effect.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <CopyRow label="Type" value="CNAME" />
+              <CopyRow label="Name" value={customDomain} />
+              {dnsTarget && <CopyRow label="Target" value={dnsTarget} />}
+              {verification && Object.entries(verification)
+                .filter(([, v]) => typeof v === 'string' || typeof v === 'number')
+                .map(([key, value]) => (
+                  <CopyRow key={key} label={key.replace(/_/g, ' ')} value={String(value)} />
+                ))}
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={handleCheckStatus} disabled={checking}>
+                {checking ? <Loader className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                {checking ? 'Checking…' : 'Check again'}
+              </Button>
+              <button
+                onClick={() => setCancelSetupOpen(true)}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors px-3"
+              >
+                Cancel setup
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isProductionEnv && customState === 'active' && (
+          <div className="border border-green-100 bg-green-50/40 rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white border border-green-200 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-5 h-5 text-green-500" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-gray-900">{customDomain}</p>
+                    <span className="text-[10px] font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Connected</span>
+                  </div>
+                  <a
+                    href={`https://${customDomain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#7c3aed] transition-colors mt-0.5"
+                  >
+                    <ExternalLink className="w-3 h-3" /> Visit store
+                  </a>
+                </div>
+              </div>
+              <button onClick={() => setRemoveOpen(true)} className="text-gray-300 hover:text-red-400 transition-colors">
+                <Trash className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isProductionEnv && customState === 'failed' && (
+          <div className="border border-red-100 bg-red-50/40 rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white border border-red-200 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Couldn't verify {customDomain}</p>
+                <p className="text-xs text-gray-400 mt-0.5">We didn't find the DNS record yet, or it doesn't match.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={handleCheckStatus} disabled={checking}>
+                {checking ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+                {checking ? 'Checking…' : 'Recheck DNS'}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 border-red-200 text-red-500 hover:bg-red-50"
+                onClick={handleRemove}
+                disabled={removing}
+              >
+                {removing ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+                {removing ? 'Removing…' : 'Start over'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Connect domain dialog ── */}
+      <Dialog open={connectOpen} onOpenChange={open => { if (!connecting) setConnectOpen(open) }} disablePointerDismissal>
+        <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
+          <div className="mb-5">
+            <h3 className="font-bold text-gray-900">Connect your domain</h3>
+            <p className="text-xs text-gray-400 mt-0.5">You'll get a DNS record to add at your domain provider next.</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-gray-700">Domain</Label>
+            <div className="flex items-center h-11 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-1 focus-within:ring-[var(--color-primary,#7c3aed)] focus-within:border-[#7c3aed]">
+              <span className="h-full flex items-center pl-3 pr-2 text-sm font-mono text-gray-400 bg-gray-50 border-r border-gray-200">www.</span>
+              <input
+                className="flex-1 h-full px-3 font-mono text-sm outline-none"
+                value={domainInput}
+                onChange={e => setDomainInput(e.target.value)}
+                placeholder="freshmart.com"
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-gray-400">Your store will be reachable at www.{domainInput.trim() || 'yourdomain.com'}</p>
+          </div>
+          <div className="flex gap-3 mt-5">
+            <Button variant="outline" className="flex-1" onClick={() => setConnectOpen(false)} disabled={connecting}>Cancel</Button>
+            <Button className="flex-1 bg-[#7c3aed] hover:bg-[#6d28d9] text-white" onClick={handleConnect} disabled={connecting}>
+              {connecting ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+              {connecting ? 'Connecting…' : 'Connect'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Remove confirm ── */}
+      <Dialog open={removeOpen} onOpenChange={open => { if (!removing) setRemoveOpen(open) }}>
+        <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
+          <div className="mb-4">
+            <h3 className="font-bold text-gray-900">Remove {customDomain}?</h3>
+            <p className="text-sm text-gray-400 mt-0.5">Your store will only be reachable at its dreambiz.app subdomain again.</p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setRemoveOpen(false)} disabled={removing}>Cancel</Button>
+            <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleRemove} disabled={removing}>
+              {removing ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+              {removing ? 'Removing…' : 'Remove'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Cancel setup confirm ── */}
+      <Dialog open={cancelSetupOpen} onOpenChange={setCancelSetupOpen}>
+        <DialogContent showCloseButton={false} className="w-full max-w-sm bg-white rounded-2xl p-6">
+          <div className="mb-4">
+            <h3 className="font-bold text-gray-900">Cancel domain setup?</h3>
+            <p className="text-sm text-gray-400 mt-0.5">{customDomain} won't be connected. You can start over any time.</p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setCancelSetupOpen(false)} disabled={removing}>Back</Button>
+            <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleRemove} disabled={removing}>
+              {removing ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+              {removing ? 'Cancelling…' : 'Cancel setup'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

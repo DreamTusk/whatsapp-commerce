@@ -340,9 +340,6 @@ export default function EditProductPage() {
               {existingImages.length > 0 && (
                 <p className="text-xs text-gray-400">Hover image — ★ sets primary · ✕ removes · JPEG, PNG, WebP, AVIF · Max 10 MB</p>
               )}
-              {newImagePreviews.length > 0 && (
-                <p className="text-xs text-[#7c3aed]/60">Dashed = will upload on save</p>
-              )}
             </div>
 
           </div>

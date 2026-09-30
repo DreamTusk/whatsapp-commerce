@@ -94,6 +94,8 @@ export default function OrderDetailPage() {
 
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isPrinting, setIsPrinting] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const [isAdvancing, setIsAdvancing] = useState(false)
   const [showCancelForm, setShowCancelForm] = useState(false)
@@ -122,6 +124,26 @@ export default function OrderDetailPage() {
   useEffect(() => {
     fetchOrder().finally(() => setLoading(false))
   }, [fetchOrder])
+
+  async function handlePrint() {
+    if (!order) return
+    setIsPrinting(true)
+    try {
+      await printInvoice(order.id)
+    } finally {
+      setIsPrinting(false)
+    }
+  }
+
+  async function handleDownload() {
+    if (!order) return
+    setIsDownloading(true)
+    try {
+      await downloadInvoice(order.id, order.order_number)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   async function handleAdvance() {
     if (!order) return
@@ -243,11 +265,13 @@ export default function OrderDetailPage() {
           <div className="flex items-center gap-2 flex-shrink-0">
             {invoiceAvailable && (
               <>
-                <Button variant="outline" onClick={() => printInvoice(order.id)}>
-                  Print invoice
+                <Button variant="outline" onClick={handlePrint} disabled={isPrinting}>
+                  {isPrinting ? <Loader className="w-4 h-4 mr-1.5 animate-spin" /> : null}
+                  {isPrinting ? 'Printing…' : 'Print invoice'}
                 </Button>
-                <Button variant="outline" onClick={() => downloadInvoice(order.id, order.order_number)}>
-                  <Download className="w-4 h-4 mr-1.5" /> Download
+                <Button variant="outline" onClick={handleDownload} disabled={isDownloading}>
+                  {isDownloading ? <Loader className="w-4 h-4 mr-1.5 animate-spin" /> : <Download className="w-4 h-4 mr-1.5" />}
+                  {isDownloading ? 'Downloading…' : 'Download'}
                 </Button>
               </>
             )}

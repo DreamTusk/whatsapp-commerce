@@ -1,0 +1,16 @@
+meta {
+  name: Remove Custom Domain
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{base_url_local}}/admin/store/custom-domain
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

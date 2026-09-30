@@ -9,6 +9,8 @@ export interface Store {
   name: string
   phone: string
   domain: string | null
+  custom_domain: string | null
+  custom_domain_status: string | null
   logo: string | null
   favicon: string | null
   address: string | null

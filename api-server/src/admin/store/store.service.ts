@@ -2,10 +2,12 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../shared/email.service';
+import { CloudflareClient } from '../../shared/cloudflare.client';
 import { buildCriteriaWhere } from '../../utils/collection-criteria';
 import { Plan, BillingCycle } from '@prisma/client';
 import { planAmount, billingPeriod, getPlanUsage } from '../../utils/plan';
@@ -39,6 +41,7 @@ export class StoreService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private cloudflareClient: CloudflareClient,
   ) {}
 
   private formatCustomization(c: {
@@ -66,6 +69,7 @@ export class StoreService {
 
   private formatStore(store: {
     id: string; name: string; phone: string; domain: string | null;
+    customDomain: string | null; customDomainStatus: string | null;
     catalogId: string | null; address: string | null; supportEmail: string | null;
     logo: string | null;
     favicon: string | null;
@@ -79,6 +83,8 @@ export class StoreService {
       name: store.name,
       phone: store.phone,
       domain: store.domain,
+      custom_domain: store.customDomain,
+      custom_domain_status: store.customDomainStatus,
       catalog_id: store.catalogId,
       address: store.address,
       support_email: store.supportEmail,
@@ -128,8 +134,11 @@ export class StoreService {
   async getStoreInfo(domain: string) {
     if (!domain) throw new BadRequestException('Missing x-store-domain header');
 
-    const store = await this.prisma.store.findUnique({
-      where: { domain },
+    // Matches either the platform subdomain or a connected custom domain —
+    // both stay resolvable so bookmarks/links to the old subdomain never
+    // break once a store connects its own domain.
+    const store = await this.prisma.store.findFirst({
+      where: { OR: [{ domain }, { customDomain: domain }] },
       include: { StoreCustomization: true },
     });
     if (!store) throw new NotFoundException('Store not found');
@@ -483,5 +492,115 @@ export class StoreService {
     );
 
     return { message: 'Store deleted successfully' };
+  }
+
+  // Custom domains only touch the real Cloudflare account, which has a
+  // shared per-project domain cap (see custom-domain-architecture.md) — every
+  // store on staging/dev pointed at that same account would burn through it
+  // during testing, so the whole feature is production-only.
+  private assertCustomDomainAvailable() {
+    if (process.env.NODE_ENV !== 'production') {
+      throw new ForbiddenException('Custom domains can only be managed in production');
+    }
+  }
+
+  // We only ever connect the www. subdomain, never the bare apex — a plain
+  // CNAME works there on every DNS provider with no exceptions, sidestepping
+  // the apex-CNAME restriction entirely (see the doc's apex-vs-www decision).
+  private normalizeCustomDomain(domain: string): string {
+    const trimmed = domain.trim().toLowerCase();
+    const base = trimmed.replace(/^www\./, '');
+    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(base)) {
+      throw new BadRequestException('Enter a valid domain, e.g. yourbrand.com');
+    }
+    return `www.${base}`;
+  }
+
+  async addCustomDomain(userId: string, body: { domain?: string }) {
+    this.assertCustomDomainAvailable();
+    if (!body.domain?.trim()) throw new BadRequestException('domain is required');
+    const domain = this.normalizeCustomDomain(body.domain);
+
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
+    if (store?.customDomain) {
+      throw new ConflictException('This store already has a custom domain connected — remove it first');
+    }
+
+    const conflict = await this.prisma.store.findUnique({ where: { customDomain: domain } });
+    if (conflict) throw new ConflictException('This domain is already connected to another store');
+
+    const result = await this.cloudflareClient.addDomain(domain);
+
+    const updated = await this.prisma.store.update({
+      where: { id: userStore.storeId },
+      data: {
+        customDomain: domain,
+        customDomainStatus: result.status,
+        cloudflareHostnameId: result.id,
+      },
+    });
+
+    return {
+      custom_domain: updated.customDomain,
+      custom_domain_status: updated.customDomainStatus,
+      // NOT VERIFIED against a real Cloudflare response yet (no live credentials
+      // during development) — dns_target is our best-effort default per
+      // Cloudflare Pages docs (a CNAME to <project>.pages.dev always works for
+      // a subdomain like www.*). verification is passed through generically
+      // since the exact shape of verification_data/validation_data hasn't been
+      // confirmed against a live call. Re-check both once real creds are in.
+      dns_target: `${process.env.CLOUDFLARE_PAGES_PROJECT}.pages.dev`,
+      verification: result.verification_data ?? result.validation_data ?? null,
+    };
+  }
+
+  async getCustomDomainStatus(userId: string) {
+    this.assertCustomDomainAvailable();
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
+    if (!store?.customDomain) throw new NotFoundException('No custom domain connected');
+
+    const result = await this.cloudflareClient.getDomainStatus(store.customDomain);
+
+    const updated = await this.prisma.store.update({
+      where: { id: userStore.storeId },
+      data: { customDomainStatus: result.status },
+    });
+
+    return {
+      custom_domain: updated.customDomain,
+      custom_domain_status: updated.customDomainStatus,
+      // NOT VERIFIED against a real Cloudflare response yet (no live credentials
+      // during development) — dns_target is our best-effort default per
+      // Cloudflare Pages docs (a CNAME to <project>.pages.dev always works for
+      // a subdomain like www.*). verification is passed through generically
+      // since the exact shape of verification_data/validation_data hasn't been
+      // confirmed against a live call. Re-check both once real creds are in.
+      dns_target: `${process.env.CLOUDFLARE_PAGES_PROJECT}.pages.dev`,
+      verification: result.verification_data ?? result.validation_data ?? null,
+    };
+  }
+
+  async removeCustomDomain(userId: string) {
+    this.assertCustomDomainAvailable();
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
+    if (!store?.customDomain) throw new NotFoundException('No custom domain connected');
+
+    await this.cloudflareClient.removeDomain(store.customDomain);
+
+    await this.prisma.store.update({
+      where: { id: userStore.storeId },
+      data: { customDomain: null, customDomainStatus: null, cloudflareHostnameId: null },
+    });
+
+    return { message: 'Custom domain removed' };
   }
 }

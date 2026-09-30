@@ -49,6 +49,26 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL')
+  const [printingId, setPrintingId] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+
+  async function handlePrint(orderId: string) {
+    setPrintingId(orderId)
+    try {
+      await printInvoice(orderId)
+    } finally {
+      setPrintingId(null)
+    }
+  }
+
+  async function handleDownload(orderId: string, orderNumber: string) {
+    setDownloadingId(orderId)
+    try {
+      await downloadInvoice(orderId, orderNumber)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
 
   useEffect(() => { fetchOrders(activeTab) }, [activeTab])
 
@@ -175,18 +195,20 @@ export default function OrdersPage() {
                     {isInvoiceAvailable(order) && (
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={(e) => { e.stopPropagation(); printInvoice(order.id) }}
-                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          onClick={(e) => { e.stopPropagation(); handlePrint(order.id) }}
+                          disabled={printingId === order.id}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
                           title="Print invoice"
                         >
-                          <Printer className="w-4 h-4" />
+                          {printingId === order.id ? <Loader className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); downloadInvoice(order.id, order.order_number) }}
-                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          onClick={(e) => { e.stopPropagation(); handleDownload(order.id, order.order_number) }}
+                          disabled={downloadingId === order.id}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
                           title="Download invoice"
                         >
-                          <Download className="w-4 h-4" />
+                          {downloadingId === order.id ? <Loader className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                         </button>
                       </div>
                     )}
