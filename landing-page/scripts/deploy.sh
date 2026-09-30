@@ -2,9 +2,11 @@
 # Build and deploy the landing page to Cloudflare Pages via Wrangler.
 #
 # Usage:
-#   CLOUDFLARE_API_TOKEN=xxx CLOUDFLARE_ACCOUNT_ID=xxx ./scripts/deploy.sh
+#   ./scripts/deploy.sh
 #
-# Required env vars (or be logged in via `npx wrangler login`):
+# Required env vars, read from .env.deploy (gitignored — copy .env.deploy.example
+# and fill in real values), or exported inline, or skip both and rely on a
+# `npx wrangler login` session:
 #   CLOUDFLARE_API_TOKEN   API token with "Cloudflare Pages — Edit" permission
 #   CLOUDFLARE_ACCOUNT_ID  Account ID shown in the Cloudflare dashboard
 #
@@ -16,6 +18,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
+
+if [[ -f .env.deploy ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env.deploy
+  set +a
+fi
 
 PROJECT_NAME="${PROJECT_NAME:-dreambiz-app-landing-page}"
 BRANCH="${BRANCH:-main}"

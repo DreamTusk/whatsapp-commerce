@@ -2,9 +2,11 @@
 # Build and deploy store-admin to Cloudflare Workers via OpenNext.
 #
 # Usage:
-#   CLOUDFLARE_API_TOKEN=xxx CLOUDFLARE_ACCOUNT_ID=xxx ./scripts/deploy.sh
+#   ./scripts/deploy.sh
 #
-# Required env vars (or be logged in via `npx wrangler login`):
+# Required env vars, read from .env.deploy (gitignored — copy .env.deploy.example
+# and fill in real values), or exported inline, or skip both and rely on a
+# `npx wrangler login` session:
 #   CLOUDFLARE_API_TOKEN   API token with "Workers Scripts — Edit" permission
 #   CLOUDFLARE_ACCOUNT_ID  Account ID shown in the Cloudflare dashboard
 #
@@ -15,6 +17,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
+
+if [[ -f .env.deploy ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env.deploy
+  set +a
+fi
 
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
   echo "warning: CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set; relying on 'wrangler login' session." >&2
