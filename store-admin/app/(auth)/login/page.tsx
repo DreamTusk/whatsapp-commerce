@@ -62,10 +62,10 @@ export default function LoginPage() {
     }
   }
 
-  async function handleGoogleAccessToken(accessToken: string) {
+  async function handleGoogleIdToken(idToken: string) {
     try {
       const res = await api.post('/api/auth/google', {
-        access_token: accessToken,
+        id_token: idToken,
       })
       applyAuthSession(res.data)
     } catch (err: unknown) {
@@ -190,7 +190,7 @@ export default function LoginPage() {
 
       {/* Google sign-in */}
       <GoogleSignInButton
-        onAccessToken={handleGoogleAccessToken}
+        onIdToken={handleGoogleIdToken}
         onError={() => toast.error('Google sign-in failed. Please try again.')}
       />
 

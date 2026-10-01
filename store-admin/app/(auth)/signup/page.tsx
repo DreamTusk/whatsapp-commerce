@@ -35,10 +35,10 @@ export default function SignupPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) })
 
-  async function handleGoogleAccessToken(accessToken: string) {
+  async function handleGoogleIdToken(idToken: string) {
     try {
       const res = await api.post('/api/auth/google', {
-        access_token: accessToken,
+        id_token: idToken,
       })
 
       auth.setTokens(res.data.access_token, res.data.refresh_token)
@@ -90,9 +90,9 @@ export default function SignupPage() {
 
       {/* Google sign-in */}
       <GoogleSignInButton
-        onAccessToken={handleGoogleAccessToken}
+        onIdToken={handleGoogleIdToken}
         onError={() => toast.error('Google sign-in failed. Please try again.')}
-        label="Sign up with Google"
+        text="signup_with"
       />
 
       <div className="flex items-center gap-3">

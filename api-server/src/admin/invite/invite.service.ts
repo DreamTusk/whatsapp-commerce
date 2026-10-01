@@ -19,6 +19,8 @@ export class InviteService {
   ) {}
 
   async createInvite(userId: string, email: string, role: string) {
+    email = email.trim().toLowerCase();
+
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
 

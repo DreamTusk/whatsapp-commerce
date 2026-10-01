@@ -121,7 +121,7 @@ const formatInvoiceDate = (date: Date) =>
 
 export function formatStoreUrl(domain: string | null): string | null {
   if (!domain) return null;
-  const host = domain.endsWith('.localhost') ? domain.replace(/\.localhost$/, '.dreambiz.app') : domain;
+  const host = domain.endsWith('.localhost') ? domain.replace(/\.localhost$/, '.dreambizstore.com') : domain;
   return `https://${host}`;
 }
 

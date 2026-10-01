@@ -70,6 +70,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   // Swap the browser tab icon to the store's own favicon once it loads —
   // store-admin isn't domain-resolved like store-customer, so this can only happen client-side after auth.
+  // Re-applied on every pathname change too: Next.js re-resolves the static
+  // app/favicon.ico metadata on each client-side navigation and resets this
+  // same <link> tag back to the default, which store?.favicon alone wouldn't
+  // catch since that value doesn't change between pages.
   useEffect(() => {
     if (!store?.favicon) return
     let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']")
@@ -79,7 +83,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       document.head.appendChild(link)
     }
     link.href = store.favicon
-  }, [store?.favicon])
+  }, [store?.favicon, pathname])
 
   const visibleNav = NAV_ITEMS.filter(item =>
     item.roles.length === 0 || (role && item.roles.includes(role))

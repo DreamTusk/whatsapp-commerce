@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -38,6 +39,8 @@ const RESERVED_SUBDOMAINS = new Set([
 
 @Injectable()
 export class StoreService {
+  private readonly logger = new Logger(StoreService.name);
+
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -125,7 +128,7 @@ export class StoreService {
   };
 
   private assertDomainNotReserved(domain: string) {
-    const match = /^([a-z0-9-]+)\.dreambiz\.app$/i.exec(domain.trim());
+    const match = /^([a-z0-9-]+)\.dreambizstore\.com$/i.exec(domain.trim());
     if (match && RESERVED_SUBDOMAINS.has(match[1].toLowerCase())) {
       throw new BadRequestException(`"${match[1]}" is a reserved subdomain and cannot be used`);
     }
@@ -596,7 +599,19 @@ export class StoreService {
       throw new NotFoundException('No custom domain connected');
     }
 
-    await this.cloudflareClient.removeHostname(store.cloudflareHostnameId);
+    try {
+      await this.cloudflareClient.removeHostname(store.cloudflareHostnameId);
+    } catch (err) {
+      // Don't let an upstream failure (wrong zone after a domain migration,
+      // the hostname already gone on Cloudflare's side, a token/permission
+      // issue) permanently block the admin from resetting their own
+      // connection state — our DB is the source of truth for "is a custom
+      // domain connected" from the product's perspective, so still clear it
+      // locally and just log the Cloudflare-side failure for visibility.
+      this.logger.warn(
+        `Failed to remove Cloudflare hostname ${store.cloudflareHostnameId}: ${err instanceof Error ? err.message : err}`,
+      );
+    }
 
     await this.prisma.store.update({
       where: { id: userStore.storeId },
