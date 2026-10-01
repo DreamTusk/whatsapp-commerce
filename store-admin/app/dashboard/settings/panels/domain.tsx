@@ -18,11 +18,10 @@ import type { Store as StoreType } from '@/types'
 
 type CustomDomainState = 'none' | 'pending' | 'active' | 'failed'
 
-// Cloudflare's exact verification_data/validation_data shape hasn't been
-// confirmed against a live call yet (no real credentials during development)
-// — kept generic and rendered as raw key/value pairs rather than assuming
-// specific field names that might not match reality.
-type VerificationData = Record<string, unknown> | null
+// Matches Cloudflare's ownership_verification shape from the Custom
+// Hostnames API — a TXT record the store owner adds alongside the CNAME to
+// prove domain control, separate from SSL cert issuance.
+type VerificationData = { type: string; name: string; value: string } | null
 
 function CopyRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false)
@@ -58,6 +57,11 @@ export default function DomainPanel() {
 
   // Custom domain
   const [customState, setCustomState] = useState<CustomDomainState>('none')
+  // Raw backend status, kept alongside the bucketed customState so the
+  // pending card can distinguish "DNS not added yet" from "DNS verified,
+  // cert still issuing" (both map to the same 'pending' bucket).
+  const [rawStatus, setRawStatus] = useState('')
+  const [sslStatus, setSslStatus] = useState('')
   const [customDomain, setCustomDomain] = useState('')
   const [verification, setVerification] = useState<VerificationData>(null)
   const [dnsTarget, setDnsTarget] = useState('')
@@ -82,6 +86,7 @@ export default function DomainPanel() {
         setStore(s)
         if (s.custom_domain) {
           setCustomDomain(s.custom_domain)
+          setRawStatus(s.custom_domain_status ?? '')
           setCustomState(s.custom_domain_status === 'active' ? 'active' : 'pending')
         }
       })
@@ -97,16 +102,18 @@ export default function DomainPanel() {
   }, [customState])
 
   async function handleConnect() {
-    const base = domainInput.trim().toLowerCase().replace(/^www\./, '')
-    if (!base) { toast.error('Enter a domain'); return }
-    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(base)) { toast.error('Enter a valid domain, e.g. freshmart.com'); return }
+    const domain = domainInput.trim().toLowerCase()
+    if (!domain) { toast.error('Enter a domain'); return }
+    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(domain)) { toast.error('Enter a valid domain, e.g. freshmart.com or shop.freshmart.com'); return }
 
     setConnecting(true)
     try {
-      const res = await api.post('/api/store/custom-domain', { domain: base })
+      const res = await api.post('/api/store/custom-domain', { domain })
       setCustomDomain(res.data.custom_domain)
       setDnsTarget(res.data.dns_target ?? '')
       setVerification(res.data.verification ?? null)
+      setRawStatus(res.data.custom_domain_status ?? '')
+      setSslStatus(res.data.ssl_status ?? '')
       setCustomState(res.data.custom_domain_status === 'active' ? 'active' : 'pending')
       setConnectOpen(false)
       setDomainInput('')
@@ -125,6 +132,8 @@ export default function DomainPanel() {
       setCustomDomain(res.data.custom_domain)
       setDnsTarget(res.data.dns_target ?? '')
       setVerification(res.data.verification ?? null)
+      setRawStatus(res.data.custom_domain_status ?? '')
+      setSslStatus(res.data.ssl_status ?? '')
       if (res.data.custom_domain_status === 'active') {
         setCustomState('active')
         toast.success('Domain verified and connected')
@@ -146,6 +155,8 @@ export default function DomainPanel() {
       setCustomDomain('')
       setVerification(null)
       setDnsTarget('')
+      setRawStatus('')
+      setSslStatus('')
       setRemoveOpen(false)
       setCancelSetupOpen(false)
       toast.success('Custom domain removed')
@@ -225,25 +236,35 @@ export default function DomainPanel() {
         {isProductionEnv && customState === 'pending' && (
           <div className="border border-amber-100 bg-amber-50/40 rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Loader className="w-4 h-4 animate-spin text-amber-500" />
-                <p className="text-sm font-semibold text-gray-900">Verifying {customDomain}</p>
-              </div>
+              <p className="text-sm font-semibold text-gray-900">
+                {rawStatus === 'pending_ssl' ? `Issuing certificate for ${customDomain}` : `Verifying ${customDomain}`}
+              </p>
               <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Pending</span>
             </div>
-            <p className="text-xs text-gray-500 mb-4">
-              Add this record at your domain's DNS provider (GoDaddy, Namecheap, Cloudflare, etc). It can take a few minutes to a few hours to take effect.
-            </p>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <CopyRow label="Type" value="CNAME" />
-              <CopyRow label="Name" value={customDomain} />
-              {dnsTarget && <CopyRow label="Target" value={dnsTarget} />}
-              {verification && Object.entries(verification)
-                .filter(([, v]) => typeof v === 'string' || typeof v === 'number')
-                .map(([key, value]) => (
-                  <CopyRow key={key} label={key.replace(/_/g, ' ')} value={String(value)} />
-                ))}
-            </div>
+            {sslStatus && <p className="text-[11px] text-gray-400 mb-3">SSL: {sslStatus.replace(/_/g, ' ')}</p>}
+            {rawStatus === 'pending_ssl' ? (
+              <p className="text-xs text-gray-500 mb-4">
+                DNS is verified — Cloudflare is issuing the SSL certificate now. This usually takes a few minutes.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 mb-4">
+                  Add these two records at your domain's DNS provider (GoDaddy, Namecheap, Cloudflare, etc). It can take a few minutes to a few hours to take effect.
+                </p>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <CopyRow label="Type" value="CNAME" />
+                  <CopyRow label="Name" value={customDomain} />
+                  {dnsTarget && <CopyRow label="Target" value={dnsTarget} />}
+                </div>
+                {verification && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <CopyRow label="Type" value="TXT" />
+                    <CopyRow label="Name" value={verification.name} />
+                    <CopyRow label="Value" value={verification.value} />
+                  </div>
+                )}
+              </>
+            )}
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={handleCheckStatus} disabled={checking}>
                 {checking ? <Loader className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -328,16 +349,19 @@ export default function DomainPanel() {
           <div className="space-y-1.5">
             <Label className="text-sm font-medium text-gray-700">Domain</Label>
             <div className="flex items-center h-11 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-1 focus-within:ring-[var(--color-primary,#7c3aed)] focus-within:border-[#7c3aed]">
-              <span className="h-full flex items-center pl-3 pr-2 text-sm font-mono text-gray-400 bg-gray-50 border-r border-gray-200">www.</span>
               <input
                 className="flex-1 h-full px-3 font-mono text-sm outline-none"
                 value={domainInput}
                 onChange={e => setDomainInput(e.target.value)}
-                placeholder="freshmart.com"
+                placeholder="freshmart.com or shop.freshmart.com"
                 autoFocus
               />
             </div>
-            <p className="text-xs text-gray-400">Your store will be reachable at www.{domainInput.trim() || 'yourdomain.com'}</p>
+            <p className="text-xs text-gray-400">
+              {/^([a-z0-9-]+\.){2,}[a-z]{2,}$/i.test(domainInput.trim())
+                ? `Your store will be reachable at ${domainInput.trim().toLowerCase()}`
+                : `Your store will be reachable at www.${domainInput.trim() || 'yourdomain.com'} (we add www. automatically for a bare domain)`}
+            </p>
           </div>
           <div className="flex gap-3 mt-5">
             <Button variant="outline" className="flex-1" onClick={() => setConnectOpen(false)} disabled={connecting}>Cancel</Button>

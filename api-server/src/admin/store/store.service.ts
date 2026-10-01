@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../shared/email.service';
-import { CloudflareClient } from '../../shared/cloudflare.client';
+import { CloudflareClient, CloudflareCustomHostname } from '../../shared/cloudflare.client';
 import { buildCriteriaWhere } from '../../utils/collection-criteria';
 import { Plan, BillingCycle } from '@prisma/client';
 import { planAmount, billingPeriod, getPlanUsage } from '../../utils/plan';
@@ -504,16 +504,24 @@ export class StoreService {
     }
   }
 
-  // We only ever connect the www. subdomain, never the bare apex — a plain
-  // CNAME works there on every DNS provider with no exceptions, sidestepping
-  // the apex-CNAME restriction entirely (see the doc's apex-vs-www decision).
+  // A bare apex (just domain.tld) can't take a CNAME, so default it to www —
+  // anything with an existing subdomain (e.g. shop.yourbrand.com) is kept
+  // exactly as given.
   private normalizeCustomDomain(domain: string): string {
     const trimmed = domain.trim().toLowerCase();
-    const base = trimmed.replace(/^www\./, '');
-    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(base)) {
-      throw new BadRequestException('Enter a valid domain, e.g. yourbrand.com');
+    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(trimmed)) {
+      throw new BadRequestException('Enter a valid domain, e.g. yourbrand.com or shop.yourbrand.com');
     }
-    return `www.${base}`;
+    return trimmed.split('.').length <= 2 ? `www.${trimmed}` : trimmed;
+  }
+
+  // Cloudflare tracks hostname verification and SSL issuance as two separate
+  // statuses — a hostname can report "active" while its cert is still
+  // issuing, which would mean serving broken HTTPS if we called that active.
+  private resolveCustomDomainStatus(result: CloudflareCustomHostname): string {
+    if (result.status === 'active' && result.ssl?.status === 'active') return 'active';
+    if (result.status === 'active') return 'pending_ssl';
+    return result.status;
   }
 
   async addCustomDomain(userId: string, body: { domain?: string }) {
@@ -532,13 +540,13 @@ export class StoreService {
     const conflict = await this.prisma.store.findUnique({ where: { customDomain: domain } });
     if (conflict) throw new ConflictException('This domain is already connected to another store');
 
-    const result = await this.cloudflareClient.addDomain(domain);
+    const result = await this.cloudflareClient.addHostname(domain);
 
     const updated = await this.prisma.store.update({
       where: { id: userStore.storeId },
       data: {
         customDomain: domain,
-        customDomainStatus: result.status,
+        customDomainStatus: this.resolveCustomDomainStatus(result),
         cloudflareHostnameId: result.id,
       },
     });
@@ -546,14 +554,9 @@ export class StoreService {
     return {
       custom_domain: updated.customDomain,
       custom_domain_status: updated.customDomainStatus,
-      // NOT VERIFIED against a real Cloudflare response yet (no live credentials
-      // during development) — dns_target is our best-effort default per
-      // Cloudflare Pages docs (a CNAME to <project>.pages.dev always works for
-      // a subdomain like www.*). verification is passed through generically
-      // since the exact shape of verification_data/validation_data hasn't been
-      // confirmed against a live call. Re-check both once real creds are in.
-      dns_target: `${process.env.CLOUDFLARE_PAGES_PROJECT}.pages.dev`,
-      verification: result.verification_data ?? result.validation_data ?? null,
+      ssl_status: result.ssl?.status ?? null,
+      dns_target: process.env.CUSTOM_DOMAIN_CNAME_TARGET ?? '',
+      verification: result.ownership_verification ?? null,
     };
   }
 
@@ -563,26 +566,23 @@ export class StoreService {
     if (!userStore) throw new NotFoundException('No store found');
 
     const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
-    if (!store?.customDomain) throw new NotFoundException('No custom domain connected');
+    if (!store?.customDomain || !store.cloudflareHostnameId) {
+      throw new NotFoundException('No custom domain connected');
+    }
 
-    const result = await this.cloudflareClient.getDomainStatus(store.customDomain);
+    const result = await this.cloudflareClient.getHostnameStatus(store.cloudflareHostnameId);
 
     const updated = await this.prisma.store.update({
       where: { id: userStore.storeId },
-      data: { customDomainStatus: result.status },
+      data: { customDomainStatus: this.resolveCustomDomainStatus(result) },
     });
 
     return {
       custom_domain: updated.customDomain,
       custom_domain_status: updated.customDomainStatus,
-      // NOT VERIFIED against a real Cloudflare response yet (no live credentials
-      // during development) — dns_target is our best-effort default per
-      // Cloudflare Pages docs (a CNAME to <project>.pages.dev always works for
-      // a subdomain like www.*). verification is passed through generically
-      // since the exact shape of verification_data/validation_data hasn't been
-      // confirmed against a live call. Re-check both once real creds are in.
-      dns_target: `${process.env.CLOUDFLARE_PAGES_PROJECT}.pages.dev`,
-      verification: result.verification_data ?? result.validation_data ?? null,
+      ssl_status: result.ssl?.status ?? null,
+      dns_target: process.env.CUSTOM_DOMAIN_CNAME_TARGET ?? '',
+      verification: result.ownership_verification ?? null,
     };
   }
 
@@ -592,9 +592,11 @@ export class StoreService {
     if (!userStore) throw new NotFoundException('No store found');
 
     const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
-    if (!store?.customDomain) throw new NotFoundException('No custom domain connected');
+    if (!store?.customDomain || !store.cloudflareHostnameId) {
+      throw new NotFoundException('No custom domain connected');
+    }
 
-    await this.cloudflareClient.removeDomain(store.customDomain);
+    await this.cloudflareClient.removeHostname(store.cloudflareHostnameId);
 
     await this.prisma.store.update({
       where: { id: userStore.storeId },
