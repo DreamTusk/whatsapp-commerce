@@ -1,6 +1,5 @@
 import {
   Injectable,
-  BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
@@ -20,12 +19,6 @@ export class InviteService {
   ) {}
 
   async createInvite(userId: string, email: string, role: string) {
-    if (!email || !role) throw new BadRequestException('email and role are required');
-    const validRoles = Object.values(Role);
-    if (!validRoles.includes(role as Role)) {
-      throw new BadRequestException(`role must be one of: ${validRoles.join(', ')}`);
-    }
-
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
 
@@ -57,13 +50,7 @@ export class InviteService {
 
     const inviteLink = `${process.env.ADMIN_APP_URL || 'http://localhost:3011'}/accept-invite?token=${token}`;
 
-    console.log(`\n--- STAFF INVITE ---`);
-    console.log(`Store  : ${invite.Store.name}`);
-    console.log(`Email  : ${email}`);
-    console.log(`Role   : ${role}`);
-    console.log(`Link   : ${inviteLink}`);
-    console.log(`Expires: ${invite.expiresAt.toISOString()}`);
-    console.log(`--------------------\n`);
+    await this.emailService.sendInviteEmail(email, invite.Store.name, role, inviteLink);
 
     return {
       invite: {

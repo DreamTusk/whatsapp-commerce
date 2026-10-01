@@ -1,0 +1,21 @@
+meta {
+  name: Delete Custom Domain
+  type: http
+  seq: 6
+}
+
+delete {
+  url: https://api.cloudflare.com/client/v4/zones/16d8e3c4973bc8a4ae1cfb63e8a63be2/custom_hostnames/4b7ef41d-ccec-4e40-8383-3d2e4d8391e4
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer YOUR_CLOUDFLARE_API_TOKEN
+  Content-Type: application/json
+}
+
+settings {
+  encodeUrl: false
+  forwardAuthorizationHeader: false
+}

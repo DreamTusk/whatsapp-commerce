@@ -14,7 +14,8 @@ export class StoreResolverMiddleware implements NestMiddleware {
       return;
     }
 
-    const store = await this.prisma.store.findUnique({ where: { domain } });
+    // Matches either the platform subdomain or a connected custom domain.
+    const store = await this.prisma.store.findFirst({ where: { OR: [{ domain }, { customDomain: domain }] } });
 
     if (!store) {
       res.status(404).json({ message: 'Store not found' });

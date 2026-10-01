@@ -89,4 +89,33 @@ export class StoreController {
   ) {
     return this.storeService.updateCustomization(user.userId, body);
   }
+
+  // POST /api/store/custom-domain — production only, see custom-domain-architecture.md
+  @Post('custom-domain')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
+  @HttpCode(HttpStatus.CREATED)
+  addCustomDomain(
+    @CurrentUser() user: { userId: string },
+    @Body() body: { domain?: string },
+  ) {
+    return this.storeService.addCustomDomain(user.userId, body);
+  }
+
+  // GET /api/store/custom-domain/status
+  @Get('custom-domain/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
+  getCustomDomainStatus(@CurrentUser() user: { userId: string }) {
+    return this.storeService.getCustomDomainStatus(user.userId);
+  }
+
+  // DELETE /api/store/custom-domain
+  @Delete('custom-domain')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
+  @HttpCode(HttpStatus.OK)
+  removeCustomDomain(@CurrentUser() user: { userId: string }) {
+    return this.storeService.removeCustomDomain(user.userId);
+  }
 }

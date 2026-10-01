@@ -6,6 +6,6 @@ export class HealthController{
     
     @Get()
     healthCheck():string{
-        return "API - version - "+1;
+        return "API - version - "+2;
     }
 }

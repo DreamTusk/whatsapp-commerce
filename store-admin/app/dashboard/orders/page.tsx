@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader, ChevronRight, Plus } from '@deemlol/next-icons'
+import { Loader, ChevronRight, Plus, Printer, Download } from '@deemlol/next-icons'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import type { Order } from '@/types'
+import { isInvoiceAvailable, printInvoice, downloadInvoice } from '@/lib/print-invoice'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
@@ -35,6 +36,10 @@ const STATUS_DISPLAY: Record<OrderStatus, string> = {
   CANCELLED: 'Cancelled',
 }
 
+function isUnpaidOnline(order: Order) {
+  return order.payment?.method === 'ONLINE' && order.payment?.status === 'PENDING'
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
@@ -44,6 +49,26 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL')
+  const [printingId, setPrintingId] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+
+  async function handlePrint(orderId: string) {
+    setPrintingId(orderId)
+    try {
+      await printInvoice(orderId)
+    } finally {
+      setPrintingId(null)
+    }
+  }
+
+  async function handleDownload(orderId: string, orderNumber: string) {
+    setDownloadingId(orderId)
+    try {
+      await downloadInvoice(orderId, orderNumber)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
 
   useEffect(() => { fetchOrders(activeTab) }, [activeTab])
 
@@ -114,7 +139,7 @@ export default function OrdersPage() {
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Total</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden lg:table-cell">Payment</th>
                 <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="text-left px-4 py-3 text-base font-medium text-gray-500 uppercase tracking-wide hidden xl:table-cell">Created by</th>
+                <th className="px-4 py-3 w-8"></th>
                 <th className="px-4 py-3 w-8"></th>
               </tr>
             </thead>
@@ -144,9 +169,10 @@ export default function OrdersPage() {
                         <p className={`text-base font-medium ${
                           order.payment.status === 'PAID' ? 'text-green-600'
                           : order.payment.status === 'FAILED' ? 'text-red-500'
+                          : isUnpaidOnline(order) ? 'text-red-500'
                           : 'text-yellow-600'
                         }`}>
-                          {order.payment.status}
+                          {isUnpaidOnline(order) ? 'Payment pending' : order.payment.status}
                         </p>
                       </div>
                     ) : (
@@ -154,15 +180,38 @@ export default function OrdersPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-base font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status as OrderStatus]}`}>
-                      {STATUS_DISPLAY[order.status as OrderStatus]}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`text-base font-medium px-2.5 py-1 rounded-full w-fit ${STATUS_COLORS[order.status as OrderStatus]}`}>
+                        {STATUS_DISPLAY[order.status as OrderStatus]}
+                      </span>
+                      {isUnpaidOnline(order) && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 w-fit">
+                          Unpaid
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 hidden xl:table-cell">
-                    <p className="text-sm text-gray-700">{order.created_by ?? '—'}</p>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${order.source === 'MANUAL' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
-                      {order.source === 'MANUAL' ? 'Manual' : 'Customer'}
-                    </span>
+                  <td className="px-4 py-3">
+                    {isInvoiceAvailable(order) && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handlePrint(order.id) }}
+                          disabled={printingId === order.id}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                          title="Print invoice"
+                        >
+                          {printingId === order.id ? <Loader className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDownload(order.id, order.order_number) }}
+                          disabled={downloadingId === order.id}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                          title="Download invoice"
+                        >
+                          {downloadingId === order.id ? <Loader className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <ChevronRight className="w-4 h-4 text-gray-300" />

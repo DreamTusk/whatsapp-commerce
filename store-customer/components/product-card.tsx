@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth'
 import { useCart } from '@/contexts/cart'
 import { useWishlist } from '@/contexts/wishlist'
 import { clientFetch } from '@/lib/client-api'
+import { useDebouncedCartMutation } from '@/lib/use-debounced-cart-mutation'
 import { addToGuestCart, updateGuestQty } from '@/lib/guest-cart'
 import type { Product } from '@/types'
 import { Heart, ShoppingCart, Check, Trash } from "@deemlol/next-icons"
@@ -37,69 +38,67 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
       : `/products/${p.id}?from=products`
     : `/products/${p.id}`
   const { isAuthenticated, requireAuth } = useAuth()
-  const { refresh, items: cartItems } = useCart()
+  const { refresh, items: cartItems, setQty } = useCart()
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist()
-  const [loading, setLoading] = useState(false)
+  const scheduleCartUpdate = useDebouncedCartMutation()
   const [added, setAdded] = useState(false)
+  const [cardError, setCardError] = useState<string | null>(null)
   const cartQty = cartItems[p.id] ?? 0
+
+  useEffect(() => {
+    if (!cardError) return
+    const t = setTimeout(() => setCardError(null), 3000)
+    return () => clearTimeout(t)
+  }, [cardError])
 
   const hasDiscount = p.original_price != null && p.original_price > p.selling_price
   const discountPct = hasDiscount
     ? Math.round((1 - p.selling_price / p.original_price!) * 100)
     : null
 
-  async function handleAdd() {
+  function handleAdd() {
     if (!p.in_stock) return
     if (!isAuthenticated) {
       addToGuestCart({
         product_id: p.id, name: p.name, image_url: p.image_url,
         selling_price: p.selling_price, original_price: p.original_price, in_stock: p.in_stock,
       })
-      await refresh()
+      refresh()
       setAdded(true)
       setTimeout(() => setAdded(false), 1500)
       return
     }
-    setLoading(true)
-    try {
-      await clientFetch('/api/storefront/cart', { method: 'POST', body: JSON.stringify({ product_id: p.id }) })
-      await refresh()
-      setAdded(true)
-      setTimeout(() => setAdded(false), 1500)
-    } catch { /* silent */ } finally {
-      setLoading(false)
-    }
+    setQty(p.id, 1)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
+    clientFetch('/api/storefront/cart', { method: 'POST', body: JSON.stringify({ product_id: p.id }) })
+      .catch(() => { setQty(p.id, 0); setAdded(false) })
   }
 
-  async function handleIncrease() {
-    if (!isAuthenticated) { updateGuestQty(p.id, cartQty + 1); await refresh(); return }
-    setLoading(true)
-    try {
-      await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty + 1 }) })
-      await refresh()
-    } catch { /* silent */ } finally { setLoading(false) }
+  function handleIncrease() {
+    if (!p.in_stock) { setCardError('Out of stock'); return }
+    if (!isAuthenticated) { updateGuestQty(p.id, cartQty + 1); refresh(); return }
+    const next = cartQty + 1
+    setQty(p.id, next)
+    scheduleCartUpdate(p.id, next, (err: any) => {
+      setCardError(err?.error ?? 'Something went wrong')
+      refresh()
+    })
   }
 
-  async function handleDecrease() {
-    if (!isAuthenticated) { updateGuestQty(p.id, cartQty - 1); await refresh(); return }
-    setLoading(true)
-    try {
-      if (cartQty <= 1) {
-        await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'DELETE' })
-      } else {
-        await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'PATCH', body: JSON.stringify({ quantity: cartQty - 1 }) })
-      }
-      await refresh()
-    } catch { /* silent */ } finally { setLoading(false) }
+  function handleDecrease() {
+    const next = cartQty - 1
+    if (next <= 0) setAdded(false)
+    if (!isAuthenticated) { updateGuestQty(p.id, next); refresh(); return }
+    setQty(p.id, next)
+    scheduleCartUpdate(p.id, next, () => refresh())
   }
 
-  async function handleRemove() {
-    if (!isAuthenticated) { updateGuestQty(p.id, 0); await refresh(); return }
-    setLoading(true)
-    try {
-      await clientFetch(`/api/storefront/cart/${p.id}`, { method: 'DELETE' })
-      await refresh()
-    } catch { /* silent */ } finally { setLoading(false) }
+  function handleRemove() {
+    setAdded(false)
+    if (!isAuthenticated) { updateGuestQty(p.id, 0); refresh(); return }
+    setQty(p.id, 0)
+    scheduleCartUpdate(p.id, 0, () => refresh())
   }
 
   return (
@@ -162,42 +161,40 @@ export default function ProductCard({ product: p, scrollable = true, source, wid
           )}
         </div>
 
+        {cardError && (
+          <p className="text-[10px] font-medium text-red-500 -mt-1">{cardError}</p>
+        )}
+
         {cartQty > 0 ? (
           <div className="relative z-20 mt-auto w-full h-[40px] sm:h-[46px] flex items-center justify-between rounded-lg border-primary border overflow-hidden [font-family:var(--font-instrument-sans)]">
-            <button onClick={cartQty === 1 ? handleRemove : handleDecrease} disabled={loading}
-              className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40"
+            <button onClick={cartQty === 1 ? handleRemove : handleDecrease}
+              className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity"
             >
-              {loading
-                ? <div className="w-3.5 h-3.5 border border-t-transparent rounded-full animate-spin spinner-primary" />
-                : cartQty === 1
+              {cartQty === 1
                 ? <Trash className="w-3.5 h-3.5 text-rose-400" />
                 : <span className="text-xl font-bold">−</span>
               }
             </button>
             <span className="text-[13px] sm:text-[14px] lg:text-[15px] font-bold text-gray-900">{cartQty}</span>
-            <button onClick={handleIncrease} disabled={loading || !p.in_stock}
+            <button onClick={handleIncrease} disabled={!p.in_stock}
               className="h-full w-[36%] flex items-center justify-center c-primary hover:opacity-70 transition-opacity disabled:opacity-40 text-xl font-bold"
             >
-              {loading ? <div className="w-3.5 h-3.5 border border-t-transparent rounded-full animate-spin spinner-primary" /> : '+'}
+              +
             </button>
           </div>
         ) : (
           <button
             onClick={handleAdd}
-            disabled={loading || !p.in_stock || added}
+            disabled={!p.in_stock || added}
             className={`relative z-20 mt-auto w-full h-[40px] sm:h-[46px] flex items-center justify-center gap-[6px] px-[6px] rounded-lg border transition-all font-semibold text-[12px] sm:text-[14px] leading-none tracking-[0px] text-center [font-family:var(--font-instrument-sans)] ${
               added
                 ? 'bg-green-500 border-green-500 text-white'
-                : loading
-                ? 'border-primary opacity-50'
                 : !p.in_stock
                 ? 'border-gray-200 text-gray-300 cursor-not-allowed'
                 : 'btn-primary-outline'
             }`}
           >
-            {loading ? (
-              <div className="w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5 border border-t-transparent rounded-full animate-spin spinner-primary" />
-            ) : added ? (
+            {added ? (
               <>
                 <Check className="w-4 h-4 lg:w-5 lg:h-5" />
                 Added!

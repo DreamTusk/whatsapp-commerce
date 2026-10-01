@@ -4,10 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth'
-import { useCart } from '@/contexts/cart'
-import { useCartDrawer } from '@/contexts/cart-drawer'
 import { clientFetch } from '@/lib/client-api'
-import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink, ShoppingBag, CheckCircle } from "@deemlol/next-icons"
+import { loadRazorpayScript } from '@/lib/razorpay'
+import { Heart, Package, ShoppingCart, MapPin, LogOut, User, ChevronLeft, ChevronRight, Edit, Trash, Plus, Check, Truck, ExternalLink, ShoppingBag, CheckCircle, Clock, XCircle } from "@deemlol/next-icons"
 
 import type { Order, CustomerAddress, WishlistItem } from '@/types'
 
@@ -40,6 +39,9 @@ const TRACKING_STEPS = [
   { status: 'DELIVERED', label: 'Delivered', Icon: Package },
 ]
 const TRACKING_ORDER: Record<string, number> = { NEW: 0, CONFIRMED: 1, OUT_FOR_DELIVERY: 2, DELIVERED: 3, CANCELLED: -1 }
+function isUnpaidOnline(o: Order) {
+  return o.payment?.method === 'ONLINE' && o.payment?.status === 'PENDING' && o.status !== 'CANCELLED'
+}
 const CANCEL_REASONS = ['Changed my mind', 'Ordered by mistake', 'Found a better price', 'Delivery taking too long', 'Other']
 const BUBBLE_COLORS = [
   'bg-orange-100 text-orange-600', 'bg-red-100 text-red-600', 'bg-yellow-100 text-yellow-700',
@@ -55,8 +57,6 @@ function formatDateTime(iso: string) {
 
 export default function AccountClient({ storeName }: { storeName?: string }) {
   const { customer, isAuthenticated, initialized, requireAuth, logout, updateCustomer } = useAuth()
-  const { refresh: cartRefresh } = useCart()
-  const { openCart } = useCartDrawer()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -96,7 +96,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   // Orders
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
-  const [orderAgainLoading, setOrderAgainLoading] = useState<string | null>(null)
+  const [payAgainLoading, setPayAgainLoading] = useState<string | null>(null)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedOrderLoading, setSelectedOrderLoading] = useState(false)
@@ -216,13 +216,63 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
     } catch { setProfileError('Failed to save') } finally { setProfileSaving(false) }
   }
 
-  async function orderAgain(order: Order) {
-    setOrderAgainLoading(order.id)
+  function orderAgain(order: Order) {
+    router.push(`/checkout?reorder=${order.id}`)
+  }
+
+  async function payAgain(order: Order) {
+    setPayAgainLoading(order.id)
     try {
-      for (const item of order.items)
-        await clientFetch('/api/storefront/cart', { method: 'POST', body: JSON.stringify({ product_id: item.product_id }) })
-      await cartRefresh(); openCart()
-    } catch { /* ignore */ } finally { setOrderAgainLoading(null) }
+      const data = await clientFetch<{
+        razorpay_order_id: string
+        razorpay_key_id: string
+        amount_paise: number
+      }>(`/api/storefront/orders/${order.id}/retry-payment`, { method: 'POST' })
+
+      const loaded = await loadRazorpayScript()
+      if (!loaded) {
+        alert('Failed to load payment gateway. Please try again.')
+        setPayAgainLoading(null)
+        return
+      }
+
+      const rzp = new (window as any).Razorpay({
+        key: data.razorpay_key_id,
+        amount: data.amount_paise,
+        currency: 'INR',
+        order_id: data.razorpay_order_id,
+        name: storeName ?? 'Store',
+        description: 'Order payment',
+        prefill: { contact: customer?.phone || undefined },
+        theme: { color: '#6366f1' },
+        handler: async (response: {
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          razorpay_signature: string
+        }) => {
+          try {
+            const d = await clientFetch<{ order: Order }>(`/api/storefront/orders/${order.id}/verify-payment`, {
+              method: 'POST',
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            })
+            setOrders(prev => prev.map(o => o.id === order.id ? d.order : o))
+          } catch {
+            alert('Payment verification failed. Please contact support with your order ID.')
+          } finally {
+            setPayAgainLoading(null)
+          }
+        },
+        modal: { ondismiss: () => setPayAgainLoading(null) },
+      })
+      rzp.open()
+    } catch (e: unknown) {
+      alert((e as { error?: string })?.error ?? 'Failed to start payment')
+      setPayAgainLoading(null)
+    }
   }
 
   async function removeFromWishlist(productId: string) {
@@ -487,10 +537,10 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                       <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
                     </div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className={`flex items-center gap-1.5 text-sm font-semibold ${STATUS_COLOR[order.status] ?? 'text-gray-500'}`}>
+                      <span className={`flex items-center gap-1.5 text-sm font-semibold ${isUnpaidOnline(order) ? 'text-red-500' : (STATUS_COLOR[order.status] ?? 'text-gray-500')}`}>
                         {order.status === 'DELIVERED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                         {order.status === 'CANCELLED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                        {STATUS_LABEL[order.status] ?? order.status}
+                        {isUnpaidOnline(order) ? 'Payment pending' : (STATUS_LABEL[order.status] ?? order.status)}
                       </span>
                       <p className="text-sm font-bold text-gray-900">₹{order.total_amount}</p>
                     </div>
@@ -499,11 +549,19 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                         View details
                         <ChevronRight className="w-3 h-3" />
                       </span>
-                      <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
-                        className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl btn-primary-outline disabled:opacity-50"
-                      >
-                        {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
-                      </button>
+                      {isUnpaidOnline(order) ? (
+                        <button onClick={() => payAgain(order)} disabled={payAgainLoading === order.id}
+                          className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl btn-primary-filled disabled:opacity-50"
+                        >
+                          {payAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-t-transparent border-white rounded-full animate-spin inline-block" /> Processing…</span> : 'Pay Again'}
+                        </button>
+                      ) : (
+                        <button onClick={() => orderAgain(order)}
+                          className="relative z-10 text-xs font-semibold px-4 py-2 rounded-xl btn-primary-outline"
+                        >
+                          Order Again
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -655,7 +713,7 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
         </div>
       </div>
       {storeName && (
-        <div className="mt-auto px-5 pb-5">
+        <div className="px-5 pt-8 pb-5 mt-auto">
           <p className="text-2xl font-bold text-gray-300 text-center">{storeName}</p>
         </div>
       )}
@@ -781,8 +839,8 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                     <p className="font-bold text-gray-900 text-lg leading-tight">{o.order_number}</p>
                     <p className="text-xs text-gray-400 mt-1">{formatDateTime(o.created_at)}</p>
                   </div>
-                  <span className={`mt-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex-shrink-0 ${isCancelled ? 'bg-red-50 text-red-500' : o.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : 'bg-gray-50 c-primary'}`}>
-                    {STATUS_LABEL[o.status] ?? o.status}
+                  <span className={`mt-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex-shrink-0 ${isCancelled ? 'bg-red-50 text-red-500' : isUnpaidOnline(o) ? 'bg-red-50 text-red-500' : o.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : 'bg-gray-50 c-primary'}`}>
+                    {isUnpaidOnline(o) ? 'Payment pending' : (STATUS_LABEL[o.status] ?? o.status)}
                   </span>
                 </div>
               </div>
@@ -827,10 +885,17 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Payment</p>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-700">{o.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}</p>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${o.payment.status === 'PAID' ? 'bg-green-50 text-green-600' : o.payment.status === 'FAILED' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'}`}>
-                      {o.payment.status === 'PENDING' ? 'Pay on delivery' : o.payment.status}
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${o.payment.status === 'PAID' ? 'bg-green-50 text-green-600' : o.payment.status === 'FAILED' ? 'bg-red-50 text-red-500' : o.payment.method === 'ONLINE' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'}`}>
+                      {o.payment.status === 'PENDING' ? (o.payment.method === 'ONLINE' ? 'Payment pending' : 'Pay on delivery') : o.payment.status}
                     </span>
                   </div>
+                  {isUnpaidOnline(o) && (
+                    <button onClick={() => payAgain(o)} disabled={payAgainLoading === o.id}
+                      className="w-full mt-3 text-sm font-semibold py-2.5 rounded-xl btn-primary-filled disabled:opacity-50"
+                    >
+                      {payAgainLoading === o.id ? <span className="flex items-center justify-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent border-white rounded-full animate-spin inline-block" /> Processing…</span> : 'Pay Again'}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -921,6 +986,19 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
   })() : null
 
   // Desktop orders
+  const orderStats = {
+    total: orders.length,
+    inTransit: orders.filter(o => o.status === 'CONFIRMED' || o.status === 'OUT_FOR_DELIVERY').length,
+    delivered: orders.filter(o => o.status === 'DELIVERED').length,
+    cancelled: orders.filter(o => o.status === 'CANCELLED').length,
+  }
+  const orderStatCards = [
+    { label: 'Total Orders', value: orderStats.total, Icon: Package, bg: 'bg-green-50', iconColor: 'text-green-600', arrowColor: 'text-green-400' },
+    { label: 'In Transit', value: orderStats.inTransit, Icon: Truck, bg: 'bg-blue-50', iconColor: 'text-blue-600', arrowColor: 'text-blue-400' },
+    { label: 'Delivered', value: orderStats.delivered, Icon: Clock, bg: 'bg-orange-50', iconColor: 'text-orange-500', arrowColor: 'text-orange-400' },
+    { label: 'Cancelled', value: orderStats.cancelled, Icon: XCircle, bg: 'bg-red-50', iconColor: 'text-red-500', arrowColor: 'text-red-400' },
+  ]
+
   const desktopOrdersPanel = selectedOrderId ? (
     <div className="flex flex-col h-full">
       {selectedOrderLoading ? (
@@ -930,17 +1008,58 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       )}
     </div>
   ) : (
-    <div className="flex flex-col h-full p-4 gap-3">
-      <div className="bg-white rounded-xl p-4 flex-1 overflow-auto">
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center gap-3 p-6 pb-5 flex-shrink-0">
+        <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+          <Package className="w-5 h-5 c-primary" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">My Orders</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Track, manage and view your orders</p>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-4 gap-3 px-6 pb-5 flex-shrink-0">
+        {orderStatCards.map(s => (
+          <div key={s.label} className={`${s.bg} rounded-2xl p-3.5 flex items-center justify-between gap-2 min-w-0`}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                <s.Icon className={`w-4 h-4 ${s.iconColor}`} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-gray-500 truncate">{s.label}</p>
+                <p className="text-lg font-bold text-gray-900">{s.value}</p>
+              </div>
+            </div>
+            <ChevronRight className={`w-4 h-4 flex-shrink-0 ${s.arrowColor}`} />
+          </div>
+        ))}
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+      <div className="bg-white rounded-xl p-4 min-h-full">
         {ordersLoading ? (
           <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin spinner-primary" /></div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-4xl mb-3">📦</p><p className="font-semibold text-gray-600">No orders yet</p>
-            <Link href="/products" className="mt-5 inline-block btn-primary-filled font-semibold px-6 py-2.5 rounded-xl text-sm">Browse products</Link>
+          <div className="flex flex-col items-center justify-center text-center py-16 px-6">
+            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-5" style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.12) 0%, rgba(34,197,94,0) 70%)' }}>
+              <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center">
+                <Package className="w-8 h-8 text-amber-600" />
+              </div>
+            </div>
+            <p className="font-bold text-gray-900 text-lg mb-1.5">No orders yet</p>
+            <p className="text-sm text-gray-400 max-w-xs mb-6 leading-relaxed">Looks like you haven't placed any orders yet. Start shopping and bring fresh products to your doorstep!</p>
+            <Link href="/products" className="inline-flex items-center gap-2 btn-primary-filled font-semibold px-6 py-3 rounded-full text-sm">
+              <ShoppingCart className="w-4 h-4" />
+              Browse products
+              <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {orders.map(order => (
               <div key={order.id} className="relative border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
                 <button onClick={() => selectOrder(order.id)} className="absolute inset-0 rounded-2xl" aria-label={`View order ${order.order_number}`} />
@@ -956,26 +1075,35 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
                         </div>
                       ))}
                     </div>
-                    <span className={`flex items-center gap-1.5 text-sm font-semibold mb-1 ${STATUS_COLOR[order.status] ?? 'text-gray-500'}`}>
+                    <span className={`flex items-center gap-1.5 text-sm font-semibold mb-1 ${isUnpaidOnline(order) ? 'text-red-500' : (STATUS_COLOR[order.status] ?? 'text-gray-500')}`}>
                       {order.status === 'DELIVERED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                       {order.status === 'CANCELLED' && <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                      {STATUS_LABEL[order.status] ?? order.status}
+                      {isUnpaidOnline(order) ? 'Payment pending' : (STATUS_LABEL[order.status] ?? order.status)}
                     </span>
                     <p className="text-xs text-gray-400">Order placed {formatDate(order.created_at)}</p>
                   </div>
                   <div className="relative z-10 flex flex-col items-end justify-center gap-3 flex-shrink-0">
                     <p className="font-bold text-gray-900 text-base">₹{order.total_amount}</p>
-                    <button onClick={() => orderAgain(order)} disabled={orderAgainLoading === order.id}
-                      className="text-sm font-semibold px-5 py-2.5 rounded-xl btn-primary-outline disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {orderAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin spinner-primary inline-block" /> Adding…</span> : 'Order Again'}
-                    </button>
+                    {isUnpaidOnline(order) ? (
+                      <button onClick={() => payAgain(order)} disabled={payAgainLoading === order.id}
+                        className="text-sm font-semibold px-5 py-2.5 rounded-xl btn-primary-filled disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {payAgainLoading === order.id ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-t-transparent border-white rounded-full animate-spin inline-block" /> Processing…</span> : 'Pay Again'}
+                      </button>
+                    ) : (
+                      <button onClick={() => orderAgain(order)}
+                        className="text-sm font-semibold px-5 py-2.5 rounded-xl btn-primary-outline whitespace-nowrap"
+                      >
+                        Order Again
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   )
@@ -1089,11 +1217,11 @@ export default function AccountClient({ storeName }: { storeName?: string }) {
       </div>
 
       {/* ── Desktop ── */}
-      <div className="hidden lg:flex page-x gap-6 pt-8 pb-16 min-h-[calc(100vh-70px)] items-stretch">
-        <div className="w-[240px] flex-shrink-0 rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ backgroundColor: '#F8F9FA' }}>
+      <div className="hidden lg:flex page-x gap-6 pt-8 pb-6 items-start">
+        <div className="w-[240px] flex-shrink-0 sticky top-[var(--store-header-h)] h-[95vh] overflow-y-auto rounded-2xl border border-gray-100 shadow-sm" style={{ backgroundColor: '#F8F9FA' }}>
           {desktopSidebar}
         </div>
-        <div className="flex-1 min-w-0 rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ backgroundColor: '#F8F9FA' }}>
+        <div className="flex-1 min-w-0 sticky top-[var(--store-header-h)] h-[95vh] rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ backgroundColor: '#F8F9FA' }}>
           {tab === 'profile' && desktopProfilePanel}
           {tab === 'orders' && desktopOrdersPanel}
           {tab === 'addresses' && desktopAddressesPanel}

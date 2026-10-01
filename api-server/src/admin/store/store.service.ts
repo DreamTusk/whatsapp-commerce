@@ -2,10 +2,12 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../shared/email.service';
+import { CloudflareClient, CloudflareCustomHostname } from '../../shared/cloudflare.client';
 import { buildCriteriaWhere } from '../../utils/collection-criteria';
 import { Plan, BillingCycle } from '@prisma/client';
 import { planAmount, billingPeriod, getPlanUsage } from '../../utils/plan';
@@ -39,6 +41,7 @@ export class StoreService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private cloudflareClient: CloudflareClient,
   ) {}
 
   private formatCustomization(c: {
@@ -66,7 +69,9 @@ export class StoreService {
 
   private formatStore(store: {
     id: string; name: string; phone: string; domain: string | null;
-    catalogId: string | null; address: string | null; logo: string | null;
+    customDomain: string | null; customDomainStatus: string | null;
+    catalogId: string | null; address: string | null; supportEmail: string | null;
+    logo: string | null;
     favicon: string | null;
     minOrderAmount: number; deliveryRadius: number | null; isActive: boolean;
     isPickupEnabled: boolean; isHomeDeliveryEnabled: boolean; plan: Plan;
@@ -78,8 +83,11 @@ export class StoreService {
       name: store.name,
       phone: store.phone,
       domain: store.domain,
+      custom_domain: store.customDomain,
+      custom_domain_status: store.customDomainStatus,
       catalog_id: store.catalogId,
       address: store.address,
+      support_email: store.supportEmail,
       logo: store.logo,
       favicon: store.favicon,
       min_order_amount: store.minOrderAmount,
@@ -126,8 +134,11 @@ export class StoreService {
   async getStoreInfo(domain: string) {
     if (!domain) throw new BadRequestException('Missing x-store-domain header');
 
-    const store = await this.prisma.store.findUnique({
-      where: { domain },
+    // Matches either the platform subdomain or a connected custom domain —
+    // both stay resolvable so bookmarks/links to the old subdomain never
+    // break once a store connects its own domain.
+    const store = await this.prisma.store.findFirst({
+      where: { OR: [{ domain }, { customDomain: domain }] },
       include: { StoreCustomization: true },
     });
     if (!store) throw new NotFoundException('Store not found');
@@ -297,11 +308,7 @@ export class StoreService {
     });
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    await this.emailService.sendSimpleEmail(
-      user!.email,
-      'Store Created Successfully',
-      `Hi ${user!.name},\n\nYour store "${store.name}" has been created successfully.\n\nYou can now start adding products and categories.`,
-    );
+    await this.emailService.sendStoreCreatedEmail(user!.email, user!.name, store.name);
 
     return { store: this.formatStore(store) };
   }
@@ -403,6 +410,7 @@ export class StoreService {
     userId: string,
     body: {
       name?: string; phone?: string; domain?: string; address?: string;
+      support_email?: string;
       min_order_amount?: string; delivery_radius?: string; is_active?: string;
       is_pickup_enabled?: string; is_home_delivery_enabled?: string;
       logo_media_id?: string; favicon_media_id?: string;
@@ -411,7 +419,16 @@ export class StoreService {
     const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
     if (!userStore) throw new NotFoundException('No store found');
 
+    const existingStore = await this.prisma.store.findUnique({
+      where: { id: userStore.storeId },
+      select: { isActive: true },
+    });
+
     if (body.domain !== undefined) this.assertDomainNotReserved(body.domain);
+
+    if (body.support_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.support_email.trim())) {
+      throw new BadRequestException('support_email must be a valid email address');
+    }
 
     let logoUrl: string | undefined = undefined;
     if (body.logo_media_id) {
@@ -432,6 +449,7 @@ export class StoreService {
         ...(body.phone && { phone: body.phone }),
         ...(body.domain !== undefined && { domain: body.domain }),
         ...(body.address !== undefined && { address: body.address }),
+        ...(body.support_email !== undefined && { supportEmail: body.support_email.trim() || null }),
         ...(logoUrl !== undefined && { logo: logoUrl }),
         ...(faviconUrl !== undefined && { favicon: faviconUrl }),
         ...(body.min_order_amount !== undefined && { minOrderAmount: parseFloat(body.min_order_amount) }),
@@ -443,11 +461,16 @@ export class StoreService {
     });
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    await this.emailService.sendSimpleEmail(
-      user!.email,
-      'Store Updated',
-      `Hi ${user!.name},\n\nYour store "${store.name}" details have been updated successfully.`,
-    );
+    const activeChanged =
+      body.is_active !== undefined && (body.is_active === 'true') !== existingStore!.isActive;
+
+    if (activeChanged && body.is_active === 'true') {
+      await this.emailService.sendStoreActivatedEmail(user!.email, user!.name, store.name);
+    } else if (activeChanged && body.is_active === 'false') {
+      await this.emailService.sendStoreDeactivatedEmail(user!.email, user!.name, store.name);
+    } else {
+      await this.emailService.sendStoreUpdatedEmail(user!.email, user!.name, store.name);
+    }
 
     return { store: this.formatStore(store) };
   }
@@ -469,5 +492,117 @@ export class StoreService {
     );
 
     return { message: 'Store deleted successfully' };
+  }
+
+  // Custom domains only touch the real Cloudflare account, which has a
+  // shared per-project domain cap (see custom-domain-architecture.md) — every
+  // store on staging/dev pointed at that same account would burn through it
+  // during testing, so the whole feature is production-only.
+  private assertCustomDomainAvailable() {
+    if (process.env.NODE_ENV !== 'production') {
+      throw new ForbiddenException('Custom domains can only be managed in production');
+    }
+  }
+
+  // A bare apex (just domain.tld) can't take a CNAME, so default it to www —
+  // anything with an existing subdomain (e.g. shop.yourbrand.com) is kept
+  // exactly as given.
+  private normalizeCustomDomain(domain: string): string {
+    const trimmed = domain.trim().toLowerCase();
+    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(trimmed)) {
+      throw new BadRequestException('Enter a valid domain, e.g. yourbrand.com or shop.yourbrand.com');
+    }
+    return trimmed.split('.').length <= 2 ? `www.${trimmed}` : trimmed;
+  }
+
+  // Cloudflare tracks hostname verification and SSL issuance as two separate
+  // statuses — a hostname can report "active" while its cert is still
+  // issuing, which would mean serving broken HTTPS if we called that active.
+  private resolveCustomDomainStatus(result: CloudflareCustomHostname): string {
+    if (result.status === 'active' && result.ssl?.status === 'active') return 'active';
+    if (result.status === 'active') return 'pending_ssl';
+    return result.status;
+  }
+
+  async addCustomDomain(userId: string, body: { domain?: string }) {
+    this.assertCustomDomainAvailable();
+    if (!body.domain?.trim()) throw new BadRequestException('domain is required');
+    const domain = this.normalizeCustomDomain(body.domain);
+
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
+    if (store?.customDomain) {
+      throw new ConflictException('This store already has a custom domain connected — remove it first');
+    }
+
+    const conflict = await this.prisma.store.findUnique({ where: { customDomain: domain } });
+    if (conflict) throw new ConflictException('This domain is already connected to another store');
+
+    const result = await this.cloudflareClient.addHostname(domain);
+
+    const updated = await this.prisma.store.update({
+      where: { id: userStore.storeId },
+      data: {
+        customDomain: domain,
+        customDomainStatus: this.resolveCustomDomainStatus(result),
+        cloudflareHostnameId: result.id,
+      },
+    });
+
+    return {
+      custom_domain: updated.customDomain,
+      custom_domain_status: updated.customDomainStatus,
+      ssl_status: result.ssl?.status ?? null,
+      dns_target: process.env.CUSTOM_DOMAIN_CNAME_TARGET ?? '',
+      verification: result.ownership_verification ?? null,
+    };
+  }
+
+  async getCustomDomainStatus(userId: string) {
+    this.assertCustomDomainAvailable();
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
+    if (!store?.customDomain || !store.cloudflareHostnameId) {
+      throw new NotFoundException('No custom domain connected');
+    }
+
+    const result = await this.cloudflareClient.getHostnameStatus(store.cloudflareHostnameId);
+
+    const updated = await this.prisma.store.update({
+      where: { id: userStore.storeId },
+      data: { customDomainStatus: this.resolveCustomDomainStatus(result) },
+    });
+
+    return {
+      custom_domain: updated.customDomain,
+      custom_domain_status: updated.customDomainStatus,
+      ssl_status: result.ssl?.status ?? null,
+      dns_target: process.env.CUSTOM_DOMAIN_CNAME_TARGET ?? '',
+      verification: result.ownership_verification ?? null,
+    };
+  }
+
+  async removeCustomDomain(userId: string) {
+    this.assertCustomDomainAvailable();
+    const userStore = await this.prisma.userStore.findFirst({ where: { userId } });
+    if (!userStore) throw new NotFoundException('No store found');
+
+    const store = await this.prisma.store.findUnique({ where: { id: userStore.storeId } });
+    if (!store?.customDomain || !store.cloudflareHostnameId) {
+      throw new NotFoundException('No custom domain connected');
+    }
+
+    await this.cloudflareClient.removeHostname(store.cloudflareHostnameId);
+
+    await this.prisma.store.update({
+      where: { id: userStore.storeId },
+      data: { customDomain: null, customDomainStatus: null, cloudflareHostnameId: null },
+    });
+
+    return { message: 'Custom domain removed' };
   }
 }

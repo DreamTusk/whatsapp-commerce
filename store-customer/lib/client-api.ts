@@ -29,7 +29,7 @@ export async function clientFetch<T>(path: string, options: RequestInit = {}): P
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw { status: res.status, error: body.error ?? 'Request failed' } as ApiError
+    throw { status: res.status, error: body.message ?? body.error ?? 'Request failed' } as ApiError
   }
 
   return res.json()

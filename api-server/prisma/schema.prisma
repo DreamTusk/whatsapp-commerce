@@ -55,6 +55,7 @@ model CartItem {
   Store      Store    @relation(fields: [storeId], references: [id])
 
   @@unique([customerId, productId])
+  @@index([customerId, storeId])
 }
 
 model Category {
@@ -160,9 +161,12 @@ model CustomerOtp {
   storeId   String
   otp       String
   isUsed    Boolean  @default(false)
+  attempts  Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
   Store     Store    @relation(fields: [storeId], references: [id])
+
+  @@index([phone, storeId])
 }
 
 model CustomerToken {
@@ -364,8 +368,12 @@ model Store {
   name                  String
   phone                 String                 @unique
   domain                String?                @unique
+  customDomain          String?                @unique
+  customDomainStatus    String?
+  cloudflareHostnameId  String?
   catalogId             String?
   address               String?
+  supportEmail          String?
   logo                  String?
   favicon               String?
   minOrderAmount        Float                  @default(0)
@@ -475,7 +483,8 @@ model User {
   id              String            @id @default(cuid())
   name            String
   email           String            @unique
-  password        String
+  password        String?
+  googleId        String?           @unique
   isVerified      Boolean           @default(false)
   createdAt       DateTime          @default(now())
   Media           Media[]

@@ -87,11 +87,7 @@ export class AuthService {
     });
 
     const otp = await this.otpService.createOtp(user.id);
-    await this.emailService.sendSimpleEmail(
-      email,
-      'OTP for account verification',
-      `Hi ${user.name},\n\nYour OTP to verify your account is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nDo not share this with anyone.`,
-    );
+    await this.emailService.sendSignupOtpEmail(email, user.name, otp);
 
     return {
       access_token,
@@ -114,11 +110,7 @@ export class AuthService {
     });
 
     const otp = await this.otpService.createOtp(user.id);
-    await this.emailService.sendSimpleEmail(
-      email,
-      'OTP for account verification',
-      `Hi ${user.name},\n\nYour new OTP to verify your account is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nDo not share this with anyone.`,
-    );
+    await this.emailService.sendSignupOtpEmail(email, user.name, otp);
 
     return { message: 'OTP sent successfully' };
   }
@@ -156,11 +148,7 @@ export class AuthService {
     if (!user) throw new NotFoundException('No account found with this email');
 
     const otp = await this.otpService.createOtp(user.id);
-    await this.emailService.sendSimpleEmail(
-      email,
-      'Reset your password - OTP',
-      `Hi ${user.name},\n\nYour OTP to reset your password is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nIf you did not request this, ignore this email.`,
-    );
+    await this.emailService.sendForgotPasswordEmail(email, user.name, otp);
 
     return { message: 'OTP sent to your email' };
   }
@@ -206,6 +194,9 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new UnauthorizedException('Invalid email or password');
+    if (!user.password) {
+      throw new UnauthorizedException('This account uses Google sign-in. Continue with Google instead.');
+    }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) throw new UnauthorizedException('Invalid email or password');
@@ -217,6 +208,81 @@ export class AuthService {
         user_id: user.id,
         email,
       });
+    }
+
+    const userStore = await this.prisma.userStore.findFirst({
+      where: { userId: user.id },
+      include: { Store: true },
+    });
+
+    if (userStore && !userStore.isActive) {
+      throw new ForbiddenException('Your account has been deactivated. Please contact your store admin.');
+    }
+
+    const access_token = this.generateAccessToken(user.id);
+    const refresh_token = this.generateRefreshToken();
+
+    await this.prisma.refreshToken.create({
+      data: { token: refresh_token, userId: user.id, expiresAt: this.refreshTokenExpiryDate() },
+    });
+
+    return {
+      access_token,
+      refresh_token,
+      user: { id: user.id, name: user.name, email: user.email },
+      role: userStore?.role ?? null,
+      store: userStore?.Store ? this.formatStore(userStore.Store) : null,
+    };
+  }
+
+  async googleLogin(accessToken: string) {
+    if (!accessToken) throw new BadRequestException('access_token is required');
+
+    let payload: { sub?: string; email?: string; email_verified?: boolean; name?: string };
+    try {
+      const res = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Google userinfo request failed');
+      payload = (await res.json()) as typeof payload;
+    } catch {
+      throw new UnauthorizedException('Invalid Google credential');
+    }
+
+    if (!payload.sub || !payload.email) throw new UnauthorizedException('Invalid Google credential');
+    if (!payload.email_verified) throw new UnauthorizedException('Google email is not verified');
+
+    const { sub: googleId, email, name } = payload;
+
+    let user = await this.prisma.user.findUnique({ where: { googleId } });
+
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email } });
+
+      if (user) {
+        // Existing email/password account signing in with Google for the first time — link it.
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { googleId, isVerified: true },
+        });
+      } else {
+        const invite = await this.prisma.storeInvite.findFirst({
+          where: { email, isUsed: false, expiresAt: { gt: new Date() } },
+        });
+
+        user = await this.prisma.user.create({
+          data: { name: name ?? email, email, googleId, isVerified: true },
+        });
+
+        if (invite) {
+          await this.prisma.$transaction([
+            this.prisma.storeInvite.update({ where: { id: invite.id }, data: { isUsed: true } }),
+            this.prisma.userStore.create({
+              data: { userId: user.id, storeId: invite.storeId, role: invite.role },
+            }),
+          ]);
+        }
+      }
     }
 
     const userStore = await this.prisma.userStore.findFirst({

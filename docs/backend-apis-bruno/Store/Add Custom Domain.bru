@@ -1,0 +1,22 @@
+meta {
+  name: Add Custom Domain
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url_local}}/admin/store/custom-domain
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "domain": "freshmart.com"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
