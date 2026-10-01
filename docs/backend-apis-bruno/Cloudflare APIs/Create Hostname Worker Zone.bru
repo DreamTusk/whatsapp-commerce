@@ -1,0 +1,32 @@
+meta {
+  name: Create Hostname Worker Zone
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://api.cloudflare.com/client/v4/accounts/{{cloudflare_account_id}}/pages/projects/{{cloudflare_pages_project}}/domains
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cloudflare_api_token}}
+}
+
+body:json {
+  {
+    "name": "www.freshmart.com"
+  }
+}
+
+vars:pre-request {
+  cloudflare_account_id: 364a88ccb827c75ddbb9f8d02905e05b
+  cloudflare_pages_project: store-customer
+  cloudflare_api_token: YOUR_CLOUDFLARE_API_TOKEN
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

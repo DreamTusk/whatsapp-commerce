@@ -1,0 +1,22 @@
+meta {
+  name: Custom Domain Verification
+  type: http
+  seq: 5
+}
+
+get {
+  url: https://api.cloudflare.com/client/v4/zones/16d8e3c4973bc8a4ae1cfb63e8a63be2/custom_hostnames/667f3961-6928-4c8b-97cd-00a89acbac12
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer YOUR_CLOUDFLARE_API_TOKEN
+  Content-Type: application/json
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+  forwardAuthorizationHeader: false
+}

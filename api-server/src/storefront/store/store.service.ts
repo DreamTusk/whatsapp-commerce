@@ -8,8 +8,9 @@ export class StorefrontStoreService {
   async getStore(domain: string) {
     if (!domain) throw new BadRequestException('Missing x-store-domain header');
 
-    const store = await this.prisma.store.findUnique({
-      where: { domain },
+    // Matches either the platform subdomain or a connected custom domain.
+    const store = await this.prisma.store.findFirst({
+      where: { OR: [{ domain }, { customDomain: domain }] },
       include: {
         StorePaymentProvider: {
           where: { isActive: true },

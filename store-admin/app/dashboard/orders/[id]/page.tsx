@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User, Truck, ExternalLink } from '@deemlol/next-icons'
+import { ArrowLeft, Loader, MapPin, CreditCard, Package, MessageSquare, Clipboard, User, Truck, ExternalLink, Download } from '@deemlol/next-icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
 import type { Order } from '@/types'
 import { apiErrorMessage } from '@/lib/utils'
+import { isInvoiceAvailable, printInvoice, downloadInvoice } from '@/lib/print-invoice'
 
 type OrderStatus = 'NEW' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
@@ -62,6 +63,10 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = {
   REFUNDED: 'Refunded',
 }
 
+function isUnpaidOnline(order: { payment: { method: string; status: string } | null }) {
+  return order.payment?.method === 'ONLINE' && order.payment?.status === 'PENDING'
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -89,6 +94,8 @@ export default function OrderDetailPage() {
 
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isPrinting, setIsPrinting] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const [isAdvancing, setIsAdvancing] = useState(false)
   const [showCancelForm, setShowCancelForm] = useState(false)
@@ -117,6 +124,26 @@ export default function OrderDetailPage() {
   useEffect(() => {
     fetchOrder().finally(() => setLoading(false))
   }, [fetchOrder])
+
+  async function handlePrint() {
+    if (!order) return
+    setIsPrinting(true)
+    try {
+      await printInvoice(order.id)
+    } finally {
+      setIsPrinting(false)
+    }
+  }
+
+  async function handleDownload() {
+    if (!order) return
+    setIsDownloading(true)
+    try {
+      await downloadInvoice(order.id, order.order_number)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   async function handleAdvance() {
     if (!order) return
@@ -201,6 +228,7 @@ export default function OrderDetailPage() {
   const status = order.status as OrderStatus
   const canAct = status !== 'DELIVERED' && status !== 'CANCELLED'
   const nextLabel = STATUS_NEXT_LABEL[status]
+  const invoiceAvailable = isInvoiceAvailable(order)
 
 
   return (
@@ -221,6 +249,11 @@ export default function OrderDetailPage() {
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLORS[status]}`}>
                 {STATUS_DISPLAY[status]}
               </span>
+              {isUnpaidOnline(order) && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-600">
+                  Unpaid
+                </span>
+              )}
               {order.source === 'MANUAL' && (
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
                   Manual
@@ -230,6 +263,18 @@ export default function OrderDetailPage() {
             <p className="text-sm text-gray-400">{formatDate(order.created_at)}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {invoiceAvailable && (
+              <>
+                <Button variant="outline" onClick={handlePrint} disabled={isPrinting}>
+                  {isPrinting ? <Loader className="w-4 h-4 mr-1.5 animate-spin" /> : null}
+                  {isPrinting ? 'Printing…' : 'Print invoice'}
+                </Button>
+                <Button variant="outline" onClick={handleDownload} disabled={isDownloading}>
+                  {isDownloading ? <Loader className="w-4 h-4 mr-1.5 animate-spin" /> : <Download className="w-4 h-4 mr-1.5" />}
+                  {isDownloading ? 'Downloading…' : 'Download'}
+                </Button>
+              </>
+            )}
             {order.shipments && order.shipments.length > 0 && (
               <Button
                 variant="outline"
@@ -465,8 +510,8 @@ export default function OrderDetailPage() {
                     <p className="text-sm font-semibold text-gray-900">
                       {order.payment.method === 'COD' ? 'Cash on delivery' : 'Online payment'}
                     </p>
-                    <p className={`text-sm font-semibold ${PAYMENT_STATUS_COLORS[order.payment.status] ?? 'text-gray-500'}`}>
-                      {PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status}
+                    <p className={`text-sm font-semibold ${isUnpaidOnline(order) ? 'text-red-500' : (PAYMENT_STATUS_COLORS[order.payment.status] ?? 'text-gray-500')}`}>
+                      {isUnpaidOnline(order) ? 'Payment not completed' : (PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status)}
                     </p>
                     {order.payment.paid_at && (
                       <p className="text-xs text-gray-400 pt-1">{formatDate(order.payment.paid_at)}</p>

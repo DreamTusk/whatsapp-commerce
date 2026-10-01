@@ -14,6 +14,8 @@ import { generateOrderNumber } from '../../utils/order-number';
 import { PaymentProvidersService } from '../../admin/payment-providers/payment-providers.service';
 import { createHmac } from 'crypto';
 import Razorpay from 'razorpay';
+import { InvoiceService } from '../../shared/invoice.service';
+import { formatStoreUrl, formatDeliveryAddress } from '../../shared/invoice-template';
 
 const orderInclude = {
   OrderItem: {
@@ -41,6 +43,7 @@ export class StorefrontOrdersService {
   constructor(
     private prisma: PrismaService,
     private paymentProviders: PaymentProvidersService,
+    private invoiceService: InvoiceService,
   ) {}
 
   private formatOrderItem(item: any) {
@@ -107,6 +110,101 @@ export class StorefrontOrdersService {
     return { order: this.formatOrder(order) };
   }
 
+  async getInvoicePdf(customerId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+      include: {
+        Customer: { select: { name: true, phone: true, email: true } },
+        OrderItem: true,
+        Payment: true,
+        Store: { include: { StoreCustomization: true } },
+      },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+
+    this.invoiceService.assertInvoiceAvailable(order);
+
+    const buffer = await this.invoiceService.renderInvoicePdf({
+      orderNumber: order.orderNumber,
+      orderDate: order.createdAt,
+      storeName: order.Store.name,
+      storeLogo: order.Store.logo,
+      storePhone: order.Store.phone,
+      storeUrl: formatStoreUrl(order.Store.domain),
+      storeSupportEmail: order.Store.supportEmail,
+      primaryColor: order.Store.StoreCustomization?.primaryColor ?? '#6366f1',
+      customerName: order.Customer.name ?? order.Customer.phone ?? 'Customer',
+      customerPhone: order.Customer.phone ?? '',
+      customerEmail: order.Customer.email,
+      deliveryAddress: formatDeliveryAddress(order),
+      items: order.OrderItem.map((i) => ({
+        productName: i.productName,
+        quantity: i.quantity,
+        price: i.price,
+        subtotal: i.subtotal,
+      })),
+      totalAmount: order.totalAmount,
+      paymentMethod: order.Payment?.method ?? 'COD',
+      paymentStatus: order.Payment?.status ?? '',
+    });
+
+    return { buffer, filename: `invoice-${order.orderNumber}.pdf` };
+  }
+
+  // Cart-shaped preview for "Order Again" — re-checks live stock/price without
+  // touching the customer's actual cart, so checkout can be reused read-only.
+  async getReorderPreview(customerId: string, storeId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId, storeId },
+      include: {
+        OrderItem: {
+          include: {
+            Product: {
+              select: {
+                name: true,
+                sellingPrice: true,
+                originalPrice: true,
+                unit: true,
+                inStock: true,
+                isActive: true,
+                ProductMedia: {
+                  orderBy: [
+                    { isPrimary: 'desc' as const },
+                    { sortOrder: 'asc' as const },
+                  ],
+                  take: 1,
+                  include: { Media: { select: { url: true, thumbnailUrl: true } } },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+
+    const items = order.OrderItem.map((oi: any) => {
+      const p = oi.Product;
+      const media = p?.ProductMedia?.[0]?.Media ?? null;
+      return {
+        id: oi.id,
+        quantity: oi.quantity,
+        product: {
+          id: oi.productId,
+          name: p?.name ?? oi.productName,
+          image_url: media?.thumbnailUrl ?? media?.url ?? null,
+          selling_price: p?.sellingPrice ?? oi.price,
+          original_price: p?.originalPrice ?? null,
+          unit: p?.unit ?? null,
+          in_stock: !!p && p.isActive && p.inStock,
+        },
+      };
+    });
+
+    const total = items.reduce((sum, i) => sum + i.product.selling_price * i.quantity, 0);
+    return { items, total };
+  }
+
   async placeOrder(
     customerId: string,
     storeId: string,
@@ -138,6 +236,10 @@ export class StorefrontOrdersService {
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       throw new BadRequestException('items array is required');
+    }
+
+    if (!name?.trim()) {
+      throw new BadRequestException('name is required');
     }
 
     const isPickup = delivery_type.toUpperCase() === 'PICKUP';
@@ -195,11 +297,16 @@ export class StorefrontOrdersService {
         };
       }
       if (
-        !deliveryAddress.address &&
-        !deliveryAddress.street &&
-        !deliveryAddress.city
+        !deliveryAddress.doorNo?.trim() ||
+        !deliveryAddress.street?.trim() ||
+        !deliveryAddress.city?.trim() ||
+        !deliveryAddress.state?.trim() ||
+        !deliveryAddress.country?.trim() ||
+        !deliveryAddress.pincode?.trim()
       ) {
-        throw new BadRequestException('address or address_id is required');
+        throw new BadRequestException(
+          'A complete delivery address (door no, street, city, state, country, pincode) is required',
+        );
       }
     }
 
@@ -265,7 +372,7 @@ export class StorefrontOrdersService {
                 ? new Date(expected_pickup_time)
                 : null,
             deliveryNotes: delivery_notes?.trim() || null,
-            address: isPickup ? null : (deliveryAddress.address ?? null),
+            address: isPickup ? null : (deliveryAddress.address?.trim() || null),
             notes: notes ?? null,
             altPhone:
               typeof alt_phone === 'string' && alt_phone.trim()
@@ -302,14 +409,14 @@ export class StorefrontOrdersService {
     if (!order)
       throw new BadRequestException('Failed to generate order number');
 
-    if (name?.trim()) {
-      await this.prisma.customer.update({
-        where: { id: customerId },
-        data: { name: name.trim() },
-      });
-    }
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: { name: name.trim() },
+    });
 
-    await this.prisma.cartItem.deleteMany({ where: { customerId, storeId } });
+    await this.prisma.cartItem.deleteMany({
+      where: { customerId, storeId, productId: { in: productIds } },
+    });
 
     // COD — return order directly
     if (method === PaymentMethod.COD) {
@@ -338,6 +445,54 @@ export class StorefrontOrdersService {
       order: this.formatOrder(order),
       razorpay_order_id: rzpOrder.id,
       razorpay_key_id: razorpayProvider!.keyId,
+      amount_paise: amountPaise,
+    };
+  }
+
+  async retryPayment(customerId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+      include: { Payment: true },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    if (!order.Payment || order.Payment.method !== PaymentMethod.ONLINE) {
+      throw new BadRequestException('This order does not use online payment');
+    }
+    if (order.Payment.status === PaymentStatus.PAID) {
+      throw new BadRequestException('This order is already paid');
+    }
+    if (order.status === OrderStatus.CANCELLED) {
+      throw new BadRequestException('This order has been cancelled');
+    }
+
+    const razorpayProvider = await this.paymentProviders.getActiveProvider(
+      order.storeId,
+      'RAZORPAY',
+    );
+    if (!razorpayProvider) {
+      throw new BadRequestException('Payment provider not configured');
+    }
+
+    const razorpay = new Razorpay({
+      key_id: razorpayProvider.keyId,
+      key_secret: razorpayProvider.keySecret,
+    });
+
+    const amountPaise = Math.round(order.totalAmount * 100);
+    const rzpOrder = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: order.orderNumber,
+    });
+
+    await this.prisma.payment.update({
+      where: { orderId: order.id },
+      data: { razorpayOrderId: rzpOrder.id, status: PaymentStatus.PENDING },
+    });
+
+    return {
+      razorpay_order_id: rzpOrder.id,
+      razorpay_key_id: razorpayProvider.keyId,
       amount_paise: amountPaise,
     };
   }

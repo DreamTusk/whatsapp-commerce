@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
-import { Search, Plus, MoreVertical } from '@deemlol/next-icons'
+import { z } from 'zod'
+import { Search, Plus, MoreVertical, UserPlus, AlertCircle } from '@deemlol/next-icons'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AppSelect } from '@/components/ui/app-select'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -19,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { StoreUser, StoreInvite } from '@/types'
 
 const INVITE_ROLES = [{ value: 'STAFF', label: 'Staff' }]
+const inviteEmailSchema = z.string().email('Enter a valid email')
 
 function roleLabel(role: string) {
   if (role === 'OWNER') return 'Owner'
@@ -33,6 +35,7 @@ export default function UsersPanel() {
 
   const [inviteOpen, setInviteOpen]   = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteEmailError, setInviteEmailError] = useState('')
   const [inviteRole, setInviteRole]   = useState('STAFF')
   const [inviting, setInviting]       = useState(false)
 
@@ -70,17 +73,28 @@ export default function UsersPanel() {
   )
 
   async function sendInvite() {
-    if (!inviteEmail.trim()) return
+    const email = inviteEmail.trim()
+    if (!email) return
+    const result = inviteEmailSchema.safeParse(email)
+    if (!result.success) {
+      setInviteEmailError(result.error.issues[0].message)
+      return
+    }
+    setInviteEmailError('')
     setInviting(true)
     try {
-      await api.post('/api/invite', { email: inviteEmail.trim(), role: inviteRole })
+      await api.post('/api/invite', { email, role: inviteRole })
       toast.success('Invite sent')
       setInviteEmail('')
       setInviteRole('STAFF')
       setInviteOpen(false)
       fetchAll()
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? 'Failed to send invite')
+      if (err.response?.status === 409) {
+        setInviteEmailError(err.response?.data?.message ?? 'This email is already in use')
+      } else {
+        toast.error(err.response?.data?.message ?? 'Failed to send invite')
+      }
     } finally {
       setInviting(false)
     }
@@ -267,23 +281,41 @@ export default function UsersPanel() {
       {/* Invite modal */}
       <Dialog
         open={inviteOpen}
-        onOpenChange={open => { setInviteOpen(open); if (!open) { setInviteEmail(''); setInviteRole('STAFF') } }}
+        onOpenChange={open => { setInviteOpen(open); if (!open) { setInviteEmail(''); setInviteEmailError(''); setInviteRole('STAFF') } }}
         disablePointerDismissal
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
-            <DialogTitle>Add staff member</DialogTitle>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0">
+                <UserPlus className="w-4 h-4 text-[#7c3aed]" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-semibold">Add staff member</DialogTitle>
+                <DialogDescription>Invite a new member to your team.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label>Email address</Label>
-              <Input
-                type="email"
-                placeholder="staff@example.com"
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && sendInvite()}
-              />
+              <div className="relative">
+                <Input
+                  type="email"
+                  placeholder="staff@example.com"
+                  value={inviteEmail}
+                  onChange={e => { setInviteEmail(e.target.value); setInviteEmailError('') }}
+                  onKeyDown={e => e.key === 'Enter' && sendInvite()}
+                  aria-invalid={!!inviteEmailError}
+                  className={inviteEmailError ? 'pr-8' : undefined}
+                />
+                {inviteEmailError && (
+                  <AlertCircle className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-destructive" />
+                )}
+              </div>
+              {inviteEmailError && (
+                <p className="text-xs text-destructive">{inviteEmailError}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Role</Label>

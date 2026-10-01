@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { Loader, ImagePlus, AlertTriangle } from '@deemlol/next-icons'
+import { Loader, ImagePlus, AlertTriangle, Info } from '@deemlol/next-icons'
 import { Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +22,7 @@ export default function GeneralPanel() {
   const [name, setName]         = useState('')
   const [phone, setPhone]       = useState('')
   const [address, setAddress]   = useState('')
+  const [supportEmail, setSupportEmail] = useState('')
   const [minOrder, setMinOrder] = useState('')
   const [radius, setRadius]     = useState('')
   const [isActive, setIsActive] = useState(true)
@@ -46,6 +47,7 @@ export default function GeneralPanel() {
         setName(s.name)
         setPhone(s.phone)
         setAddress(s.address ?? '')
+        setSupportEmail(s.support_email ?? '')
         setMinOrder(String(s.min_order_amount ?? 0))
         setRadius(s.delivery_radius != null ? String(s.delivery_radius) : '')
         setIsActive(s.is_active)
@@ -71,6 +73,10 @@ export default function GeneralPanel() {
   async function handleSave() {
     if (!name.trim()) { toast.error('Store name is required'); return }
     if (!phone.trim()) { toast.error('Phone is required'); return }
+    if (supportEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supportEmail.trim())) {
+      toast.error('Enter a valid support email address')
+      return
+    }
     setIsSaving(true)
     try {
       let logoMediaId: string | undefined
@@ -87,6 +93,7 @@ export default function GeneralPanel() {
         name: name.trim(),
         phone: phone.trim(),
         address: address.trim(),
+        support_email: supportEmail.trim(),
         min_order_amount: minOrder || '0',
         ...(radius && { delivery_radius: radius }),
         is_active: String(isActive),
@@ -216,6 +223,13 @@ export default function GeneralPanel() {
         <div className="space-y-1.5">
           <Label className="text-sm font-medium text-gray-700">Address <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
           <Input className="h-11" value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St, City" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+            Support email <span className="text-gray-400 font-normal text-xs">(optional)</span>
+            <span title="This email will be shown on invoices"><Info className="w-3.5 h-3.5 text-gray-300" /></span>
+          </Label>
+          <Input className="h-11" type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@yourstore.com" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
