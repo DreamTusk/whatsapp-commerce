@@ -94,7 +94,7 @@ export function DashboardShowcaseSection() {
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
                   <Icon name="open_in_new" className="text-sm" />
-                  <span>freshmart.dreambiz.app</span>
+                  <span>freshmart.dreambizstore.com</span>
                 </div>
               </div>
 

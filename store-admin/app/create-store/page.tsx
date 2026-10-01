@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import api from '@/lib/api'
 import { apiErrorMessage } from '@/lib/utils'
 
-const BASE_DOMAIN = process.env.NEXT_PUBLIC_STORE_DOMAIN ?? 'dreambiz.app'
+const BASE_DOMAIN = process.env.NEXT_PUBLIC_STORE_DOMAIN ?? 'dreambizstore.com'
 
 // Keep in sync with RESERVED_SUBDOMAINS in api-server/src/admin/store/store.service.ts
 const RESERVED_SUBDOMAINS = new Set([

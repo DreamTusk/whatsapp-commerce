@@ -17,13 +17,13 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
   return fallback
 }
 
-// The storefront link always points at the live dreambiz.app domain, even
-// when store-admin itself is running locally — some stores still have a
+// The storefront link always points at the live dreambizstore.com domain,
+// even when store-admin itself is running locally — some stores still have a
 // leftover "<slug>.localhost" domain saved from before prod deploys existed,
-// so normalize those to "<slug>.dreambiz.app" for display rather than
+// so normalize those to "<slug>.dreambizstore.com" for display rather than
 // requiring a DB backfill.
 export function getStorefrontUrl(domain: string | null | undefined): string | null {
   if (!domain) return null
-  const prodDomain = domain.endsWith('.localhost') ? domain.replace(/\.localhost$/, '.dreambiz.app') : domain
+  const prodDomain = domain.endsWith('.localhost') ? domain.replace(/\.localhost$/, '.dreambizstore.com') : domain
   return `https://${prodDomain}`
 }

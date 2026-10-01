@@ -13,7 +13,7 @@ const localhostSubdomainPattern = /^http:\/\/[a-z0-9-]+\.localhost:\d+$/;
 const ngrokPattern = /^https:\/\/[a-z0-9-]+\.ngrok-free\.(app|dev)$/;
 const devtunnelsPattern = /^https:\/\/[a-z0-9]+-\d+\.[a-z0-9]+\.devtunnels\.ms$/;
 //Production
-const STOREFRONT_ORIGIN_REGEX = /^https:\/\/[a-z0-9-]+\.dreambiz\.app$/;
+const STOREFRONT_ORIGIN_REGEX = /^https:\/\/[a-z0-9-]+\.dreambizstore\.com$/;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
